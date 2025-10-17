@@ -1,0 +1,139 @@
+/* Sidebar Background Gradient */
+.main-sidebar {
+    background: linear-gradient(180deg, #343a40 0%, #495057 100%) !important;
+}
+
+/* Brand Area Styling */
+.brand-link {
+    background: linear-gradient(45deg, #007bff, #0056b3) !important;
+    border-bottom: 3px solid rgba(255,255,255,0.2) !important;
+}
+
+.brand-link .brand-text {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;
+}
+
+/* User Panel Styling */
+.user-panel {
+    border-bottom: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.user-panel .info a {
+    color: #ffffff !important;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;
+}
+
+/* Sidebar Menu Items */
+.nav-sidebar .nav-item > .nav-link {
+    color: rgba(255,255,255,0.8) !important;
+    border-radius: 5px !important;
+    margin: 2px 8px !important;
+    transition: all 0.3s ease !important;
+}
+
+.nav-sidebar .nav-item > .nav-link:hover {
+    background-color: rgba(255,255,255,0.1) !important;
+    color: #ffffff !important;
+    transform: translateX(5px) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+}
+
+.nav-sidebar .nav-item > .nav-link.active {
+    background: linear-gradient(45deg, #28a745, #20c997) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
+    transform: translateX(8px) !important;
+}
+
+/* Menu Headers */
+.nav-header {
+    color: #adb5bd !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    margin-top: 15px !important;
+    padding: 10px 15px 5px 15px !important;
+    border-top: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+/* Menu Icons with Colors */
+.nav-sidebar .nav-link i {
+    margin-right: 10px !important;
+    font-size: 16px !important;
+}
+
+/* Specific Icon Colors */
+.nav-sidebar .fa-tachometer-alt { color: #ffc107 !important; }
+.nav-sidebar .fa-building { color: #17a2b8 !important; }
+.nav-sidebar .fa-users { color: #28a745 !important; }
+.nav-sidebar .fa-book { color: #007bff !important; }
+.nav-sidebar .fa-clipboard-list { color: #fd7e14 !important; }
+.nav-sidebar .fa-certificate { color: #dc3545 !important; }
+.nav-sidebar .fa-credit-card { color: #28a745 !important; }
+.nav-sidebar .fa-chart-bar { color: #17a2b8 !important; }
+.nav-sidebar .fa-user-cog { color: #6f42c1 !important; }
+
+/* Hover Effects for Icons */
+.nav-sidebar .nav-link:hover i {
+    transform: scale(1.1) !important;
+    transition: transform 0.2s ease !important;
+}
+
+/* Active Menu Item Glow Effect */
+.nav-sidebar .nav-link.active {
+    position: relative !important;
+}
+
+.nav-sidebar .nav-link.active::before {
+    content: '' !important;
+    position: absolute !important;
+    left: -8px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    width: 4px !important;
+    height: 70% !important;
+    background: linear-gradient(180deg, #28a745, #20c997) !important;
+    border-radius: 2px !important;
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.5) !important;
+}
+
+/* Small Boxes (Stats) */
+.small-box {
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    position: relative !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+.small-box:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+}
+
+.small-box .icon {
+    transition: all 0.3s ease !important;
+}
+
+.small-box:hover .icon {
+    transform: scale(1.1) !important;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+}
+
+/* Main Content Cards */
+.card {
+    border: none !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07) !important;
+    transition: all 0.3s ease !important;
+}
+
+.card:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1) !important;
+}
