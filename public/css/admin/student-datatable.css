@@ -1,0 +1,226 @@
+/* Enhanced Student DataTable Styles */
+.student-avatar {
+    position: relative;
+}
+
+.student-avatar .rounded-circle {
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Table Enhancements */
+#studentsTable {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+#studentsTable thead th {
+    border-top: none;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    color: #495057;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#studentsTable tbody tr {
+    transition: all 0.2s ease;
+}
+
+#studentsTable tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Status Badges */
+.badge {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    border-radius: 20px;
+    padding: 6px 12px;
+}
+
+/* Action Buttons */
+.btn-group-sm > .btn, .btn-sm {
+    padding: 0.4rem 0.6rem;
+    font-size: 11px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-info:hover {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    transform: translateY(-1px);
+}
+
+.btn-outline-success:hover {
+    background-color: #28a745;
+    border-color: #28a745;
+    transform: translateY(-1px);
+}
+
+.btn-outline-primary:hover {
+    background-color: #007bff;
+    border-color: #007bff;
+    transform: translateY(-1px);
+}
+
+.btn-outline-secondary:hover {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    transform: translateY(-1px);
+}
+
+/* Cards Enhancement */
+.card {
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Statistics Cards */
+.card-body .rounded-circle {
+    transition: all 0.3s ease;
+}
+
+.card:hover .rounded-circle {
+    transform: scale(1.1);
+}
+
+/* Filter Section */
+.form-control-sm {
+    border-radius: 8px;
+    border: 1px solid #e3e6f0;
+    transition: all 0.2s ease;
+}
+
+.form-control-sm:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* DataTables Pagination */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 6px;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: white !important;
+    transform: translateY(-1px);
+}
+
+/* Search Box */
+.dataTables_filter input {
+    border-radius: 20px;
+    border: 1px solid #e3e6f0;
+    padding: 8px 15px;
+    transition: all 0.2s ease;
+}
+
+.dataTables_filter input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+}
+
+/* Custom Checkboxes */
+.custom-control-input:checked ~ .custom-control-label::before {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+.custom-control-input:focus ~ .custom-control-label::before {
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Loading Animation */
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .btn-group-sm {
+        flex-direction: column;
+    }
+    
+    .statistics-card .d-flex {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .statistics-card .rounded-circle {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Toast Notifications */
+.toast {
+    border-radius: 10px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border: none;
+}
+
+.toast-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border-radius: 15px;
+    border: none;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-header .close {
+    color: white;
+    opacity: 0.8;
+}
+
+.modal-header .close:hover {
+    opacity: 1;
+}
+
+/* Gradient Backgrounds */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.bg-gradient-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.bg-gradient-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+}
+
+.bg-gradient-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}

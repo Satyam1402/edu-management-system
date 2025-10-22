@@ -1,0 +1,509 @@
+/* ===== STUDENT CREATE FORM STYLES - OPTIMIZED WITH PADDING-BLOCK FIX ===== */
+
+/* Form Container */
+.create-form-card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    overflow: hidden;
+    background: white;
+    margin-bottom: 2rem;
+}
+
+/* Header Section */
+.create-header {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.create-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 100%;
+    height: 200%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transform: rotate(-15deg);
+}
+
+.create-header h3,
+.create-header p {
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Section Dividers */
+.section-divider {
+    border-left: 4px solid #28a745;
+    padding: 0.75rem 0 0.75rem 1rem;
+    margin: 2rem 0 1.5rem 0;
+    background: linear-gradient(90deg, rgba(40, 167, 69, 0.05) 0%, transparent 100%);
+    border-radius: 0 8px 8px 0;
+}
+
+/* Form Labels */
+.form-label-enhanced {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.required-marker::after {
+    content: ' *';
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Input Groups with Icons */
+.input-icon-group {
+    position: relative;
+    margin-bottom: 0.5rem;
+}
+
+.input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 14px;
+    z-index: 3;
+    width: 16px;
+    text-align: center;
+}
+
+.input-with-icon {
+    padding-left: 45px !important;
+}
+
+/* Enhanced Form Controls */
+.form-control-enhanced {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    padding-block: initial; /* Fix for consistent form control height */
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-control-enhanced:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+    background: white;
+}
+
+.form-control-enhanced.is-valid {
+    border-color: #28a745;
+    background: white;
+}
+
+.form-control-enhanced.is-invalid {
+    border-color: #dc3545;
+    background: white;
+}
+
+.form-control-enhanced:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+}
+
+/* Input Group Styling */
+.input-group-text {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-right: none;
+    border-radius: 10px 0 0 10px !important;
+    padding: 0.75rem;
+    padding-block: initial; /* Fix for input group alignment */
+    min-width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.3s ease;
+}
+
+.input-group .form-control {
+    border: 2px solid #e9ecef;
+    border-left: none;
+    border-radius: 0 10px 10px 0 !important;
+    padding: 0.75rem 1rem;
+    padding-block: initial !important; /* Critical fix for Bootstrap interference */
+    font-size: 14px;
+    transition: all 0.3s ease;
+    height: calc(2.25rem + 4px);
+    min-height: calc(2.25rem + 4px);
+}
+
+.input-group .form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+}
+
+.input-group .form-control:focus ~ .input-group-prepend .input-group-text {
+    border-color: #28a745;
+}
+
+/* SELECT DROPDOWN STYLING - UPDATED WITH PADDING-BLOCK FIX */
+select.form-control {
+    background-color: white;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 2.5rem;
+    padding-block: initial !important; /* THE CRITICAL FIX FOR PLACEHOLDER TEXT */
+    color: #495057;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+}
+
+select.form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+    background-color: white;
+    color: #495057;
+}
+
+select.form-control:hover {
+    border-color: #80bdff;
+}
+
+select.form-control:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Placeholder styling for select options */
+select.form-control:invalid {
+    color: #6c757d;
+    padding-block: initial !important; /* Ensure placeholder shows correctly */
+}
+
+select.form-control:valid {
+    color: #495057;
+    padding-block: initial !important; /* Consistent styling */
+}
+
+select.form-control option {
+    color: #495057;
+    background-color: white;
+    font-weight: 400;
+    padding: 8px 12px;
+    padding-block: initial; /* Reset any inherited padding */
+}
+
+select.form-control option:disabled {
+    color: #6c757d !important;
+    font-style: italic;
+    padding-block: initial;
+}
+
+select.form-control option:checked {
+    background-color: #28a745;
+    color: white;
+    padding-block: initial;
+}
+
+/* Input group select specific styling */
+.input-group select.form-control {
+    border-left: none;
+    border-radius: 0 10px 10px 0 !important;
+    padding-block: initial !important; /* Critical fix for input groups */
+}
+
+.input-group select.form-control:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+}
+
+/* Additional fixes for better placeholder visibility */
+select.form-control option[value=""] {
+    color: #6c757d !important;
+    font-style: italic;
+    padding-block: initial;
+}
+
+/* Textarea Styling */
+textarea.form-control-enhanced {
+    resize: vertical;
+    min-height: 100px;
+    padding-block: initial; /* Fix for textarea consistency */
+}
+
+/* Buttons */
+.btn-enhanced {
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    border: none;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.btn-enhanced:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    text-decoration: none;
+}
+
+.btn-enhanced:focus-visible {
+    outline: 2px solid #28a745;
+    outline-offset: 2px;
+}
+
+.btn-secondary.btn-enhanced {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary.btn-enhanced:hover {
+    background: #5a6268;
+    color: white;
+}
+
+.btn-outline-warning.btn-enhanced {
+    border: 2px solid #ffc107;
+    color: #856404;
+    background: transparent;
+}
+
+.btn-outline-warning.btn-enhanced:hover {
+    background: #ffc107;
+    color: #212529;
+}
+
+.btn-success.btn-enhanced {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+}
+
+.btn-success.btn-enhanced:hover {
+    background: linear-gradient(135deg, #218838, #1ba085);
+    color: white;
+}
+
+/* Action Footer */
+.action-footer {
+    background: #f8f9fa;
+    padding: 1.5rem 2rem;
+    border-top: 1px solid #dee2e6;
+    margin: 2rem -1.5rem -1.5rem -1.5rem;
+}
+
+/* Form Validation Feedback */
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.form-text {
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #6c757d;
+}
+
+/* Form Validation Animations */
+.is-invalid {
+    animation: shake 0.5s ease-in-out;
+}
+
+.is-valid {
+    animation: pulse-green 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+/* BOOTSTRAP OVERRIDES - ADDITIONAL FIXES */
+.form-control,
+.input-group .form-control,
+select.form-control {
+    padding-block: initial !important;
+    line-height: 1.5;
+    min-height: calc(1.5em + 0.75rem + 4px);
+}
+
+.input-group .form-control,
+.input-group select.form-control {
+    padding-inline-start: 0.75rem;
+    padding-inline-end: 0.75rem;
+}
+
+.input-group select.form-control {
+    padding-inline-end: 2.5rem; /* Space for dropdown arrow */
+}
+
+/* Fix for input group prepend alignment */
+.input-group-prepend .input-group-text {
+    padding-block: initial;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: auto;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+    .create-header {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .create-header .row > div {
+        margin-bottom: 1rem;
+    }
+    
+    .action-footer {
+        padding: 1rem;
+    }
+    
+    .action-footer .d-flex {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .btn-enhanced {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .section-divider {
+        margin: 1.5rem 0 1rem 0;
+    }
+    
+    .form-control-enhanced:focus-visible {
+        outline: 2px solid #28a745;
+        outline-offset: 2px;
+    }
+}
+
+@media (max-width: 576px) {
+    .input-icon-group {
+        margin-bottom: 1rem;
+    }
+    
+    .form-control-enhanced,
+    .input-group .form-control,
+    select.form-control {
+        font-size: 16px; /* Prevents zoom on iOS */
+        padding-block: initial !important; /* Maintain fix on mobile */
+    }
+    
+    .btn-enhanced {
+        padding: 0.875rem 1.25rem;
+        font-size: 16px;
+    }
+}
+
+/* CROSS-BROWSER COMPATIBILITY */
+
+/* Safari and iOS fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    select.form-control {
+        background-position-x: calc(100% - 12px);
+        padding-block: initial !important;
+    }
+}
+
+/* Firefox specific fixes */
+@-moz-document url-prefix() {
+    select.form-control {
+        text-indent: 0.01px;
+        text-overflow: '';
+        padding-block: initial !important;
+    }
+}
+
+/* Edge compatibility */
+@supports (-ms-ime-align: auto) {
+    select.form-control {
+        padding-right: 2rem;
+        padding-block: initial !important;
+    }
+}
+
+/* ACCESSIBILITY IMPROVEMENTS */
+.form-control-enhanced:focus,
+.input-group .form-control:focus,
+select.form-control:focus {
+    outline: none;
+    border-color: #28a745;
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .form-control-enhanced,
+    .input-group .form-control,
+    select.form-control {
+        border-width: 2px;
+        padding-block: initial !important;
+    }
+    
+    .btn-enhanced {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .form-control-enhanced,
+    .input-group .form-control,
+    select.form-control,
+    .btn-enhanced {
+        transition: none;
+    }
+    
+    .is-invalid,
+    .is-valid {
+        animation: none;
+    }
+}
+
+/* PRINT STYLES */
+@media print {
+    .create-header {
+        background: #f8f9fa !important;
+        color: #000 !important;
+        box-shadow: none !important;
+    }
+    
+    .btn-enhanced {
+        display: none;
+    }
+    
+    .action-footer {
+        display: none;
+    }
+}

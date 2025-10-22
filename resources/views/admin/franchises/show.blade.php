@@ -1,48 +1,56 @@
-{{-- resources/views/admin/franchises/show.blade.php --}}
+{{-- resources/views/admin/franchises/show.blade.php - FIXED UI --}}
 @extends('layouts.custom-admin')
 
 @section('title', $franchise->name)
 @section('page-title', 'Franchise Details - ' . $franchise->name)
 
+@section('css')
+<link rel="stylesheet" href="{{ asset('css/admin/franchise-show.css') }}">
+@endsection
+
 @section('content')
-    <!-- Franchise Header -->
-    <div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+    <!-- Enhanced Franchise Header -->
+    <div class="card border-0 shadow-sm mb-4 franchise-header">
         <div class="card-body text-white p-4">
             <div class="row align-items-center">
                 <div class="col-md-8">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="avatar-lg me-3" style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 24px;">
+                        <div class="franchise-avatar-lg">
                             {{ substr($franchise->name, 0, 1) }}
                         </div>
                         <div>
-                            <h3 class="mb-1">{{ $franchise->name }}</h3>
-                            <p class="mb-0 opacity-90">Code: <strong>{{ $franchise->code }}</strong></p>
+                            <h2 class="mb-1 font-weight-bold">{{ $franchise->name }}</h2>
+                            <p class="mb-0 h5" style="opacity: 0.9;">
+                                <i class="fas fa-hashtag mr-1"></i>{{ $franchise->code }}
+                            </p>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
-                            <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ $franchise->email }}</p>
-                            <p class="mb-0"><i class="fas fa-phone me-2"></i>{{ $franchise->phone }}</p>
+                            <p class="mb-1"><i class="fas fa-envelope mr-2"></i>{{ $franchise->email }}</p>
+                            <p class="mb-0"><i class="fas fa-phone mr-2"></i>{{ $franchise->phone }}</p>
                         </div>
                         <div class="col-md-6">
                             @if($franchise->city || $franchise->state)
-                                <p class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>{{ $franchise->city }}{{ $franchise->city && $franchise->state ? ', ' : '' }}{{ $franchise->state }}</p>
+                                <p class="mb-2"><i class="fas fa-map-marker-alt mr-2"></i>{{ $franchise->city }}{{ $franchise->city && $franchise->state ? ', ' : '' }}{{ $franchise->state }}</p>
                             @endif
-                            <span class="badge bg-{{ $franchise->status_badge }} px-3 py-2">{{ ucfirst($franchise->status) }}</span>
+                            <span class="badge badge-{{ $franchise->status_badge }} px-3 py-2" style="border-radius: 12px; font-size: 13px;">
+                                <i class="fas fa-circle mr-1" style="font-size: 8px;"></i>{{ ucfirst($franchise->status) }}
+                            </span>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 text-right">
+                <div class="col-md-4 text-right d-none d-md-block">
                     <div class="d-flex flex-column align-items-end">
-                        <div class="mb-2">
-                            <a href="{{ route('admin.franchises.edit', $franchise) }}" class="btn btn-light btn-sm me-2">
-                                <i class="fas fa-edit"></i> Edit
+                        <div class="mb-3">
+                            <a href="{{ route('admin.franchises.edit', $franchise) }}" class="btn btn-light action-btn-lg mr-2">
+                                <i class="fas fa-edit mr-1"></i> Edit Franchise
                             </a>
-                            <button class="btn btn-outline-light btn-sm" onclick="createUser({{ $franchise->id }})">
-                                <i class="fas fa-user-plus"></i> Add User
+                            <button class="btn btn-outline-light action-btn-lg" onclick="createUser({{ $franchise->id }})">
+                                <i class="fas fa-user-plus mr-1"></i> Add User
                             </button>
                         </div>
-                        <div class="dashboard-icon" style="font-size: 3rem; opacity: 0.3;">
+                        <div style="font-size: 4rem; opacity: 0.2;">
                             <i class="fas fa-building"></i>
                         </div>
                     </div>
@@ -51,87 +59,94 @@
         </div>
     </div>
 
-    <!-- Statistics Cards -->
+    <!-- Enhanced Statistics Cards -->
     <div class="row mb-4">
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100 text-center">
-                <div class="card-body">
-                    <div class="text-primary mb-2">
-                        <i class="fas fa-users fa-2x"></i>
+            <div class="card stat-card h-100 text-center">
+                <div class="card-body p-4">
+                    <div class="text-primary mb-3">
+                        <i class="fas fa-users fa-3x"></i>
                     </div>
-                    <h4 class="mb-1">{{ $stats['total_students'] }}</h4>
-                    <small class="text-muted">Total Students</small>
+                    <h3 class="mb-1 font-weight-bold text-dark">{{ $stats['total_students'] }}</h3>
+                    <p class="text-muted mb-0">Total Students</p>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100 text-center">
-                <div class="card-body">
-                    <div class="text-success mb-2">
-                        <i class="fas fa-user-check fa-2x"></i>
+            <div class="card stat-card h-100 text-center">
+                <div class="card-body p-4">
+                    <div class="text-success mb-3">
+                        <i class="fas fa-user-check fa-3x"></i>
                     </div>
-                    <h4 class="mb-1">{{ $stats['active_students'] }}</h4>
-                    <small class="text-muted">Active Students</small>
+                    <h3 class="mb-1 font-weight-bold text-dark">{{ $stats['active_students'] }}</h3>
+                    <p class="text-muted mb-0">Active Students</p>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100 text-center">
-                <div class="card-body">
-                    <div class="text-info mb-2">
-                        <i class="fas fa-user-tie fa-2x"></i>
+            <div class="card stat-card h-100 text-center">
+                <div class="card-body p-4">
+                    <div class="text-info mb-3">
+                        <i class="fas fa-user-tie fa-3x"></i>
                     </div>
-                    <h4 class="mb-1">{{ $stats['total_users'] }}</h4>
-                    <small class="text-muted">System Users</small>
+                    <h3 class="mb-1 font-weight-bold text-dark">{{ $stats['total_users'] }}</h3>
+                    <p class="text-muted mb-0">System Users</p>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-3 col-md-6 mb-3">
-            <div class="card border-0 shadow-sm h-100 text-center">
-                <div class="card-body">
-                    <div class="text-warning mb-2">
-                        <i class="fas fa-calendar fa-2x"></i>
+            <div class="card stat-card h-100 text-center">
+                <div class="card-body p-4">
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-calendar-check fa-3x"></i>
                     </div>
-                    <h4 class="mb-1">{{ $franchise->created_at->diffInDays() }}</h4>
-                    <small class="text-muted">Days Active</small>
+                    <h3 class="mb-1 font-weight-bold text-dark">{{ $franchise->created_at->diffInDays() }}</h3>
+                    <p class="text-muted mb-0">Days Active</p>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="row">
-        <!-- Franchise Details -->
+        <!-- Enhanced Franchise Details -->
         <div class="col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-transparent">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-info-circle text-primary me-2"></i>Franchise Information
+            <div class="card info-card h-100">
+                <div class="card-header bg-white border-0 pt-4">
+                    <h5 class="card-title mb-0 font-weight-bold text-dark">
+                        <i class="fas fa-info-circle text-primary mr-2"></i>Franchise Information
                     </h5>
                 </div>
                 <div class="card-body">
-                    <table class="table table-borderless">
+                    <table class="table table-borderless mb-0">
                         <tr>
-                            <td class="fw-medium text-muted" width="40%">Franchise Code:</td>
-                            <td><strong class="text-primary">{{ $franchise->code }}</strong></td>
+                            <td class="font-weight-medium text-muted" width="40%">Franchise Code:</td>
+                            <td><span class="badge badge-primary px-3 py-2">{{ $franchise->code }}</span></td>
                         </tr>
                         <tr>
-                            <td class="fw-medium text-muted">Contact Person:</td>
+                            <td class="font-weight-medium text-muted">Contact Person:</td>
                             <td>{{ $franchise->contact_person ?: 'Not specified' }}</td>
                         </tr>
                         <tr>
-                            <td class="fw-medium text-muted">Email:</td>
-                            <td>{{ $franchise->email }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-medium text-muted">Phone:</td>
-                            <td>{{ $franchise->phone }}</td>
-                        </tr>
-                        <tr>
-                            <td class="fw-medium text-muted">Address:</td>
+                            <td class="font-weight-medium text-muted">Email Address:</td>
                             <td>
+                                <i class="fas fa-envelope text-primary mr-2"></i>
+                                <a href="mailto:{{ $franchise->email }}" class="text-decoration-none">{{ $franchise->email }}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-weight-medium text-muted">Phone Number:</td>
+                            <td>
+                                <i class="fas fa-phone text-success mr-2"></i>
+                                <a href="tel:{{ $franchise->phone }}" class="text-decoration-none">{{ $franchise->phone }}</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-weight-medium text-muted">Full Address:</td>
+                            <td>
+                                <i class="fas fa-map-marker-alt text-danger mr-2"></i>
                                 @if($franchise->address)
                                     {{ $franchise->address }}<br>
                                 @endif
@@ -139,66 +154,82 @@
                                     {{ $franchise->city }}{{ $franchise->city && $franchise->state ? ', ' : '' }}{{ $franchise->state }}
                                     @if($franchise->pincode) - {{ $franchise->pincode }} @endif
                                 @else
-                                    Not specified
+                                    <span class="text-muted">Not specified</span>
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td class="fw-medium text-muted">Established:</td>
-                            <td>{{ $franchise->established_date ? $franchise->established_date->format('M d, Y') : 'Not specified' }}</td>
+                            <td class="font-weight-medium text-muted">Established Date:</td>
+                            <td>
+                                <i class="fas fa-calendar text-info mr-2"></i>
+                                {{ $franchise->established_date ? $franchise->established_date->format('M d, Y') : 'Not specified' }}
+                            </td>
                         </tr>
                         <tr>
-                            <td class="fw-medium text-muted">Created:</td>
-                            <td>{{ $franchise->created_at->format('M d, Y \a\t H:i') }}</td>
+                            <td class="font-weight-medium text-muted">System Registration:</td>
+                            <td>
+                                <i class="fas fa-clock text-warning mr-2"></i>
+                                {{ $franchise->created_at->format('M d, Y \a\t H:i') }}
+                            </td>
                         </tr>
                     </table>
 
                     @if($franchise->notes)
-                        <div class="mt-3">
-                            <strong class="text-muted">Notes:</strong>
-                            <p class="mt-1">{{ $franchise->notes }}</p>
+                        <div class="mt-4 p-3" style="background: #f8f9fa; border-radius: 8px; border-left: 4px solid #007bff;">
+                            <h6 class="font-weight-bold text-dark mb-2">
+                                <i class="fas fa-sticky-note text-warning mr-2"></i>Additional Notes
+                            </h6>
+                            <p class="mb-0 text-muted">{{ $franchise->notes }}</p>
                         </div>
                     @endif
                 </div>
             </div>
         </div>
 
-        <!-- Franchise Users -->
+        <!-- Enhanced Franchise Users -->
         <div class="col-md-6 mb-4">
-            <div class="card border-0 shadow-sm h-100">
-                <div class="card-header bg-transparent">
+            <div class="card info-card h-100">
+                <div class="card-header bg-white border-0 pt-4">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-users text-success me-2"></i>Franchise Users ({{ $franchise->users->count() }})
+                        <h5 class="card-title mb-0 font-weight-bold text-dark">
+                            <i class="fas fa-users text-success mr-2"></i>System Users 
+                            <span class="badge badge-success ml-2">{{ $franchise->users->count() }}</span>
                         </h5>
-                        <button class="btn btn-sm btn-success" onclick="createUser({{ $franchise->id }})">
-                            <i class="fas fa-plus"></i> Add User
+                        <button class="btn btn-success btn-sm" onclick="createUser({{ $franchise->id }})" style="border-radius: 8px;">
+                            <i class="fas fa-plus mr-1"></i> Add User
                         </button>
                     </div>
                 </div>
                 <div class="card-body">
                     @if($franchise->users->count() > 0)
                         @foreach($franchise->users as $user)
-                            <div class="d-flex align-items-center mb-3 p-3 border rounded">
-                                <div class="avatar-sm me-3" style="width: 40px; height: 40px; background: linear-gradient(45deg, #28a745, #20c997); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
+                            <div class="d-flex align-items-center mb-3 p-3 border rounded" style="border-radius: 10px !important; background: #f8f9fa;">
+                                <div class="user-avatar-sm">
                                     {{ substr($user->name, 0, 1) }}
                                 </div>
                                 <div class="flex-grow-1">
-                                    <div class="fw-medium">{{ $user->name }}</div>
-                                    <div class="text-muted small">{{ $user->email }}</div>
-                                    <div class="text-muted small">Created: {{ $user->created_at->format('M d, Y') }}</div>
+                                    <div class="font-weight-bold text-dark">{{ $user->name }}</div>
+                                    <div class="text-muted small mb-1">
+                                        <i class="fas fa-envelope mr-1"></i>{{ $user->email }}
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-calendar mr-1"></i>Created: {{ $user->created_at->format('M d, Y') }}
+                                    </div>
                                 </div>
                                 <div>
-                                    <span class="badge bg-success">Active</span>
+                                    <span class="badge badge-success px-3 py-2" style="border-radius: 12px;">
+                                        <i class="fas fa-check-circle mr-1"></i>Active
+                                    </span>
                                 </div>
                             </div>
                         @endforeach
                     @else
-                        <div class="text-center py-4">
-                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No users created yet</p>
-                            <button class="btn btn-success" onclick="createUser({{ $franchise->id }})">
-                                <i class="fas fa-plus me-2"></i>Create First User
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-4x text-muted mb-3"></i>
+                            <h5 class="text-muted font-weight-bold">No Users Created</h5>
+                            <p class="text-muted mb-4">Create the first user account to manage this franchise</p>
+                            <button class="btn btn-success btn-lg" onclick="createUser({{ $franchise->id }})" style="border-radius: 25px;">
+                                <i class="fas fa-plus mr-2"></i>Create First User
                             </button>
                         </div>
                     @endif
@@ -207,55 +238,70 @@
         </div>
     </div>
 
-    <!-- Recent Students -->
+    <!-- Enhanced Students Section -->
     @if($franchise->students->count() > 0)
-        <div class="card border-0 shadow-sm">
-            <div class="card-header bg-transparent">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-user-graduate text-info me-2"></i>Recent Students ({{ $franchise->students->count() }} total)
-                </h5>
+        <div class="card info-card">
+            <div class="card-header bg-white border-0 pt-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0 font-weight-bold text-dark">
+                        <i class="fas fa-user-graduate text-info mr-2"></i>Enrolled Students
+                        <span class="badge badge-info ml-2">{{ $franchise->students->count() }} Total</span>
+                    </h5>
+                    <a href="{{ route('admin.students.index') }}?franchise={{ $franchise->id }}" class="btn btn-info btn-sm" style="border-radius: 8px;">
+                        <i class="fas fa-eye mr-1"></i> View All
+                    </a>
+                </div>
             </div>
-            <div class="card-body">
+            <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <th>Student ID</th>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Course</th>
-                                <th>Status</th>
-                                <th>Enrolled</th>
+                                <th class="border-0 font-weight-bold text-dark">Student ID</th>
+                                <th class="border-0 font-weight-bold text-dark">Student Name</th>
+                                <th class="border-0 font-weight-bold text-dark">Email Address</th>
+                                <th class="border-0 font-weight-bold text-dark">Course</th>
+                                <th class="border-0 font-weight-bold text-dark">Status</th>
+                                <th class="border-0 font-weight-bold text-dark">Enrolled Date</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach($franchise->students->take(10) as $student)
                                 <tr>
-                                    <td><strong>{{ $student->student_id }}</strong></td>
-                                    <td>{{ $student->name }}</td>
-                                    <td>{{ $student->email }}</td>
-                                    <td>
+                                    <td class="py-3">
+                                        <strong class="text-primary">{{ $student->student_id }}</strong>
+                                    </td>
+                                    <td class="py-3">
+                                        <div class="d-flex align-items-center">
+                                            <div style="width: 35px; height: 35px; background: linear-gradient(45deg, #007bff, #6610f2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; margin-right: 0.75rem;">
+                                                {{ substr($student->name, 0, 1) }}
+                                            </div>
+                                            <span class="font-weight-medium">{{ $student->name }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">{{ $student->email }}</td>
+                                    <td class="py-3">
                                         @if($student->course)
-                                            <span class="badge bg-info">{{ $student->course->name }}</span>
+                                            <span class="badge badge-info px-3 py-2" style="border-radius: 12px;">{{ $student->course->name }}</span>
                                         @else
                                             <span class="text-muted">Not Assigned</span>
                                         @endif
                                     </td>
-                                    <td>
-                                        <span class="badge bg-{{ $student->status_badge }}">
+                                    <td class="py-3">
+                                        <span class="badge badge-{{ $student->status_badge }} px-3 py-2" style="border-radius: 12px;">
                                             {{ ucfirst($student->status) }}
                                         </span>
                                     </td>
-                                    <td>{{ $student->enrollment_date->format('M d, Y') }}</td>
+                                    <td class="py-3">{{ $student->enrollment_date->format('M d, Y') }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
                 </div>
                 @if($franchise->students->count() > 10)
-                    <div class="text-center mt-3">
-                        <a href="{{ route('admin.students.by-franchise', $franchise) }}" class="btn btn-outline-primary">
-                            <i class="fas fa-eye me-2"></i>View All {{ $franchise->students->count() }} Students
+                    <div class="card-footer bg-light text-center">
+                        <a href="{{ route('admin.students.index') }}?franchise={{ $franchise->id }}" class="btn btn-outline-info">
+                            <i class="fas fa-eye mr-2"></i>View All {{ $franchise->students->count() }} Students
                         </a>
                     </div>
                 @endif
@@ -263,28 +309,34 @@
         </div>
     @endif
 
-    <!-- Create User Modal (same as in index page) -->
-    <div class="modal fade" id="createUserModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Create New User for {{ $franchise->name }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <!-- Create User Modal (Bootstrap 4 Compatible) -->
+    <div class="modal fade" id="createUserModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="border-radius: 15px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title font-weight-bold">
+                        <i class="fas fa-user-plus text-success mr-2"></i>Create New User for {{ $franchise->name }}
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
                 </div>
                 <form id="createUserForm">
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" name="name" required>
+                    <div class="modal-body pt-0">
+                        <div class="form-group">
+                            <label class="font-weight-medium">Full Name</label>
+                            <input type="text" class="form-control" name="name" required style="border-radius: 8px; padding: 12px;">
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" name="email" required>
+                        <div class="form-group">
+                            <label class="font-weight-medium">Email Address</label>
+                            <input type="email" class="form-control" name="email" required style="border-radius: 8px; padding: 12px;">
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Create User</button>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-secondary px-4" data-dismiss="modal" style="border-radius: 8px;">Cancel</button>
+                        <button type="submit" class="btn btn-success px-4" style="border-radius: 8px;">
+                            <i class="fas fa-plus mr-2"></i>Create User
+                        </button>
                     </div>
                 </form>
             </div>
@@ -293,48 +345,5 @@
 @endsection
 
 @section('js')
-<script>
-function createUser(franchiseId) {
-    new bootstrap.Modal(document.getElementById('createUserModal')).show();
-
-    document.getElementById('createUserForm').onsubmit = function(e) {
-        e.preventDefault();
-
-        const formData = new FormData(this);
-
-        fetch(`/admin/franchises/${franchiseId}/create-user`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            },
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                bootstrap.Modal.getInstance(document.getElementById('createUserModal')).hide();
-
-                // Show success alert
-                const alertHtml = `
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <h5><i class="fas fa-check-circle me-2"></i>User Created Successfully!</h5>
-                        <strong>Login Credentials:</strong><br>
-                        <strong>Email:</strong> <code>${data.user.email}</code><br>
-                        <strong>Password:</strong> <code>${data.user.password}</code>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `;
-                document.querySelector('.content').insertAdjacentHTML('afterbegin', alertHtml);
-
-                // Reload after 3 seconds
-                setTimeout(() => location.reload(), 3000);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Error creating user. Please try again.');
-        });
-    };
-}
-</script>
+<script src="{{ asset('js/admin/franchise-show.js') }}"></script>
 @endsection

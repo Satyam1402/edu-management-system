@@ -1,0 +1,125 @@
+/* ===== FRANCHISE EDIT FORM STYLES ===== */
+    .form-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    .form-header {
+        background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+        color: white;
+        padding: 1.5rem 2rem;
+        margin: -1rem -1.5rem 2rem -1.5rem;
+    }
+    .section-header {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+        margin-bottom: 1.5rem;
+    }
+    .form-control {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.1);
+    }
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    /* CRITICAL: Same working CSS from your create form */
+    .form-control-enhanced {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+        font-size: 14px;
+    }
+    .form-control-enhanced:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.15);
+        transform: translateY(-1px);
+    }
+    .form-label-enhanced {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.7rem;
+        font-size: 14px;
+    }
+    .required-marker::after {
+        content: " *";
+        color: #dc3545;
+        font-weight: bold;
+    }
+    
+    /* Fix for select dropdown text visibility */
+    select.form-control,
+    select.form-control-enhanced {
+        color: #495057 !important;
+        background-color: white !important;
+        -webkit-appearance: menulist !important;
+        -moz-appearance: menulist !important;
+        appearance: menulist !important;
+    }
+    
+    select.form-control option,
+    select.form-control-enhanced option {
+        color: #495057 !important;
+        background-color: white !important;
+        padding: 8px 12px !important;
+        font-weight: normal !important;
+    }
+    
+    .user-card {
+        background: #f8f9fa;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    .user-card:hover {
+        border-color: #007bff;
+        background: #e3f2fd;
+    }
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(45deg, #28a745, #20c997);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 1rem;
+        box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3);
+    }
+    .action-buttons {
+        background: #f8f9fa;
+        padding: 1.5rem 2rem;
+        margin: 2rem -1.5rem -1rem -1.5rem;
+        border-top: 1px solid #dee2e6;
+    }
+    .btn-custom {
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .btn-custom:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }

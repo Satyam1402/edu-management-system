@@ -1,4 +1,4 @@
-{{-- resources/views/layouts/custom-admin.blade.php - SAFE VERSION --}}
+{{-- resources/views/layouts/custom-admin.blade.php - NUCLEAR ZERO SPACING FIX --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,6 +15,84 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
 
     <style>
+        /* NUCLEAR OPTION - ELIMINATE ALL NAVBAR SPACING */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        /* CUSTOM NAVBAR - ZERO SPACING GUARANTEED */
+        .custom-navbar {
+            position: fixed !important;
+            top: 0 !important;
+            right: 0 !important;
+            left: 250px !important;
+            height: 57px !important;
+            background: #ffffff !important;
+            border-bottom: 1px solid #dee2e6 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
+            z-index: 1030 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .custom-navbar-left {
+            display: flex !important;
+            align-items: center !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .custom-navbar-right {
+            display: flex !important;
+            align-items: center !important;
+            padding-right: 1rem !important;
+        }
+
+        .hamburger-btn {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 57px !important;
+            height: 57px !important;
+            color: #495057 !important;
+            text-decoration: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            background: none !important;
+            border: none !important;
+            transition: background-color 0.2s ease !important;
+        }
+
+        .hamburger-btn:hover {
+            background: rgba(0,0,0,0.05) !important;
+            color: #007bff !important;
+            text-decoration: none !important;
+        }
+
+        .nav-dashboard-link {
+            padding: 0 15px !important;
+            color: #495057 !important;
+            text-decoration: none !important;
+            display: flex !important;
+            align-items: center !important;
+            height: 57px !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .nav-dashboard-link:hover {
+            color: #007bff !important;
+            text-decoration: none !important;
+            background: rgba(0,123,255,0.05) !important;
+        }
+
         /* Custom Sidebar Styling */
         .main-sidebar {
             position: fixed !important;
@@ -35,18 +113,7 @@
         .content-wrapper {
             margin-left: 250px !important;
             min-height: 100vh;
-        }
-
-        .main-header {
-            position: fixed !important;
-            top: 0;
-            right: 0;
-            left: 250px;
-            z-index: 1030;
-        }
-
-        .content-wrapper {
-            padding-top: 57px;
+            padding-top: 57px !important;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
         }
 
@@ -70,6 +137,33 @@
             box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3) !important;
         }
 
+        /* Enhanced User Avatar */
+        .user-avatar {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(45deg, #007bff, #6610f2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+        }
+
+        /* Enhanced Dropdown */
+        .dropdown-menu {
+            border-radius: 10px;
+            border: none;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .dropdown-header {
+            border-radius: 10px 10px 0 0;
+            font-weight: 600;
+        }
+
         /* Icon Colors */
         .nav-sidebar .fa-tachometer-alt { color: #ffc107 !important; }
         .nav-sidebar .fa-building { color: #17a2b8 !important; }
@@ -80,6 +174,42 @@
         .nav-sidebar .fa-credit-card { color: #28a745 !important; }
         .nav-sidebar .fa-chart-bar { color: #17a2b8 !important; }
         .nav-sidebar .fa-user-cog { color: #6f42c1 !important; }
+
+        /* Navbar Button Styling */
+        .navbar-btn {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 40px !important;
+            height: 40px !important;
+            color: #495057 !important;
+            text-decoration: none !important;
+            border-radius: 6px !important;
+            margin-right: 8px !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .navbar-btn:hover {
+            background: rgba(0,123,255,0.1) !important;
+            color: #007bff !important;
+            text-decoration: none !important;
+        }
+
+        .notification-badge {
+            position: absolute !important;
+            top: -3px !important;
+            right: -3px !important;
+            background: #ffc107 !important;
+            color: white !important;
+            border-radius: 50% !important;
+            width: 18px !important;
+            height: 18px !important;
+            font-size: 10px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-weight: bold !important;
+        }
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
@@ -93,14 +223,15 @@
             .content-wrapper {
                 margin-left: 0 !important;
             }
-            .main-header {
-                left: 0;
+            .custom-navbar {
+                left: 0 !important;
             }
         }
 
         /* Card Hover Effects */
         .card {
             transition: all 0.3s ease;
+            border-radius: 10px;
         }
         .card:hover {
             transform: translateY(-2px);
@@ -115,47 +246,175 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
         }
+
+        /* Enhanced Breadcrumbs */
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "›";
+            color: #6c757d;
+        }
+
+        /* Enhanced Alerts */
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        /* User Dropdown Styling */
+        .user-dropdown-btn {
+            display: flex !important;
+            align-items: center !important;
+            color: #495057 !important;
+            text-decoration: none !important;
+            padding: 8px 12px !important;
+            border-radius: 6px !important;
+            transition: all 0.2s ease !important;
+        }
+
+        .user-dropdown-btn:hover {
+            background: rgba(0,123,255,0.05) !important;
+            color: #007bff !important;
+            text-decoration: none !important;
+        }
+
+        .user-name {
+            font-weight: 500 !important;
+            margin-left: 8px !important;
+        }
     </style>
 
     @yield('css')
 </head>
 <body class="hold-transition sidebar-mini layout-fixed">
     <div class="wrapper">
-        <!-- Navbar -->
-        <nav class="main-header navbar navbar-expand navbar-white navbar-light">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" data-widget="pushmenu" href="#" role="button"><i class="fas fa-bars"></i></a>
-                </li>
-            </ul>
-            <ul class="navbar-nav ml-auto">
-                @auth
-                <li class="nav-item dropdown">
-                    <a class="nav-link" data-toggle="dropdown" href="#">
-                        <i class="far fa-user"></i> {{ Auth::user()->name ?? 'User' }}
+        <!-- CUSTOM NAVBAR - ZERO WHITE SPACE -->
+        <div class="custom-navbar">
+            <!-- Left Side - Hamburger Menu (ABSOLUTE ZERO SPACING) -->
+            <div class="custom-navbar-left">
+                <a href="#" class="hamburger-btn" data-widget="pushmenu">
+                    <i class="fas fa-bars"></i>
+                </a>
+                <a href="{{ route('admin.dashboard') }}" class="nav-dashboard-link d-none d-sm-flex">
+                    <i class="fas fa-home mr-2"></i>Dashboard
+                </a>
+            </div>
+
+            <!-- Right Side - User Menu -->
+            <div class="custom-navbar-right">
+                <!-- Search -->
+                <div class="dropdown">
+                    <a href="#" class="navbar-btn" data-toggle="dropdown" title="Search">
+                        <i class="fas fa-search"></i>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-right">
-                        <a href="{{ route('profile.edit') }}" class="dropdown-item">
-                            <i class="fas fa-user mr-2"></i> Profile
+                    <div class="dropdown-menu dropdown-menu-right p-3" style="min-width: 300px;">
+                        <form>
+                            <div class="input-group">
+                                <input type="text" class="form-control" placeholder="Search franchises, students...">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit">
+                                        <i class="fas fa-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="dropdown">
+                    <a href="#" class="navbar-btn position-relative" data-toggle="dropdown" title="Notifications">
+                        <i class="far fa-bell"></i>
+                        <span class="notification-badge">3</span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" style="width: 320px;">
+                        <div class="dropdown-header bg-primary text-white">
+                            <i class="fas fa-bell mr-2"></i>3 Notifications
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item">
+                            <div class="d-flex align-items-center">
+                                <div class="mr-3">
+                                    <i class="fas fa-building text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="font-weight-medium">New franchise registered</div>
+                                    <div class="text-muted small">2 minutes ago</div>
+                                </div>
+                            </div>
                         </a>
                         <div class="dropdown-divider"></div>
-                        <form method="POST" action="{{ route('logout') }}">
+                        <a href="#" class="dropdown-item">
+                            <div class="d-flex align-items-center">
+                                <div class="mr-3">
+                                    <i class="fas fa-users text-success"></i>
+                                </div>
+                                <div>
+                                    <div class="font-weight-medium">5 new students enrolled</div>
+                                    <div class="text-muted small">1 hour ago</div>
+                                </div>
+                            </div>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" class="dropdown-item dropdown-footer bg-light text-center">
+                            <i class="fas fa-eye mr-2"></i>View All Notifications
+                        </a>
+                    </div>
+                </div>
+
+                @auth
+                <!-- User Dropdown -->
+                <div class="dropdown">
+                    <a href="#" class="user-dropdown-btn" data-toggle="dropdown">
+                        <div class="user-avatar">
+                            {{ substr(Auth::user()->name, 0, 1) }}
+                        </div>
+                        <span class="user-name d-none d-md-inline">{{ Auth::user()->name }}</span>
+                        <i class="fas fa-caret-down ml-2"></i>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" style="min-width: 280px;">
+                        <div class="dropdown-header bg-primary text-white">
+                            <div class="d-flex align-items-center">
+                                <div class="user-avatar mr-3" style="background: rgba(255,255,255,0.2);">
+                                    {{ substr(Auth::user()->name, 0, 1) }}
+                                </div>
+                                <div>
+                                    <strong>{{ Auth::user()->name }}</strong><br>
+                                    <small>Super Administrator</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="{{ route('profile.edit') }}" class="dropdown-item">
+                            <i class="fas fa-user mr-3 text-primary"></i> My Profile
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-cog mr-3 text-secondary"></i> Account Settings
+                        </a>
+                        <a href="#" class="dropdown-item">
+                            <i class="fas fa-question-circle mr-3 text-info"></i> Help & Support
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <form method="POST" action="{{ route('logout') }}" class="m-0">
                             @csrf
-                            <button type="submit" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                            <button type="submit" class="dropdown-item text-danger">
+                                <i class="fas fa-sign-out-alt mr-3"></i> Logout
                             </button>
                         </form>
                     </div>
-                </li>
+                </div>
                 @else
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('login') }}">
-                        <i class="fas fa-sign-in-alt"></i> Login
+                <div>
+                    <a class="btn btn-primary px-3" href="{{ route('login') }}">
+                        <i class="fas fa-sign-in-alt mr-1"></i> Login
                     </a>
-                </li>
+                </div>
                 @endauth
-            </ul>
-        </nav>
+            </div>
+        </div>
 
         <!-- Main Sidebar -->
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
@@ -168,12 +427,12 @@
                 @auth
                 <div class="user-panel mt-3 pb-3 mb-3 d-flex">
                     <div class="image">
-                        <div class="img-circle elevation-2" style="width: 34px; height: 34px; background-color: #007bff; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+                        <div class="img-circle elevation-2" style="width: 34px; height: 34px; background-color: #007bff; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; border-radius: 50%;">
                             {{ substr(Auth::user()->name ?? 'U', 0, 1) }}
                         </div>
                     </div>
                     <div class="info">
-                        <a href="#" class="d-block">{{ Auth::user()->name ?? 'User' }}</a>
+                        <a href="#" class="d-block text-white">{{ Auth::user()->name ?? 'User' }}</a>
                         <small class="text-light">
                             {{ Auth::user()->roles->first()->name ?? 'User' }}
                         </small>
@@ -269,7 +528,7 @@
                 <div class="container-fluid">
                     <div class="row mb-2">
                         <div class="col-sm-6">
-                            <h1 class="m-0">@yield('page-title', 'Dashboard')</h1>
+                            <h1 class="m-0 font-weight-bold">@yield('page-title', 'Dashboard')</h1>
                         </div>
                         <div class="col-sm-6">
                             <ol class="breadcrumb float-sm-right">

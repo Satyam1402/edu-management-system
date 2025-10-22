@@ -25,7 +25,9 @@ class Franchise extends Model
     ];
 
     protected $casts = [
-        'established_date' => 'date'
+        'established_date' => 'date',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     // All your relationships stay the same...

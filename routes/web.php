@@ -49,6 +49,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 
     // Franchise Management (Super Admin Only)
     Route::resource('franchises', FranchiseController::class);
+    Route::post('franchises/{franchise}/create-user', [FranchiseController::class, 'createUser'])->name('franchises.create-user');
     Route::post('/franchises/{franchise}/toggle-status', [FranchiseController::class, 'toggleStatus'])->name('franchises.toggle-status');
     Route::post('/franchises/{franchise}/create-user', [FranchiseController::class, 'createUser'])->name('franchises.create-user');
 
@@ -57,16 +58,19 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::post('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
     Route::post('/courses/{course}/feature', [CourseController::class, 'toggleFeatured'])->name('courses.toggle-featured');
 
-    // Student Management (All Students Across All Franchises)
+        // Student Management (All Students Across All Franchises)
     Route::resource('students', StudentController::class);
+    Route::post('/students/bulk-action', [StudentController::class, 'bulkAction'])->name('students.bulk-action');
+    Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
     Route::post('/students/{student}/toggle-status', [StudentController::class, 'toggleStatus'])->name('students.toggle-status');
     Route::get('/students/franchise/{franchise}', [StudentController::class, 'byFranchise'])->name('students.by-franchise');
 
     // Certificate Management (Approve/Reject Certificates)
-    Route::resource('certificates', CertificateController::class)->only(['index', 'show', 'update', 'destroy']);
+    Route::resource('certificates', CertificateController::class);
     Route::post('/certificates/{certificate}/approve', [CertificateController::class, 'approve'])->name('certificates.approve');
     Route::post('/certificates/{certificate}/reject', [CertificateController::class, 'reject'])->name('certificates.reject');
-    Route::post('/certificates/{certificate}/reissue', [CertificateController::class, 'reissue'])->name('certificates.reissue');
+    Route::post('/certificates/{certificate}/issue', [CertificateController::class, 'issue'])->name('certificates.issue');
+
 
     // Exam Management
     Route::resource('exams', ExamController::class);

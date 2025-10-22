@@ -1,50 +1,216 @@
 <?php
-// app/Http/Controllers/Admin/StudentController.php
+
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Student;
-use App\Models\Franchise;
 use App\Models\Course;
+use App\Models\Franchise;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\View\View;
+use Yajra\DataTables\Facades\DataTables;
 
 class StudentController extends Controller
 {
-    public function index()
+    /**
+     * Display a listing of the students
+     */
+    public function index(Request $request)
     {
-        $students = Student::with(['franchise', 'course'])->latest()->get();
-        return view('admin.students.index', compact('students'));
+        if ($request->ajax()) {
+            $query = Student::with(['franchise', 'course'])
+                           ->select('students.*');
+
+            // Apply filters
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('franchise')) {
+                $query->where('franchise_id', $request->franchise);
+            }
+
+            if ($request->filled('course')) {
+                $query->where('course_id', $request->course);
+            }
+
+            if ($request->filled('date_range')) {
+                $this->applyDateRangeFilter($query, $request->date_range);
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('checkbox', function ($student) {
+                    return '<div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input student-checkbox" id="student_'.$student->id.'" value="'.$student->id.'">
+                                <label class="custom-control-label" for="student_'.$student->id.'"></label>
+                            </div>';
+                })
+                ->addColumn('student_details', function ($student) {
+                    $genderIcon = match($student->gender) {
+                        'male' => '👨',
+                        'female' => '👩',
+                        default => '🧑'
+                    };
+                    
+                    return '<div class="d-flex align-items-center">
+                                <div class="student-avatar mr-3">
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0 font-weight-bold">' . $student->name . '</h6>
+                                    <small class="text-muted">' . $genderIcon . ' ' . ($student->age ? $student->age . ' years' : 'Age N/A') . '</small>
+                                </div>
+                            </div>';
+                })
+                ->addColumn('contact_info', function ($student) {
+                    return '<div>
+                                <div class="mb-1">
+                                    <i class="fas fa-envelope fa-xs text-muted mr-1"></i>
+                                    <small>' . $student->email . '</small>
+                                </div>
+                                <div>
+                                    <i class="fas fa-phone fa-xs text-muted mr-1"></i>
+                                    <small>' . $student->phone . '</small>
+                                </div>
+                            </div>';
+                })
+                ->addColumn('location_info', function ($student) {
+                    return '<div>
+                                <div class="font-weight-bold">' . ($student->city ?: 'N/A') . '</div>
+                                <small class="text-muted">' . ($student->state ?: '') . ($student->pincode ? ', ' . $student->pincode : '') . '</small>
+                            </div>';
+                })
+                ->addColumn('academic_info', function ($student) {
+                    return '<div>
+                                <div class="mb-1">
+                                    <i class="fas fa-building fa-xs text-primary mr-1"></i>
+                                    <small class="font-weight-bold">' . ($student->franchise->name ?? 'Not assigned') . '</small>
+                                </div>
+                                <div>
+                                    <i class="fas fa-book fa-xs text-success mr-1"></i>
+                                    <small>' . ($student->course->name ?? 'No course') . '</small>
+                                </div>
+                            </div>';
+                })
+                ->addColumn('status_badge', function ($student) {
+                    $statusColors = [
+                        'active' => 'success',
+                        'inactive' => 'secondary',
+                        'graduated' => 'info',
+                        'dropped' => 'danger',
+                        'suspended' => 'warning'
+                    ];
+                    $color = $statusColors[$student->status] ?? 'secondary';
+                    return '<span class="badge badge-' . $color . ' px-3 py-2">' . ucfirst($student->status) . '</span>';
+                })
+                ->addColumn('enrollment_info', function ($student) {
+                    $enrollmentDate = $student->enrollment_date ? $student->enrollment_date->format('M d, Y') : 'N/A';
+                    $daysSince = $student->enrollment_date ? $student->enrollment_date->diffForHumans() : '';
+                    
+                    return '<div>
+                                <div class="font-weight-bold">' . $enrollmentDate . '</div>
+                                <small class="text-muted">' . $daysSince . '</small>
+                            </div>';
+                })
+                ->addColumn('actions', function ($student) {
+                    return '<div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info btn-sm" onclick="quickView(' . $student->id . ')" title="Quick View">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <a href="' . route('admin.students.show', $student->id) . '" class="btn btn-outline-success btn-sm" title="View Details">
+                                    <i class="fas fa-user"></i>
+                                </a>
+                                <a href="' . route('admin.students.edit', $student->id) . '" class="btn btn-outline-primary btn-sm" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="' . route('admin.payments.create', ['student' => $student->id]) . '">
+                                            <i class="fas fa-credit-card mr-2"></i>Add Payment
+                                        </a>
+                                        <a class="dropdown-item" href="' . route('admin.certificates.create', ['student' => $student->id]) . '">
+                                            <i class="fas fa-certificate mr-2"></i>Issue Certificate
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                        <a class="dropdown-item text-danger" href="#" onclick="deleteStudent(' . $student->id . ')">
+                                            <i class="fas fa-trash mr-2"></i>Delete
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>';
+                })
+                ->rawColumns(['checkbox', 'student_details', 'contact_info', 'location_info', 'academic_info', 'status_badge', 'enrollment_info', 'actions'])
+                ->make(true);
+        }
+
+        return view('admin.students.index');
     }
 
-    public function create()
+    /**
+     * Apply date range filter
+     */
+    private function applyDateRangeFilter($query, $range)
     {
-        $franchises = Franchise::where('status', 'active')->get();
-        $courses = Course::where('status', 'active')->get();
+        switch ($range) {
+            case 'today':
+                $query->whereDate('enrollment_date', today());
+                break;
+            case 'week':
+                $query->whereBetween('enrollment_date', [now()->startOfWeek(), now()->endOfWeek()]);
+                break;
+            case 'month':
+                $query->whereMonth('enrollment_date', now()->month)
+                      ->whereYear('enrollment_date', now()->year);
+                break;
+            case 'quarter':
+                $query->whereBetween('enrollment_date', [now()->startOfQuarter(), now()->endOfQuarter()]);
+                break;
+            case 'year':
+                $query->whereYear('enrollment_date', now()->year);
+                break;
+        }
+    }
+
+    /**
+     * Show the form for creating a new student
+     */
+    public function create(): View
+    {
+        $franchises = Franchise::active()->get();
+        $courses = Course::active()->get();
+        
         return view('admin.students.create', compact('franchises', 'courses'));
     }
 
+    /**
+     * Store a newly created student
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:students,email',
-            'phone' => 'required|string|max:15',
-            'date_of_birth' => 'required|date',
+            'phone' => 'required|string|max:20',
+            'date_of_birth' => 'required|date|before:today',
+            'gender' => 'required|in:male,female,other',
             'address' => 'required|string',
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:100',
             'pincode' => 'required|string|max:10',
             'franchise_id' => 'required|exists:franchises,id',
             'course_id' => 'nullable|exists:courses,id',
-            'status' => 'required|in:active,inactive',
+            'guardian_name' => 'nullable|string|max:255',
+            'guardian_phone' => 'nullable|string|max:20',
+            'batch' => 'nullable|string|max:50',
+            'notes' => 'nullable|string'
         ]);
-
-        // Generate student ID
-        $lastStudent = Student::latest('id')->first();
-        $studentId = 'STU' . str_pad(($lastStudent ? $lastStudent->id + 1 : 1), 6, '0', STR_PAD_LEFT);
-
-        $validated['student_id'] = $studentId;
-        $validated['enrollment_date'] = now();
 
         Student::create($validated);
 
@@ -52,45 +218,118 @@ class StudentController extends Controller
             ->with('success', 'Student created successfully!');
     }
 
+    /**
+     * Display the specified student
+     */
     public function show(Student $student)
     {
-        $student->load(['franchise', 'course', 'certificates', 'payments']);
+        if (request()->ajax()) {
+            return view('admin.students.partials.quick-view', compact('student'))->render();
+        }
+        
+        $student->load(['franchise', 'course', 'payments', 'certificates']);
         return view('admin.students.show', compact('student'));
     }
 
-    public function edit(Student $student)
+    /**
+     * Show the form for editing the specified student
+     */
+    public function edit(Student $student): View
     {
-        $franchises = Franchise::where('status', 'active')->get();
-        $courses = Course::where('status', 'active')->get();
+        $franchises = Franchise::active()->get();
+        $courses = Course::active()->get();
+        
         return view('admin.students.edit', compact('student', 'franchises', 'courses'));
     }
 
+    /**
+     * Update the specified student
+     */
     public function update(Request $request, Student $student)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:students,email,' . $student->id,
-            'phone' => 'required|string|max:15',
-            'date_of_birth' => 'required|date',
+            'phone' => 'required|string|max:20',
+            'date_of_birth' => 'required|date|before:today',
+            'gender' => 'required|in:male,female,other',
             'address' => 'required|string',
             'city' => 'required|string|max:100',
             'state' => 'required|string|max:100',
             'pincode' => 'required|string|max:10',
             'franchise_id' => 'required|exists:franchises,id',
             'course_id' => 'nullable|exists:courses,id',
-            'status' => 'required|in:active,inactive',
+            'guardian_name' => 'nullable|string|max:255',
+            'guardian_phone' => 'nullable|string|max:20',
+            'batch' => 'nullable|string|max:50',
+            'status' => 'required|in:active,inactive,graduated,dropped,suspended',
+            'notes' => 'nullable|string'
         ]);
 
         $student->update($validated);
 
-        return redirect()->route('admin.students.index')
+        return redirect()->route('admin.students.show', $student)
             ->with('success', 'Student updated successfully!');
     }
 
-    public function destroy(Student $student)
+    /**
+     * Remove the specified student
+     */
+    public function destroy(Student $student): JsonResponse
     {
-        $student->delete();
-        return redirect()->route('admin.students.index')
-            ->with('success', 'Student deleted successfully!');
+        try {
+            $student->delete();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Student deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting student: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Handle bulk actions
+     */
+    public function bulkAction(Request $request): JsonResponse
+    {
+        $request->validate([
+            'action' => 'required|in:activate,deactivate,delete',
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'exists:students,id'
+        ]);
+
+        try {
+            $students = Student::whereIn('id', $request->ids);
+            
+            switch ($request->action) {
+                case 'activate':
+                    $students->update(['status' => 'active']);
+                    $message = 'Students activated successfully!';
+                    break;
+                case 'deactivate':
+                    $students->update(['status' => 'inactive']);
+                    $message = 'Students deactivated successfully!';
+                    break;
+                case 'delete':
+                    $students->delete();
+                    $message = 'Students deleted successfully!';
+                    break;
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error performing bulk action: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
