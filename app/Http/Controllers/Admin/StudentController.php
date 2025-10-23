@@ -9,15 +9,17 @@ use App\Models\Franchise;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
+use Illuminate\Http\RedirectResponse;
 use Yajra\DataTables\Facades\DataTables;
 
 class StudentController extends Controller
 {
     /**
-     * Display a listing of the students
+     * Display a listing of students
      */
     public function index(Request $request)
     {
+        // Handle AJAX request for DataTables
         if ($request->ajax()) {
             $query = Student::with(['franchise', 'course'])
                            ->select('students.*');
@@ -61,7 +63,7 @@ class StudentController extends Controller
                                     </div>
                                 </div>
                                 <div>
-                                    <h6 class="mb-0 font-weight-bold">' . $student->name . '</h6>
+                                    <h6 class="mb-1 font-weight-bold">' . $student->name . '</h6>
                                     <small class="text-muted">' . $genderIcon . ' ' . ($student->age ? $student->age . ' years' : 'Age N/A') . '</small>
                                 </div>
                             </div>';
@@ -150,6 +152,7 @@ class StudentController extends Controller
                 ->make(true);
         }
 
+        // Return view for non-AJAX requests
         return view('admin.students.index');
     }
 
@@ -192,7 +195,7 @@ class StudentController extends Controller
     /**
      * Store a newly created student
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -212,7 +215,7 @@ class StudentController extends Controller
             'notes' => 'nullable|string'
         ]);
 
-        Student::create($validated);
+        $student = Student::create($validated);
 
         return redirect()->route('admin.students.index')
             ->with('success', 'Student created successfully!');
@@ -223,6 +226,7 @@ class StudentController extends Controller
      */
     public function show(Student $student)
     {
+        // Handle AJAX request for quick view
         if (request()->ajax()) {
             return view('admin.students.partials.quick-view', compact('student'))->render();
         }
@@ -245,7 +249,7 @@ class StudentController extends Controller
     /**
      * Update the specified student
      */
-    public function update(Request $request, Student $student)
+    public function update(Request $request, Student $student): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -305,25 +309,27 @@ class StudentController extends Controller
 
         try {
             $students = Student::whereIn('id', $request->ids);
+            $count = $students->count();
             
             switch ($request->action) {
                 case 'activate':
                     $students->update(['status' => 'active']);
-                    $message = 'Students activated successfully!';
+                    $message = "{$count} students activated successfully!";
                     break;
                 case 'deactivate':
                     $students->update(['status' => 'inactive']);
-                    $message = 'Students deactivated successfully!';
+                    $message = "{$count} students deactivated successfully!";
                     break;
                 case 'delete':
                     $students->delete();
-                    $message = 'Students deleted successfully!';
+                    $message = "{$count} students deleted successfully!";
                     break;
             }
 
             return response()->json([
                 'success' => true,
-                'message' => $message
+                'message' => $message,
+                'count' => $count
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -331,5 +337,83 @@ class StudentController extends Controller
                 'message' => 'Error performing bulk action: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Export students data
+     */
+    public function export(Request $request)
+    {
+        $format = $request->get('format', 'excel');
+        $students = Student::with(['franchise', 'course'])->get();
+        
+        // For now, return a simple response
+        // You can implement actual export logic using Laravel Excel package
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Export in {$format} format initiated",
+            'data' => $students
+        ]);
+    }
+
+    /**
+     * Toggle student status
+     */
+    public function toggleStatus(Student $student): JsonResponse
+    {
+        try {
+            $newStatus = $student->status === 'active' ? 'inactive' : 'active';
+            $student->update(['status' => $newStatus]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Student status changed to {$newStatus}",
+                'new_status' => $newStatus
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Get students by franchise
+     */
+    public function byFranchise(Franchise $franchise)
+    {
+        $students = $franchise->students()->with(['course'])->get();
+        
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'data' => $students
+            ]);
+        }
+
+        return view('admin.students.by-franchise', compact('franchise', 'students'));
+    }
+
+    /**
+     * Search students
+     */
+    public function search(Request $request): JsonResponse
+    {
+        $query = $request->get('q', '');
+        
+        $students = Student::where('name', 'like', "%{$query}%")
+                          ->orWhere('email', 'like', "%{$query}%")
+                          ->orWhere('student_id', 'like', "%{$query}%")
+                          ->orWhere('phone', 'like', "%{$query}%")
+                          ->with(['franchise', 'course'])
+                          ->limit(20)
+                          ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $students
+        ]);
     }
 }

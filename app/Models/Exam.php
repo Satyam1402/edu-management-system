@@ -1,5 +1,5 @@
 <?php
-// app/Models/Exam.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,14 +10,13 @@ class Exam extends Model
     use HasFactory;
 
     protected $fillable = [
-        'title', 'exam_code', 'description', 'course_id',
-        'exam_date', 'duration', 'total_marks', 'passing_marks',
-        'status', 'instructions'
+        'course_id', 'title', 'description', 'mode', 'exam_date', 
+        'start_time', 'duration_minutes', 'total_marks', 'status'
     ];
 
     protected $casts = [
-        'exam_date' => 'datetime',
-        'instructions' => 'array'
+        'exam_date' => 'date',
+        'start_time' => 'datetime:H:i'
     ];
 
     public function course()
@@ -25,13 +24,25 @@ class Exam extends Model
         return $this->belongsTo(Course::class);
     }
 
-    public function results()
+    public function exam_attempts()
     {
-        return $this->hasMany(ExamResult::class);
+        return $this->hasMany(ExamAttempt::class);
     }
 
-    public function students()
+    // Helper methods
+    public function getDurationTextAttribute()
     {
-        return $this->hasManyThrough(Student::class, ExamResult::class, 'exam_id', 'id', 'id', 'student_id');
+        $hours = intval($this->duration_minutes / 60);
+        $minutes = $this->duration_minutes % 60;
+        
+        if ($hours > 0) {
+            return $hours . 'h ' . $minutes . 'm';
+        }
+        return $minutes . ' minutes';
+    }
+
+    public function getFormattedDateAttribute()
+    {
+        return $this->exam_date ? $this->exam_date->format('M d, Y') : 'Not scheduled';
     }
 }

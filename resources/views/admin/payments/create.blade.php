@@ -1,252 +1,53 @@
-{{-- resources/views/admin/payments/create.blade.php --}}
 @extends('layouts.custom-admin')
 
-@section('title', 'Create Payment')
-@section('page-title', 'Create New Payment')
-
-@section('css')
-<style>
-.create-payment-card {
-    border: none;
-    border-radius: 15px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-    overflow: hidden;
-    background: white;
-    margin-bottom: 2rem;
-}
-
-.create-payment-header {
-    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
-    color: white;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-}
-
-.create-payment-header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 100%;
-    height: 200%;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    transform: rotate(-15deg);
-}
-
-.create-payment-header h3,
-.create-payment-header p {
-    position: relative;
-    z-index: 2;
-    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.form-section {
-    border-left: 4px solid #17a2b8;
-    padding: 0.75rem 0 0.75rem 1rem;
-    margin: 2rem 0 1.5rem 0;
-    background: linear-gradient(90deg, rgba(23, 162, 184, 0.05) 0%, transparent 100%);
-    border-radius: 0 8px 8px 0;
-}
-
-.form-label-enhanced {
-    font-weight: 600;
-    color: #495057;
-    margin-bottom: 0.5rem;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-}
-
-.required-marker::after {
-    content: ' *';
-    color: #dc3545;
-    font-weight: bold;
-}
-
-.form-control-enhanced {
-    border: 2px solid #e9ecef;
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    padding-block: initial !important;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    background: white;
-}
-
-.form-control-enhanced:focus {
-    border-color: #17a2b8;
-    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.15);
-    background: white;
-}
-
-.input-group .input-group-text {
-    background: #f8f9fa;
-    border: 2px solid #e9ecef;
-    border-right: none;
-    border-radius: 10px 0 0 10px !important;
-    padding: 0.75rem;
-    padding-block: initial !important;
-    min-width: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.input-group .form-control {
-    border: 2px solid #e9ecef;
-    border-left: none;
-    border-radius: 0 10px 10px 0 !important;
-    padding: 0.75rem 1rem;
-    padding-block: initial !important;
-    font-size: 14px;
-    transition: all 0.3s ease;
-}
-
-.input-group .form-control:focus {
-    border-color: #17a2b8;
-    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.15);
-}
-
-.input-group .form-control:focus ~ .input-group-prepend .input-group-text {
-    border-color: #17a2b8;
-}
-
-select.form-control {
-    background-color: white;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3E%3C/svg%3E");
-    background-position: right 0.75rem center;
-    background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    padding-right: 2.5rem;
-    padding-block: initial !important;
-    color: #495057;
-    font-size: 14px;
-    font-weight: 400;
-    cursor: pointer;
-}
-
-.action-footer {
-    background: #f8f9fa;
-    padding: 1.5rem 2rem;
-    border-top: 1px solid #dee2e6;
-    margin: 2rem -1.5rem -1.5rem -1.5rem;
-}
-
-.btn-enhanced {
-    padding: 0.75rem 1.5rem;
-    font-weight: 600;
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    border: none;
-    font-size: 14px;
-    display: inline-flex;
-    align-items: center;
-    text-decoration: none;
-}
-
-.btn-enhanced:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    text-decoration: none;
-}
-
-.btn-secondary.btn-enhanced {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-info.btn-enhanced {
-    background: linear-gradient(135deg, #17a2b8, #138496);
-    color: white;
-}
-
-.amount-preview {
-    background: linear-gradient(135deg, #28a745, #20c997);
-    color: white;
-    padding: 1rem;
-    border-radius: 10px;
-    text-align: center;
-    margin-top: 1rem;
-}
-</style>
-@endsection
+@section('page-title', 'Create Payment')
 
 @section('content')
-<div class="create-payment-card">
-    <!-- Enhanced Header -->
-    <div class="create-payment-header">
-        <div class="d-flex align-items-center justify-content-between">
-            <div>
-                <h3 class="mb-2 font-weight-bold">
-                    <i class="fas fa-plus-circle mr-3"></i>Create New Payment
-                </h3>
-                <p class="mb-0 h6" style="opacity: 0.9;">
-                    Create a payment request for student course enrollment
-                </p>
-            </div>
-            <div class="text-right d-none d-md-block">
-                <div style="font-size: 4rem; opacity: 0.2;">
-                    <i class="fas fa-credit-card"></i>
-                </div>
-            </div>
+<div class="container-fluid p-4">
+    
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3>Create New Payment</h3>
+            <p class="text-muted mb-0">Create payment records for students with multiple gateway options</p>
         </div>
+        <a href="{{ route('admin.payments.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Payments
+        </a>
     </div>
 
-    <div class="card-body px-4">
-        <!-- PAYMENT CREATION FORM -->
-        <form action="{{ route('admin.payments.store') }}" method="POST" id="paymentForm">
-            @csrf
-
-            <div class="row">
-                <!-- Student Selection -->
-                <div class="col-md-6">
-                    <div class="form-section">
-                        <h6 class="mb-0 font-weight-bold text-dark">
-                            <i class="fas fa-user mr-2 text-primary"></i>Student Information
-                        </h6>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="student_id" class="form-label-enhanced required-marker">Select Student</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">
-                                    <i class="fas fa-user text-primary"></i>
-                                </span>
-                            </div>
-                            <select class="form-control @error('student_id') is-invalid @enderror" 
-                                    id="student_id" name="student_id" required>
-                                <option value="" disabled selected style="color: #6c757d;">-- Select Student --</option>
+    <div class="row">
+        <!-- Main Form -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-credit-card mr-2"></i>Payment Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ route('admin.payments.store') }}" id="paymentForm">
+                        @csrf
+                        
+                        <!-- Student Selection -->
+                        <div class="form-group">
+                            <label for="student_id"><i class="fas fa-user mr-1"></i> Student *</label>
+                            <select name="student_id" id="student_id" class="form-control" required>
+                                <option value="">Select Student</option>
                                 @foreach($students as $student)
-                                    <option value="{{ $student->id }}" 
-                                            data-course="{{ $student->course_id }}"
-                                            {{ old('student_id') == $student->id ? 'selected' : '' }}>
-                                        {{ $student->name }} ({{ $student->student_id }})
+                                    <option value="{{ $student->id }}" {{ old('student_id') == $student->id ? 'selected' : '' }}>
+                                        {{ $student->name }} - {{ $student->email }}
                                     </option>
                                 @endforeach
                             </select>
+                            @error('student_id')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
-                        @error('student_id')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                    </div>
 
-                    <div class="form-group">
-                        <label for="course_id" class="form-label-enhanced required-marker">Select Course</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">
-                                    <i class="fas fa-book text-info"></i>
-                                </span>
-                            </div>
-                            <select class="form-control @error('course_id') is-invalid @enderror" 
-                                    id="course_id" name="course_id" required>
-                                <option value="" disabled selected style="color: #6c757d;">-- Select Course --</option>
+                        <!-- Course Selection -->
+                        <div class="form-group">
+                            <label for="course_id"><i class="fas fa-book mr-1"></i> Course *</label>
+                            <select name="course_id" id="course_id" class="form-control" required>
+                                <option value="">Select Course</option>
                                 @foreach($courses as $course)
                                     <option value="{{ $course->id }}" 
                                             data-fee="{{ $course->fee ?? 0 }}"
@@ -255,198 +56,310 @@ select.form-control {
                                     </option>
                                 @endforeach
                             </select>
+                            @error('course_id')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
-                        @error('course_id')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                    </div>
-                </div>
 
-                <!-- Payment Details -->
-                <div class="col-md-6">
-                    <div class="form-section">
-                        <h6 class="mb-0 font-weight-bold text-dark">
-                            <i class="fas fa-rupee-sign mr-2 text-success"></i>Payment Details
-                        </h6>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="amount" class="form-label-enhanced required-marker">Amount</label>
-                        <div class="input-group">
-                            <div class="input-group-prepend">
-                                <span class="input-group-text">
-                                    <i class="fas fa-rupee-sign text-success"></i>
-                                </span>
+                        <!-- Amount Field (Fixed Version) -->
+                        <div class="form-group">
+                            <label for="amount"><i class="fas fa-rupee-sign mr-1"></i> Amount *</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">₹</span>
+                                </div>
+                                <input type="text" 
+                                       name="amount" 
+                                       id="amount" 
+                                       class="form-control" 
+                                       required 
+                                       value="{{ old('amount') }}"
+                                       placeholder="0.00"
+                                       pattern="[0-9]+(\.[0-9]{1,2})?"
+                                       title="Please enter a valid amount (e.g., 1000 or 1000.50)">
                             </div>
-                            <input type="number" class="form-control @error('amount') is-invalid @enderror"
-                                   id="amount" name="amount" value="{{ old('amount') }}" 
-                                   min="1" step="0.01" placeholder="Enter amount" required>
+                            <small class="text-success" id="amount-help">Select a course above to auto-fill the amount.</small>
+                            @error('amount')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
                         </div>
-                        @error('amount')
-                            <div class="invalid-feedback d-block">{{ $message }}</div>
-                        @enderror
-                    </div>
 
-                    <!-- Amount Preview -->
-                    <div class="amount-preview" id="amountPreview" style="display: none;">
-                        <h5 class="mb-1">Payment Amount</h5>
-                        <h3 class="mb-0 font-weight-bold" id="previewAmount">₹0.00</h3>
-                        <small>Including all applicable charges</small>
-                    </div>
-
-                    <!-- Student Details Preview -->
-                    <div class="mt-3" id="studentPreview" style="display: none;">
-                        <div class="card border-primary">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0">
-                                    <i class="fas fa-user mr-2"></i>Selected Student
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="studentDetails">
-                                    <!-- Student details will be populated here -->
+                        <!-- Gateway Selection -->
+                        <div class="form-group">
+                            <label><i class="fas fa-credit-card mr-1"></i> Payment Method *</label>
+                            <div class="row mt-3">
+                                <div class="col-md-4 mb-3">
+                                    <div class="card text-center gateway-card h-100" data-gateway="manual">
+                                        <div class="card-body d-flex flex-column justify-content-center">
+                                            <i class="fas fa-hand-paper fa-2x mb-2 text-secondary"></i>
+                                            <h6 class="mb-1">Manual</h6>
+                                            <small class="text-muted">Cash/Bank Transfer</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card text-center gateway-card h-100" data-gateway="razorpay">
+                                        <div class="card-body d-flex flex-column justify-content-center">
+                                            <i class="fas fa-credit-card fa-2x mb-2 text-primary"></i>
+                                            <h6 class="mb-1">Razorpay</h6>
+                                            <small class="text-muted">Card/NetBanking/UPI</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="card text-center gateway-card h-100" data-gateway="upi">
+                                        <div class="card-body d-flex flex-column justify-content-center">
+                                            <i class="fas fa-qrcode fa-2x mb-2 text-success"></i>
+                                            <h6 class="mb-1">UPI QR Code</h6>
+                                            <small class="text-muted">Scan & Pay</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            <input type="hidden" name="gateway" id="selected_gateway" value="{{ old('gateway', 'manual') }}" required>
+                            @error('gateway')
+                                <div class="text-danger mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="form-group text-center">
+                            <button type="submit" class="btn btn-primary btn-lg px-5">
+                                <i class="fas fa-plus mr-2"></i>Create Payment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instructions Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-info-circle mr-2"></i>Instructions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h6><i class="fas fa-list-ol text-info mr-2"></i>How it works:</h6>
+                        <ol class="small pl-3">
+                            <li>Select a student from the dropdown</li>
+                            <li>Choose a course - <strong class="text-success">amount will auto-fill</strong></li>
+                            <li>Pick your preferred payment method</li>
+                            <li>Click "Create Payment" to proceed</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6><i class="fas fa-edit text-warning mr-2"></i>About Amount:</h6>
+                        <ul class="small pl-3">
+                            <li>Amount auto-fills from course fee</li>
+                            <li>You can manually edit the amount if needed</li>
+                            <li>Supports decimal values (e.g., 1000.50)</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h6><i class="fas fa-payment text-success mr-2"></i>Payment Methods:</h6>
+                        <div class="small">
+                            <div class="mb-2">
+                                <strong class="text-secondary">Manual:</strong> Record cash payments or bank transfers manually
+                            </div>
+                            <div class="mb-2">
+                                <strong class="text-primary">Razorpay:</strong> Online payments via cards, UPI, net banking, wallets
+                            </div>
+                            <div class="mb-2">
+                                <strong class="text-success">UPI QR:</strong> Generate QR code for direct UPI app payments
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                    
+                    <div class="alert alert-info">
+                        <small><i class="fas fa-lightbulb mr-1"></i> <strong>Pro Tip:</strong> Select the course first to automatically get the correct amount!</small>
+                    </div>
 
-            <!-- Enhanced Action Footer -->
-            <div class="action-footer">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <a href="{{ route('admin.payments.index') }}" class="btn btn-secondary btn-enhanced">
-                            <i class="fas fa-arrow-left mr-2"></i>Back to List
-                        </a>
-                    </div>
-                    <div class="d-flex">
-                        <button type="button" class="btn btn-outline-warning btn-enhanced mr-3" onclick="resetForm()">
-                            <i class="fas fa-redo mr-2"></i>Reset Form
-                        </button>
-                        <button type="submit" class="btn btn-info btn-enhanced">
-                            <i class="fas fa-credit-card mr-2"></i>Create Payment
-                        </button>
+                    <div class="alert alert-warning">
+                        <small><i class="fas fa-exclamation-triangle mr-1"></i> <strong>Note:</strong> For Razorpay and UPI payments, you'll be redirected to the payment interface after creation.</small>
                     </div>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
+@endsection
+
+@section('css')
+<style>
+.gateway-card {
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #e9ecef;
+    min-height: 120px;
+}
+
+.gateway-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 15px rgba(0,123,255,0.2);
+    transform: translateY(-3px);
+}
+
+.gateway-card.active {
+    border-color: #007bff;
+    background: linear-gradient(135deg, rgba(0,123,255,0.1), rgba(0,123,255,0.05));
+    box-shadow: 0 8px 25px rgba(0,123,255,0.3);
+    transform: translateY(-2px);
+}
+
+.gateway-card.active i {
+    color: #007bff !important;
+}
+
+.gateway-card.active h6 {
+    color: #007bff;
+    font-weight: bold;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+.btn-lg {
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-radius: 10px;
+}
+
+.card-header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    border-radius: 10px 10px 0 0 !important;
+}
+
+#amount {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+#amount-help {
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+.alert {
+    border-radius: 8px;
+}
+
+.text-success { color: #28a745 !important; }
+.text-info { color: #007bff !important; }
+</style>
 @endsection
 
 @section('js')
 <script>
 $(document).ready(function() {
-    // Handle student selection change
-    $('#student_id').on('change', function() {
-        const studentId = $(this).val();
-        const studentText = $(this).find('option:selected').text();
-        const courseId = $(this).find('option:selected').data('course');
-        
-        if (studentId) {
-            // Auto-select course if student has one
-            if (courseId) {
-                $('#course_id').val(courseId).trigger('change');
-            }
-            
-            // Show student preview
-            $('#studentDetails').html(`
-                <div class="font-weight-bold text-primary">${studentText}</div>
-                <small class="text-muted">Selected for payment</small>
-            `);
-            $('#studentPreview').show();
-        } else {
-            $('#studentPreview').hide();
-            $('#course_id').val('');
-        }
-    });
-
-    // Handle course selection change
+    // Auto-fill amount when course is selected
     $('#course_id').on('change', function() {
-        const courseFee = $(this).find('option:selected').data('fee');
+        const selectedOption = $(this).find('option:selected');
+        const courseFee = selectedOption.data('fee');
         
-        if (courseFee) {
+        if (courseFee && courseFee > 0) {
             $('#amount').val(courseFee);
-            updateAmountPreview(courseFee);
+            $('#amount-help')
+                .text('Amount auto-filled from course fee: ₹' + courseFee + '. You can modify it if needed.')
+                .removeClass('text-success')
+                .addClass('text-info');
+        } else {
+            $('#amount').val('');
+            $('#amount-help')
+                .text('Please enter the amount manually as this course has no fee set.')
+                .removeClass('text-info')
+                .addClass('text-warning');
         }
     });
-
-    // Handle amount input change
-    $('#amount').on('input', function() {
-        const amount = parseFloat($(this).val()) || 0;
-        updateAmountPreview(amount);
+    
+    // Gateway selection handling
+    $('.gateway-card').on('click', function() {
+        const gateway = $(this).data('gateway');
+        selectGateway(gateway);
     });
-
-    // Form validation before submission
+    
+    // Set default gateway
+    selectGateway($('#selected_gateway').val() || 'manual');
+    
+    // If there's an old course selection, trigger amount fill
+    const oldCourseId = "{{ old('course_id') }}";
+    if (oldCourseId) {
+        setTimeout(function() {
+            $('#course_id').trigger('change');
+        }, 100);
+    }
+    
+    // Form validation before submit
     $('#paymentForm').on('submit', function(e) {
-        let isValid = true;
+        const amount = $('#amount').val().trim();
+        const amountFloat = parseFloat(amount);
         
-        // Check required fields
-        const requiredFields = ['student_id', 'course_id', 'amount'];
-        
-        requiredFields.forEach(function(fieldName) {
-            const field = $(`#${fieldName}`);
-            if (!field.val()) {
-                field.addClass('is-invalid');
-                isValid = false;
-            } else {
-                field.removeClass('is-invalid').addClass('is-valid');
-            }
-        });
-
         // Validate amount
-        const amount = parseFloat($('#amount').val());
-        if (amount <= 0) {
-            $('#amount').addClass('is-invalid');
-            isValid = false;
-        }
-
-        if (!isValid) {
+        if (!amount || isNaN(amountFloat) || amountFloat <= 0) {
             e.preventDefault();
-            showAlert('error', 'Please fill in all required fields correctly.');
+            alert('Please enter a valid amount greater than 0.');
+            $('#amount').focus();
+            return false;
         }
+        
+        // Validate gateway
+        const gateway = $('#selected_gateway').val();
+        if (!gateway) {
+            e.preventDefault();
+            alert('Please select a payment method.');
+            return false;
+        }
+        
+        // Show loading state
+        $(this).find('button[type="submit"]')
+            .html('<i class="fas fa-spinner fa-spin mr-2"></i>Creating Payment...')
+            .prop('disabled', true);
+        
+        return true;
+    });
+
+    // Amount input formatting
+    $('#amount').on('input', function() {
+        let value = $(this).val();
+        // Remove any non-numeric characters except decimal point
+        value = value.replace(/[^0-9.]/g, '');
+        // Ensure only one decimal point
+        const parts = value.split('.');
+        if (parts.length > 2) {
+            value = parts[0] + '.' + parts.slice(1).join('');
+        }
+        // Limit to 2 decimal places
+        if (parts[1] && parts[1].length > 2) {
+            value = parts[0] + '.' + parts[1].substring(0, 2);
+        }
+        $(this).val(value);
     });
 });
 
-// Update amount preview
-function updateAmountPreview(amount) {
-    if (amount > 0) {
-        $('#previewAmount').text('₹' + parseFloat(amount).toLocaleString('en-IN', {minimumFractionDigits: 2}));
-        $('#amountPreview').show();
-    } else {
-        $('#amountPreview').hide();
-    }
-}
-
-// Global reset function
-function resetForm() {
-    if (confirm('Are you sure you want to reset all form data?')) {
-        $('#paymentForm')[0].reset();
-        $('.form-control').removeClass('is-valid is-invalid');
-        $('#studentPreview, #amountPreview').hide();
-    }
-}
-
-// Show alert function
-function showAlert(type, message) {
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-    const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
+function selectGateway(gateway) {
+    // Remove active class from all cards
+    $('.gateway-card').removeClass('active');
     
-    const alertHtml = `
-        <div class="alert ${alertClass} alert-dismissible fade show mt-3" role="alert">
-            <i class="${icon} mr-2"></i>${message}
-            <button type="button" class="close" data-dismiss="alert">
-                <span>&times;</span>
-            </button>
-        </div>
-    `;
+    // Add active class to selected card
+    $(`.gateway-card[data-gateway="${gateway}"]`).addClass('active');
     
-    $('body').prepend(alertHtml);
+    // Set hidden input value
+    $('#selected_gateway').val(gateway);
     
-    setTimeout(() => {
-        $('.alert').alert('close');
-    }, 4000);
+    console.log('Gateway selected:', gateway);
 }
 </script>
 @endsection

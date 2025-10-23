@@ -1,120 +1,133 @@
-{{-- resources/views/admin/exams/index.blade.php --}}
 @extends('layouts.custom-admin')
 
-@section('title', 'Exams')
 @section('page-title', 'Exam Management')
 
+@section('css')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" href="{{ asset('css/admin/exams/index.css') }}">
+@endsection
+
 @section('content')
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <!-- <h3 class="mb-1">Exam Management</h3> -->
+                    <h4 class="text-muted mb-0">Manage and schedule exams</>
+                </div>
+                <a href="{{ route('admin.exams.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Schedule New Exam
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exams DataTable -->
     <div class="row">
         <div class="col-12">
-            <div class="card shadow" style="border: none; border-radius: 10px;">
-                <div class="card-header" style="background: linear-gradient(45deg, #fd7e14, #e65100); color: white; border-radius: 10px 10px 0 0;">
-                    <h3 class="card-title mb-0">
-                        <i class="fas fa-clipboard-list mr-2"></i> All Exams ({{ \App\Models\Exam::count() }})
-                    </h3>
-                    <div class="card-tools">
-                        <a href="{{ route('admin.exams.create') }}" class="btn btn-light btn-sm">
-                            <i class="fas fa-plus mr-1"></i> Schedule New Exam
-                        </a>
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 font-weight-bold text-white">
+                        <i class="fas fa-clipboard-list mr-2"></i>All Exams
+                    </h6>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-light" onclick="refreshTable()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover mb-0">
-                            <thead style="background: #f8f9fa;">
-                                <tr>
-                                    <th class="pl-4">Exam Details</th>
-                                    <th>Course</th>
-                                    <th>Date & Time</th>
-                                    <th>Duration</th>
-                                    <th>Marks</th>
-                                    <th>Status</th>
-                                    <th class="pr-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse(\App\Models\Exam::with('course')->get() as $exam)
-                                <tr>
-                                    <td class="pl-4">
-                                        <div>
-                                            <strong class="text-dark">{{ $exam->title }}</strong><br>
-                                            <small class="text-muted">Code: {{ $exam->exam_code }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-primary px-3 py-1">{{ $exam->course->name ?? 'N/A' }}</span>
-                                    </td>
-                                    <td>
-                                        <div class="text-info">
-                                            <i class="fas fa-calendar mr-1"></i>{{ $exam->exam_date->format('M d, Y') }}<br>
-                                            <small class="text-muted">{{ $exam->exam_date->format('h:i A') }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <span class="text-warning">
-                                            <i class="fas fa-clock mr-1"></i>{{ $exam->duration }} min
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="text-center">
-                                            <strong class="text-success">{{ $exam->total_marks }}</strong><br>
-                                            <small class="text-muted">Pass: {{ $exam->passing_marks }}</small>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        @php
-                                            $statusColors = [
-                                                'scheduled' => 'primary',
-                                                'ongoing' => 'warning',
-                                                'completed' => 'success',
-                                                'cancelled' => 'danger'
-                                            ];
-                                        @endphp
-                                        <span class="badge badge-{{ $statusColors[$exam->status] ?? 'secondary' }} px-3 py-1">
-                                            {{ ucfirst($exam->status) }}
-                                        </span>
-                                    </td>
-                                    <td class="pr-4">
-                                        <div class="btn-group">
-                                            <a href="{{ route('admin.exams.show', $exam) }}" class="btn btn-info btn-sm" title="View Details">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{{ route('admin.exams.edit', $exam) }}" class="btn btn-warning btn-sm" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <button type="button" class="btn btn-success btn-sm" title="Results" onclick="viewResults({{ $exam->id }})">
-                                                <i class="fas fa-chart-line"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="7" class="text-center py-5">
-                                        <div class="text-muted">
-                                            <i class="fas fa-clipboard-list fa-3x mb-3"></i>
-                                            <h5>No Exams Scheduled</h5>
-                                            <p>Create your first exam to get started!</p>
-                                            <a href="{{ route('admin.exams.create') }}" class="btn btn-warning">
-                                                <i class="fas fa-plus mr-1"></i> Schedule Exam
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="card-body">
+                    <table class="table mb-0" id="examsTable">
+                        <thead>
+                            <tr>
+                                <th width="300">Exam Details</th>
+                                <th width="150">Course</th>
+                                <th width="120">Date & Time</th>
+                                <th width="100">Duration</th>
+                                <th width="100">Marks</th>
+                                <th width="100">Status</th>
+                                <th width="150" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+</div>
 @endsection
 
 @section('js')
-    <script>
-        function viewResults(examId) {
-            alert('Exam results feature coming soon!');
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    window.examsTable = $('#examsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: "{{ route('admin.exams.index') }}",
+        columns: [
+            { data: 'exam_details', name: 'title' },
+            { data: 'course', name: 'course.name', orderable: false },
+            { data: 'exam_date', name: 'exam_date' },
+            { data: 'duration', name: 'duration_minutes' },
+            { data: 'marks', name: 'total_marks' },
+            { data: 'status', name: 'status' },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false }
+        ],
+        order: [[2, 'desc']],
+        responsive: true,
+        pageLength: 25,
+        language: {
+            processing: "Loading exams...",
+            emptyTable: "No exams found"
         }
-    </script>
+    });
+});
+
+function refreshTable() {
+    examsTable.ajax.reload();
+}
+
+function deleteExam(examId) {
+    if (!confirm('Are you sure you want to delete this exam?')) return;
+    
+    $.ajax({
+        url: `/admin/exams/${examId}`,
+        type: 'DELETE',
+        data: { _token: '{{ csrf_token() }}' },
+        success: function(response) {
+            examsTable.ajax.reload();
+            showToast('success', response.message);
+        },
+        error: function() {
+            showToast('error', 'Error deleting exam');
+        }
+    });
+}
+
+function showToast(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    
+    const toast = $(`
+        <div class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
+            <div class="alert ${alertClass} alert-dismissible fade show">
+                ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        </div>
+    `);
+    
+    $('body').append(toast);
+    setTimeout(() => toast.find('.alert').alert('close'), 3000);
+}
+</script>
 @endsection

@@ -1,0 +1,590 @@
+/* Enhanced DataTable Styling for Courses */
+.course-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.course-card:hover {
+    border-color: #007bff;
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.2);
+}
+
+.course-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    font-size: 24px;
+    color: white;
+}
+
+.course-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 5px;
+}
+
+.course-label {
+    color: #718096;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* DataTable Container Fixes */
+.dataTables_wrapper {
+    margin-top: 20px !important;
+    padding-top: 15px;
+}
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+    margin-top: 10px !important;
+    margin-bottom: 15px !important;
+}
+
+.dataTables_wrapper .dataTables_length select {
+    padding: 8px 12px !important;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: white;
+    color: #4a5568;
+    font-weight: 500;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+    padding: 8px 12px !important;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: white;
+    margin-left: 8px;
+}
+
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Table Styling */
+.table {
+    font-size: 14px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    margin-top: 0 !important;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    padding: 15px 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9ff;
+    transform: scale(1.01);
+    box-shadow: 0 5px 15px rgba(0, 123, 255, 0.1);
+}
+
+.table tbody td {
+    padding: 15px 12px;
+    vertical-align: middle;
+    border: none;
+}
+
+.badge {
+    padding: 8px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-group-sm .btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    margin: 0 2px;
+    transition: all 0.3s ease;
+}
+
+/* Filter Section Styling */
+.filter-section {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+}
+
+/* FIXED: Form Control and Select Dropdown Issues */
+.filter-section .form-control,
+.filter-section select.form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 15px !important; /* Force padding with !important */
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    background-color: white;
+    color: #4a5568;
+    height: auto !important;
+    line-height: 1.5;
+    min-height: 45px;
+    box-sizing: border-box;
+    display: block !important;
+}
+
+/* Specific fix for select dropdowns */
+select.form-control {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3E%3Cpath fill='%23666' d='m2 0-2 2h4zm0 5 2-2h-4z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 12px;
+    padding-right: 40px !important;
+}
+
+/* Placeholder styling for select options */
+select.form-control option:first-child {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+select.form-control:invalid {
+    color: #a0aec0;
+}
+
+.filter-section .form-control:focus,
+.filter-section select.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.filter-section .form-control:valid {
+    border-color: #28a745;
+}
+
+/* Label styling */
+.form-label {
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Card styling */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    overflow: visible; /* Allow dropdowns to show */
+}
+
+.card-header {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-radius: 15px 15px 0 0;
+    padding: 20px;
+    border: none;
+}
+
+.card-body {
+    padding: 0; /* Remove padding to let DataTable handle spacing */
+}
+
+/* DataTable info and pagination spacing */
+.dataTables_wrapper .dataTables_info {
+    padding-top: 15px !important;
+    margin-bottom: 10px;
+}
+
+.dataTables_wrapper .dataTables_paginate {
+    padding-top: 15px !important;
+    margin-bottom: 10px;
+}
+
+/* Bulk action button improvements */
+.bulk-action-btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 8px 16px;
+    font-size: 13px;
+    transition: all 0.3s ease;
+}
+
+.bulk-action-btn:hover:not(.disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.bulk-action-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .course-card {
+        margin-bottom: 15px;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+    
+    .filter-section {
+        padding: 20px;
+    }
+    
+    .filter-section .form-control,
+    .filter-section select.form-control {
+        font-size: 16px; /* Prevent zoom on iOS */
+        min-height: 50px;
+    }
+    
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        margin-bottom: 20px !important;
+    }
+}
+
+/* Fix for dropdown z-index issues */
+.dropdown-menu {
+    z-index: 1050 !important;
+    border-radius: 8px;
+    border: none;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+}
+
+/* Ensure proper spacing for all elements */
+.container-fluid > .row {
+    margin-bottom: 20px;
+}
+
+.container-fluid > .row:last-child {
+    margin-bottom: 0;
+}
+
+/* Enhanced Modal Styling */
+.modal {
+    z-index: 9999 !important;
+}
+
+.modal-backdrop {
+    z-index: 9998 !important;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-xl {
+    max-width: 1200px;
+    width: 95%;
+    margin: 1.75rem auto;
+}
+
+.modal-content {
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+    border: none !important;
+    border-radius: 15px !important;
+}
+
+.modal-dialog-centered {
+    min-height: calc(100% - 3.5rem);
+}
+
+.modal-dialog-scrollable .modal-body {
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+}
+
+/* Quick View Content Styling */
+.course-quick-view {
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.course-quick-view .course-icon-large {
+    font-size: 3rem;
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 123, 255, 0.1);
+    border-radius: 15px;
+    color: #007bff;
+}
+
+.course-quick-view .course-stats {
+    display: flex;
+    justify-content: space-around;
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.course-quick-view .stat-item {
+    text-align: center;
+}
+
+.course-quick-view .stat-number {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: bold;
+    line-height: 1;
+    color: #2d3748;
+}
+
+.course-quick-view .stat-label {
+    font-size: 12px;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+}
+
+.course-quick-view .nav-tabs-custom {
+    border-bottom: 2px solid #e9ecef;
+    margin-bottom: 25px;
+}
+
+.course-quick-view .nav-tabs-custom .nav-link {
+    border: none;
+    color: #6c757d;
+    font-weight: 600;
+    padding: 12px 20px;
+    border-radius: 10px 10px 0 0;
+    transition: all 0.3s ease;
+    margin-right: 5px;
+}
+
+.course-quick-view .nav-tabs-custom .nav-link:hover {
+    background: rgba(0, 123, 255, 0.1);
+    color: #007bff;
+    border-color: transparent;
+}
+
+.course-quick-view .nav-tabs-custom .nav-link.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+.course-quick-view .course-info-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+}
+
+.course-quick-view .info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.course-quick-view .info-item:last-child {
+    border-bottom: none;
+}
+
+.course-quick-view .info-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 13px;
+}
+
+.course-quick-view .info-value {
+    color: #6c757d;
+    font-size: 13px;
+}
+
+.course-quick-view .student-item {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 15px;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+}
+
+.course-quick-view .student-item:hover {
+    border-color: #007bff;
+    transform: translateX(5px);
+    box-shadow: 0 3px 10px rgba(0, 123, 255, 0.1);
+}
+
+.course-quick-view .student-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Responsive fixes for modal */
+@media (max-width: 768px) {
+    .modal-xl {
+        width: 98%;
+        margin: 0.5rem auto;
+    }
+    
+    .course-quick-view .course-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .course-quick-view .stat-item {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+    }
+    
+    .course-quick-view .stat-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    
+    .course-quick-view .course-icon-large {
+        font-size: 2rem;
+        width: 50px;
+        height: 50px;
+    }
+    
+    .modal-body {
+        padding: 20px !important;
+    }
+}
+
+/* Ensure modal is always on top */
+body.modal-open {
+    overflow: hidden;
+}
+
+body.modal-open .modal {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+/* Fix any conflicts with DataTables */
+.dataTables_wrapper .modal {
+    position: fixed !important;
+}
+
+/* Loading spinner styling */
+.modal-body .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Simple Action Buttons - No Dropdowns */
+.btn-sm {
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    margin: 1px;
+}
+
+.btn-outline-info {
+    color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.btn-outline-info:hover {
+    color: #fff;
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+}
+
+.btn-outline-success {
+    color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-outline-success:hover {
+    color: #fff;
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-outline-primary {
+    color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.btn-outline-warning {
+    color: #ffc107;
+    border-color: #ffc107;
+}
+
+.btn-outline-warning:hover {
+    color: #212529;
+    background-color: #ffc107;
+    border-color: #ffc107;
+}
+
+.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+
+.btn-outline-danger:hover {
+    color: #fff;
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .d-flex {
+        flex-wrap: wrap;
+    }
+    
+    .btn-sm {
+        margin: 2px 1px;
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+}
+
