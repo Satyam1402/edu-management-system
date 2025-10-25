@@ -34,6 +34,92 @@
     margin: 0;
 }
 
+/* Special styling for Payment Link Card */
+.payment-link-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-link-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(120, 255, 214, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.payment-link-card .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.payment-link-input {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+}
+
+.payment-link-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.payment-link-input:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+}
+
+.payment-gateway-card {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    border: none;
+}
+
+.payment-gateway-card .card-body {
+    position: relative;
+    z-index: 1;
+}
+
+.gateway-option {
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    text-decoration: none;
+    color: white;
+    display: block;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.gateway-option:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+.gateway-icon {
+    font-size: 1.5rem;
+    margin-right: 12px;
+    opacity: 0.9;
+}
+
 .info-section {
     background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
     border-radius: 15px;
@@ -60,7 +146,6 @@
     margin-right: 8px;
 }
 
-/* FIXED: Better text layout for small spaces */
 .info-row {
     display: flex;
     justify-content: space-between;
@@ -75,7 +160,6 @@
     border-bottom: none;
 }
 
-/* FIXED: Smaller labels that don't take too much space */
 .info-label {
     font-weight: 600;
     color: #495057;
@@ -88,7 +172,6 @@
     line-height: 1.2;
 }
 
-/* FIXED: Better text wrapping for values */
 .info-value {
     color: #2c3e50;
     font-weight: 500;
@@ -103,7 +186,6 @@
     min-width: 0;
 }
 
-/* FIXED: Special handling for long IDs */
 .info-value.long-text {
     font-size: 10px;
     font-family: 'Courier New', monospace;
@@ -208,6 +290,14 @@
     color: #856404;
 }
 
+.btn-info {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+}
+
 .btn-outline-secondary {
     background: transparent;
     border: 2px solid #6c757d;
@@ -220,7 +310,6 @@
     border-color: transparent;
 }
 
-/* FIXED: Better timeline for smaller space */
 .timeline {
     position: relative;
     padding: 15px 0;
@@ -278,13 +367,11 @@
     margin: 5px 0 0 0;
 }
 
-/* FIXED: Card body padding */
 .card-body {
     padding: 15px;
     overflow: hidden;
 }
 
-/* FIXED: Responsive improvements */
 @media (max-width: 768px) {
     .action-buttons {
         flex-direction: column;
@@ -313,7 +400,6 @@
     }
 }
 
-/* FIXED: Ensure no overflow */
 * {
     box-sizing: border-box;
 }
@@ -332,7 +418,6 @@
     max-width: 100%;
 }
 
-/* Loading Animation */
 @keyframes fadeInUp {
     from {
         opacity: 0;
@@ -404,6 +489,108 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Student Payment Link (Only for Pending Payments) -->
+            @if($payment->status === 'pending' && $payment->payment_token)
+            <div class="card payment-link-card">
+                <div class="card-header">
+                    <h6 class="mb-0 font-weight-bold">
+                        <i class="fas fa-link mr-2"></i>Student Payment Link
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Share this secure link with the student to complete payment:</p>
+                    
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control payment-link-input" 
+                               value="{{ route('payment.student', $payment->payment_token) }}" 
+                               id="paymentLink" readonly>
+                        <div class="input-group-append">
+                            <button class="btn btn-light" type="button" onclick="copyPaymentLink()">
+                                <i class="fas fa-copy mr-1"></i> Copy Link
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <small class="text-white-75">
+                                <i class="fas fa-whatsapp mr-1"></i>
+                                Send via WhatsApp, SMS, or Email
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-md-right">
+                            <small class="text-white-75">
+                                <i class="fas fa-shield-alt mr-1"></i>
+                                Secure payment link expires when paid
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Share Options -->
+                    <div class="action-buttons">
+                        <a href="https://wa.me/?text={{ urlencode('Complete your payment: ' . route('payment.student', $payment->payment_token)) }}" 
+                           target="_blank" class="btn btn-success btn-sm">
+                            <i class="fab fa-whatsapp mr-1"></i> WhatsApp
+                        </a>
+                        <a href="mailto:{{ $payment->student->email ?? '' }}?subject=Complete Payment&body={{ urlencode('Please complete your payment using this link: ' . route('payment.student', $payment->payment_token)) }}" 
+                           class="btn btn-info btn-sm">
+                            <i class="fas fa-envelope mr-1"></i> Email
+                        </a>
+                        <button class="btn btn-warning btn-sm" onclick="generateQR()">
+                            <i class="fas fa-qrcode mr-1"></i> Generate QR
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endif
+
+            <!-- Payment Gateway Options (Only for Pending Payments) -->
+            @if($payment->status === 'pending')
+            <div class="card payment-gateway-card">
+                <div class="card-header">
+                    <h6 class="mb-0 font-weight-bold">
+                        <i class="fas fa-credit-card mr-2"></i>Payment Gateway Options
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-3">Choose a payment method to process this payment:</p>
+                    
+                    <!-- Razorpay Option -->
+                    <a href="{{ route('admin.payments.razorpay', $payment) }}" class="gateway-option">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-credit-card gateway-icon"></i>
+                            <div>
+                                <h6 class="mb-1">Razorpay Gateway</h6>
+                                <small class="text-white-75">Automatic verification • 2-3% fees • Multiple payment methods</small>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- UPI QR Code Option -->
+                    <a href="{{ route('admin.payments.upi', $payment) }}" class="gateway-option">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-qrcode gateway-icon"></i>
+                            <div>
+                                <h6 class="mb-1">UPI QR Code</h6>
+                                <small class="text-white-75">Direct UPI payment • 0% fees • Manual verification required</small>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- Manual Payment Option -->
+                    <div class="gateway-option" onclick="markAsCompleted({{ $payment->id }})">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-hand-holding-usd gateway-icon"></i>
+                            <div>
+                                <h6 class="mb-1">Manual Payment</h6>
+                                <small class="text-white-75">Cash/Cheque/Bank Transfer • Mark as paid manually</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @endif
 
             <!-- Student Information -->
             <div class="info-section">
@@ -576,6 +763,49 @@
 
 @section('js')
 <script>
+function copyPaymentLink() {
+    const linkInput = document.getElementById('paymentLink');
+    linkInput.select();
+    document.execCommand('copy');
+    
+    // Show feedback
+    const button = event.target.closest('button');
+    const originalHtml = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!';
+    button.classList.remove('btn-light');
+    button.classList.add('btn-success');
+    
+    setTimeout(() => {
+        button.innerHTML = originalHtml;
+        button.classList.remove('btn-success');
+        button.classList.add('btn-light');
+    }, 2000);
+}
+
+function generateQR() {
+    const paymentLink = document.getElementById('paymentLink').value;
+    const qrWindow = window.open('', '_blank', 'width=400,height=500');
+    qrWindow.document.write(`
+        <html>
+            <head><title>Payment QR Code</title></head>
+            <body style="text-align: center; padding: 20px; font-family: Arial;">
+                <h3>Payment QR Code</h3>
+                <div id="qrcode"></div>
+                <p style="font-size: 12px; color: #666; margin-top: 20px;">
+                    Scan this QR code to open payment link
+                </p>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
+                <script>
+                    QRCode.toCanvas(document.getElementById('qrcode'), '${paymentLink}', {
+                        width: 300,
+                        height: 300
+                    });
+                </script>
+            </body>
+        </html>
+    `);
+}
+
 function markAsCompleted(paymentId) {
     if (!confirm('Are you sure you want to mark this payment as completed?')) return;
     

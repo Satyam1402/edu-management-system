@@ -1,5 +1,5 @@
 <?php
-// routes/web.php (COMPLETE UPDATED VERSION WITH FRANCHISE SYSTEM)
+// routes/web.php (COMPLETE UPDATED VERSION WITH COMPLETE PAYMENT SYSTEM)
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\FranchiseController;
 use App\Http\Controllers\Admin\CourseController;
@@ -21,6 +21,12 @@ use App\Http\Controllers\Franchise\PaymentController as FranchisePaymentControll
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// =============================================================================
+// PUBLIC STUDENT PAYMENT ROUTES (No Authentication Required)
+// =============================================================================
+Route::get('pay/{token}', [App\Http\Controllers\Admin\PaymentController::class, 'studentPayment'])->name('payment.student');
+Route::post('pay/{token}/confirm', [App\Http\Controllers\Admin\PaymentController::class, 'studentConfirmUpi'])->name('payment.student.confirm');
 
 // Main dashboard route - redirects based on role
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -53,7 +59,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::post('/franchises/{franchise}/toggle-status', [FranchiseController::class, 'toggleStatus'])->name('franchises.toggle-status');
     Route::post('/franchises/{franchise}/create-user', [FranchiseController::class, 'createUser'])->name('franchises.create-user');
 
-        // =============================================================================
+    // =============================================================================
     // COURSE MANAGEMENT (Global Courses)
     // =============================================================================
     
@@ -141,7 +147,7 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::post('/courses/{course}/request-feedback', [CourseController::class, 'requestFeedback'])->name('courses.request-feedback');
     Route::get('/courses/{course}/feedback-summary', [CourseController::class, 'getFeedbackSummary'])->name('courses.feedback-summary');
 
-        // =============================================================================
+    // =============================================================================
     // STUDENT MANAGEMENT (All Students Across All Franchises)
     // =============================================================================
     
@@ -203,7 +209,6 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::post('/students/{student}/quick-payment', [StudentController::class, 'addQuickPayment'])->name('students.quick-payment');
     Route::post('/students/{student}/quick-certificate', [StudentController::class, 'issueQuickCertificate'])->name('students.quick-certificate');
 
-
     // Certificate Management (Approve/Reject Certificates)
     Route::resource('certificates', CertificateController::class);
     Route::post('/certificates/{certificate}/approve', [CertificateController::class, 'approve'])->name('certificates.approve');
@@ -212,29 +217,36 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::get('/certificates/{certificate}/download', [CertificateController::class, 'download'])->name('certificates.download');
     Route::get('certificates-export', [CertificateController::class, 'export'])->name('certificates.export');
 
-
     // Exam Management
     Route::resource('exams', ExamController::class);
     Route::post('/exams/{exam}/toggle-status', [ExamController::class, 'toggleStatus'])->name('exams.toggle-status');
     Route::get('/exams/{exam}/results', [ExamController::class, 'results'])->name('exams.results');
 
-    // Payment Management (All Payments)
-    Route::resource('payments', App\Http\Controllers\Admin\PaymentController::class);
-    Route::post('payments/{payment}/mark-completed', [PaymentController::class, 'markAsCompleted'])->name('payments.mark-completed');
-    Route::post('payments/{payment}/mark-failed', [PaymentController::class, 'markAsFailed'])->name('payments.mark-failed');
-    Route::post('payments/{payment}/refund', [PaymentController::class, 'processRefund'])->name('payments.refund');
-    Route::get('payments-export', [PaymentController::class, 'export'])->name('payments.export');
-    Route::post('payments/verify-razorpay', [PaymentController::class, 'verifyRazorpay'])->name('payments.verify-razorpay');
-    // UPI Payment Routes
-Route::post('payments/{payment}/confirm-upi', [PaymentController::class, 'confirmUpi'])->name('payments.confirm-upi');
-
-    Route::get('payments/{payment}/mark-paid', [PaymentController::class, 'markAsCompleted'])->name('payments.mark-paid');
-    Route::get('payments/{payment}/mark-failed', [PaymentController::class, 'markAsFailed'])->name('payments.mark-failed');
-    Route::post('payments/{payment}/mark-completed', [PaymentController::class, 'markAsCompleted'])->name('payments.mark-completed');
-    Route::post('payments/{payment}/mark-failed', [PaymentController::class, 'markAsFailed'])->name('payments.mark-failed');
-    Route::post('payments/{payment}/refund', [PaymentController::class, 'processRefund'])->name('payments.refund');
-    Route::get('payments/export', [PaymentController::class, 'export'])->name('payments.export');
+    // =============================================================================
+    // PAYMENT MANAGEMENT (COMPLETE WITH ALL GATEWAYS)
+    // =============================================================================
     
+    // Basic Payment CRUD
+    Route::resource('payments', App\Http\Controllers\Admin\PaymentController::class);
+    
+    // Payment Gateway Routes
+    Route::get('payments/{payment}/razorpay', [PaymentController::class, 'handleRazorpayPayment'])->name('payments.razorpay');
+    Route::get('payments/{payment}/upi', [PaymentController::class, 'handleUpiPayment'])->name('payments.upi');
+    Route::post('payments/verify-razorpay', [PaymentController::class, 'verifyRazorpay'])->name('payments.verify-razorpay');
+    
+    // UPI Payment Routes
+    Route::post('payments/{payment}/confirm-upi', [PaymentController::class, 'confirmUpi'])->name('payments.confirm-upi');
+    
+    // Payment Status Management
+    Route::post('payments/{payment}/mark-completed', [PaymentController::class, 'markAsCompleted'])->name('payments.mark-completed');
+    Route::post('payments/{payment}/mark-failed', [PaymentController::class, 'markAsFailed'])->name('payments.mark-failed');
+    Route::get('payments/{payment}/mark-paid', [PaymentController::class, 'markAsCompleted'])->name('payments.mark-paid');
+    
+    // Payment Actions
+    Route::post('payments/{payment}/refund', [PaymentController::class, 'processRefund'])->name('payments.refund');
+    
+    // Export & Reports
+    Route::get('payments-export', [PaymentController::class, 'export'])->name('payments.export');
 
     // =============================================================================
     // REPORTS & ANALYTICS (Super Admin Only)
@@ -290,10 +302,26 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
     Route::get('/certificates/student/{student}', [FranchiseCertificateController::class, 'byStudent'])->name('certificates.by-student');
 
     // =============================================================================
-    // PAYMENT MANAGEMENT (Own Students' Payments)
+    // FRANCHISE PAYMENT MANAGEMENT (Own Students' Payments with All Gateways)
     // =============================================================================
-    Route::resource('payments', FranchisePaymentController::class)->only(['index', 'show', 'create', 'store']);
-    Route::post('/payments/{payment}/mark-paid', [FranchisePaymentController::class, 'markPaid'])->name('payments.mark-paid');
+    
+    // Basic Payment CRUD (Franchise Limited)
+    Route::resource('payments', FranchisePaymentController::class);
+    
+    // Payment Gateway Routes (Franchise)
+    Route::get('payments/{payment}/razorpay', [FranchisePaymentController::class, 'handleRazorpayPayment'])->name('payments.razorpay');
+    Route::get('payments/{payment}/upi', [FranchisePaymentController::class, 'handleUpiPayment'])->name('payments.upi');
+    Route::post('payments/verify-razorpay', [FranchisePaymentController::class, 'verifyRazorpay'])->name('payments.verify-razorpay');
+    
+    // UPI Payment Routes (Franchise)
+    Route::post('payments/{payment}/confirm-upi', [FranchisePaymentController::class, 'confirmUpi'])->name('payments.confirm-upi');
+    
+    // Payment Status Management (Franchise)
+    Route::post('payments/{payment}/mark-completed', [FranchisePaymentController::class, 'markAsCompleted'])->name('payments.mark-completed');
+    Route::post('payments/{payment}/mark-failed', [FranchisePaymentController::class, 'markAsFailed'])->name('payments.mark-failed');
+    Route::post('payments/{payment}/refund', [FranchisePaymentController::class, 'processRefund'])->name('payments.refund');
+    
+    // Student-specific Payment Routes
     Route::get('/payments/student/{student}', [FranchisePaymentController::class, 'byStudent'])->name('payments.by-student');
 
     // =============================================================================
@@ -357,6 +385,19 @@ Route::middleware('auth')->prefix('api')->name('api.')->group(function () {
         Route::get('/franchises/search', [FranchiseController::class, 'search'])->name('franchises.search');
         Route::get('/franchises/{franchise}/stats', [FranchiseController::class, 'getStats'])->name('franchises.stats');
     });
+});
+
+// =============================================================================
+// TESTING ROUTES (Remove in Production)
+// =============================================================================
+Route::get('/test-upi', function() {
+    $service = new \App\Services\PaymentGatewayService();
+    try {
+        $qrData = $service->generateUpiQrCode(100, 'Test User', 'Test Payment');
+        return response()->json($qrData);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
 });
 
 // Include authentication routes (login, register, password reset, etc.)

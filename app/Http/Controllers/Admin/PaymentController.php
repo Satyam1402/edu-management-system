@@ -177,37 +177,43 @@ class PaymentController extends Controller
     }
 
     /**
-     * Store a newly created payment (WITH GATEWAY SUPPORT)
+     * Store a newly created payment
      */
     public function store(Request $request)
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
+            'course_id' => 'nullable|exists:courses,id',
             'amount' => 'required|numeric|min:1',
-            'gateway' => 'required|in:manual,razorpay,upi',
-            'course_id' => 'nullable|exists:courses,id'
+            'gateway' => 'required|in:razorpay,upi,manual',
+            'due_date' => 'nullable|date|after:today',
+            'description' => 'nullable|string|max:500'
         ]);
 
         $payment = Payment::create([
+            'order_id' => 'ORD' . strtoupper(uniqid()),
             'student_id' => $request->student_id,
             'course_id' => $request->course_id,
             'amount' => $request->amount,
             'currency' => 'INR',
+            'status' => 'pending',
             'gateway' => $request->gateway,
-            'status' => 'pending'
+            'due_date' => $request->due_date,
+            'description' => $request->description,
+            'payment_token' => \Illuminate\Support\Str::random(32) // ADD THIS LINE
         ]);
 
-        // Handle different gateways
+        // Redirect based on gateway selection
         if ($request->gateway === 'razorpay') {
-            return $this->handleRazorpayPayment($payment);
+            return redirect()->route('admin.payments.razorpay', $payment);
         } elseif ($request->gateway === 'upi') {
-            return $this->handleUpiPayment($payment);
+            return redirect()->route('admin.payments.upi', $payment);
+        } else {
+            return redirect()->route('admin.payments.show', $payment)
+                        ->with('success', 'Payment created successfully');
         }
-
-        // Manual payment
-        return redirect()->route('admin.payments.show', $payment)
-                        ->with('success', 'Manual payment created successfully!');
     }
+
 
     /**
      * Handle Razorpay Payment
@@ -464,4 +470,57 @@ class PaymentController extends Controller
             ->route('admin.payments.show', $payment)
             ->with('success', 'UPI payment confirmed successfully!');
     }
+
+    /**
+     * Student Payment Page (Public Access)
+     */
+    public function studentPayment($token)
+    {
+        $payment = Payment::where('payment_token', $token)
+                        ->where('status', 'pending')
+                        ->with(['student', 'course'])
+                        ->firstOrFail();
+        
+        try {
+            $qrData = $this->paymentService->generateUpiQrCode(
+                $payment->amount,
+                $payment->student->name,
+                "Payment for " . ($payment->course->name ?? 'Course')
+            );
+            
+            return view('payment.student-upi', compact('payment', 'qrData'));
+            
+        } catch (\Exception $e) {
+            abort(500, 'Unable to generate payment QR code');
+        }
+    }
+
+    /**
+     * Student Confirms Payment (Public Access)
+     */
+    public function studentConfirmUpi(Request $request, $token)
+    {
+        $request->validate([
+            'transaction_id' => 'required|string|min:8|max:25'
+        ]);
+        
+        $payment = Payment::where('payment_token', $token)
+                        ->where('status', 'pending')
+                        ->firstOrFail();
+        
+        $payment->update([
+            'status' => 'completed',
+            'gateway_payment_id' => $request->transaction_id,
+            'gateway_response' => [
+                'upi_transaction_id' => $request->transaction_id,
+                'payment_method' => 'upi_qr_student',
+                'confirmed_at' => now(),
+                'confirmed_by_student' => true
+            ],
+            'paid_at' => now()
+        ]);
+        
+        return view('payment.success', compact('payment'));
+    }
+
 }
