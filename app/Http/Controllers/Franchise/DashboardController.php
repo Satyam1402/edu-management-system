@@ -1,64 +1,146 @@
 <?php
+
 namespace App\Http\Controllers\Franchise;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use App\Models\Student;
-use App\Models\Course;
 use App\Models\Certificate;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
+    /**
+     * Display franchise dashboard with real-time stats
+     */
     public function index()
     {
-        $user = Auth::user();
-
-        // Check if user has franchise assigned
-        if (!$user->franchise_id) {
-            return redirect()->route('login')->with('error', 'No franchise assigned to your account. Please contact administrator.');
-        }
-
-        $franchise = $user->franchise;
-
-        if (!$franchise) {
-            return redirect()->route('login')->with('error', 'Franchise not found. Please contact administrator.');
-        }
-
-        // Get franchise-specific statistics - ALL REQUIRED KEYS
+        // Get current franchise ID from authenticated user
+        $franchiseId = Auth::user()->franchise_id;
+        
+        // Calculate all statistics
         $stats = [
-            'students' => Student::where('franchise_id', $franchise->id)->count(),
-            'active_students' => Student::where('franchise_id', $franchise->id)->where('status', 'active')->count(),
-            'courses' => Course::where('status', 'active')->count(), // ← ADDED THIS
-            'certificates' => Certificate::whereHas('student', function($query) use ($franchise) { // ← ADDED THIS
-                $query->where('franchise_id', $franchise->id);
-            })->count(),
-
-            // Additional stats for later use
-            'completed_students' => Student::where('franchise_id', $franchise->id)->where('status', 'graduated')->count(),
-            'total_revenue' => 0, // Will calculate when payments system is ready
-            'pending_payments' => 0, // Will calculate when payments system is ready
+            // Student Statistics
+            'total_students' => Student::where('franchise_id', $franchiseId)->count(),
+            'active_students' => Student::where('franchise_id', $franchiseId)
+                                       ->where('status', 'active')
+                                       ->count(),
+            'graduated_students' => Student::where('franchise_id', $franchiseId)
+                                          ->where('status', 'graduated')
+                                          ->count(),
+            'dropped_students' => Student::where('franchise_id', $franchiseId)
+                                        ->where('status', 'dropped')
+                                        ->count(),
+            
+            // Certificate Statistics
+            'total_certificates' => Certificate::whereHas('student', function($query) use ($franchiseId) {
+                                                  $query->where('franchise_id', $franchiseId);
+                                              })->count(),
+            'pending_certificates' => Certificate::whereHas('student', function($query) use ($franchiseId) {
+                                                    $query->where('franchise_id', $franchiseId);
+                                                })->where('status', 'pending')->count(),
+            'approved_certificates' => Certificate::whereHas('student', function($query) use ($franchiseId) {
+                                                     $query->where('franchise_id', $franchiseId);
+                                                 })->where('status', 'approved')->count(),
+            'rejected_certificates' => Certificate::whereHas('student', function($query) use ($franchiseId) {
+                                                     $query->where('franchise_id', $franchiseId);
+                                                 })->where('status', 'rejected')->count(),
+            
+            // Payment Statistics
+            'total_payments' => Payment::whereHas('student', function($query) use ($franchiseId) {
+                                       $query->where('franchise_id', $franchiseId);
+                                   })->sum('amount'),
+            'completed_payments' => Payment::whereHas('student', function($query) use ($franchiseId) {
+                                           $query->where('franchise_id', $franchiseId);
+                                       })->where('status', 'completed')->sum('amount'),
+            'pending_payments' => Payment::whereHas('student', function($query) use ($franchiseId) {
+                                         $query->where('franchise_id', $franchiseId);
+                                     })->where('status', 'pending')->sum('amount'),
+            'pending_payments_count' => Payment::whereHas('student', function($query) use ($franchiseId) {
+                                               $query->where('franchise_id', $franchiseId);
+                                           })->where('status', 'pending')->count(),
         ];
-
-        // Recent students (last 5)
-        $recent_students = Student::where('franchise_id', $franchise->id)
+        
+        // Recent Activities (Last 7 days)
+        $recentStudents = Student::where('franchise_id', $franchiseId)
+                                ->latest()
+                                ->take(5)
+                                ->get();
+        
+        $recentCertificates = Certificate::whereHas('student', function($query) use ($franchiseId) {
+                                            $query->where('franchise_id', $franchiseId);
+                                        })
+                                        ->with(['student', 'course'])
+                                        ->latest()
+                                        ->take(5)
+                                        ->get();
+        
+        $recentPayments = Payment::whereHas('student', function($query) use ($franchiseId) {
+                                     $query->where('franchise_id', $franchiseId);
+                                 })
+                                 ->with(['student'])
                                  ->latest()
                                  ->take(5)
                                  ->get();
-
-        // Available courses
-        $available_courses = Course::where('status', 'active')->take(6)->get();
-
-        // Recent certificates
-        $recent_certificates = collect(); // Empty collection for now, will populate when certificates exist
-
+        
+        // Chart Data - Monthly trend (last 6 months)
+        $chartData = $this->getChartData($franchiseId);
+        
         return view('franchise.dashboard', compact(
             'stats',
-            'recent_students',
-            'franchise',
-            'available_courses',
-            'recent_certificates'
+            'recentStudents',
+            'recentCertificates',
+            'recentPayments',
+            'chartData'
         ));
+    }
+    
+    /**
+     * Get chart data for dashboard graphs
+     */
+    private function getChartData($franchiseId)
+    {
+        $months = [];
+        $studentData = [];
+        $certificateData = [];
+        $paymentData = [];
+        
+        // Get last 6 months data
+        for ($i = 5; $i >= 0; $i--) {
+            $date = Carbon::now()->subMonths($i);
+            $months[] = $date->format('M Y');
+            
+            // Students enrolled in this month
+            $studentData[] = Student::where('franchise_id', $franchiseId)
+                                   ->whereYear('created_at', $date->year)
+                                   ->whereMonth('created_at', $date->month)
+                                   ->count();
+            
+            // Certificates issued in this month
+            $certificateData[] = Certificate::whereHas('student', function($query) use ($franchiseId) {
+                                              $query->where('franchise_id', $franchiseId);
+                                          })
+                                          ->where('status', 'approved')
+                                          ->whereYear('created_at', $date->year)
+                                          ->whereMonth('created_at', $date->month)
+                                          ->count();
+            
+            // Payments completed in this month
+            $paymentData[] = Payment::whereHas('student', function($query) use ($franchiseId) {
+                                    $query->where('franchise_id', $franchiseId);
+                                })
+                                ->where('status', 'completed')
+                                ->whereYear('created_at', $date->year)
+                                ->whereMonth('created_at', $date->month)
+                                ->sum('amount');
+        }
+        
+        return [
+            'months' => $months,
+            'students' => $studentData,
+            'certificates' => $certificateData,
+            'payments' => $paymentData
+        ];
     }
 }

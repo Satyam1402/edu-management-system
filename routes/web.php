@@ -297,7 +297,8 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
     // =============================================================================
     // CERTIFICATE MANAGEMENT (Issue for Own Students)
     // =============================================================================
-    Route::resource('certificates', FranchiseCertificateController::class)->only(['index', 'show', 'create', 'store']);
+    Route::resource('certificates', FranchiseCertificateController::class)->only(['index', 'show']);
+    Route::resource('courses', FranchiseCourseController::class)->only(['index', 'show']);
     Route::post('/certificates/{certificate}/download', [FranchiseCertificateController::class, 'download'])->name('certificates.download');
     Route::get('/certificates/student/{student}', [FranchiseCertificateController::class, 'byStudent'])->name('certificates.by-student');
 

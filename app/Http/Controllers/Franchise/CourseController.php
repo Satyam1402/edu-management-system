@@ -3,63 +3,25 @@
 namespace App\Http\Controllers\Franchise;
 
 use App\Http\Controllers\Controller;
+use App\Models\Course;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        // If you want to show only courses that the franchise is allowed to see, filter here.
+        $courses = Course::query()->get();
+        // Replace with a filter if needed, e.g., if courses are assigned to franchise
+        
+        return view('franchise.courses.index', compact('courses'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function show(Course $course)
     {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        // Optional: authorize if you have franchise-specific limits
+        
+        return view('franchise.courses.show', compact('course'));
     }
 }

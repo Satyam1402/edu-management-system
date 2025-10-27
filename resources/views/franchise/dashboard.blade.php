@@ -1,156 +1,280 @@
-{{-- resources/views/franchise/dashboard.blade.php - PROFESSIONAL DESIGN --}}
-@extends('layouts.franchise-admin')
+@extends('layouts.custom-admin')
 
-@section('title', 'Franchise Dashboard')
-@section('page-title', 'Dashboard - ' . (Auth::user()->franchise->name ?? 'Franchise'))
+@section('page-title', 'Franchise Dashboard')
+
+@section('css')
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: transform 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+    
+    .recent-list {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .list-item {
+        padding: 12px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: background 0.2s;
+    }
+    
+    .list-item:hover {
+        background: #f8f9fa;
+    }
+    
+    .list-item:last-child {
+        border-bottom: none;
+    }
+    
+    .badge-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+@endsection
 
 @section('content')
-    <!-- Professional Welcome Section -->
+<div class="container-fluid">
+    <!-- Welcome Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none; border-radius: 15px; overflow: hidden;">
-                <div class="card-body text-white p-4 position-relative">
-                    <!-- Background Pattern -->
-                    <div style="position: absolute; top: 0; right: 0; width: 200px; height: 200px; background: url('data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><circle cx=\"20\" cy=\"20\" r=\"2\" fill=\"white\" opacity=\"0.1\"/><circle cx=\"60\" cy=\"20\" r=\"2\" fill=\"white\" opacity=\"0.1\"/><circle cx=\"40\" cy=\"40\" r=\"2\" fill=\"white\" opacity=\"0.1\"/><circle cx=\"80\" cy=\"40\" r=\"2\" fill=\"white\" opacity=\"0.1\"/><circle cx=\"20\" cy=\"60\" r=\"2\" fill=\"white\" opacity=\"0.1\"/><circle cx=\"60\" cy=\"60\" r=\"2\" fill=\"white\" opacity=\"0.1\"/><circle cx=\"40\" cy=\"80\" r=\"2\" fill=\"white\" opacity=\"0.1\"/></svg>') repeat; opacity: 0.3;"></div>
+            <h2>Welcome back, {{ Auth::user()->name }}!</h2>
+            <p class="text-muted">Here's what's happening with your franchise today</p>
+        </div>
+    </div>
 
-                    <div class="row align-items-center position-relative">
-                        <div class="col-md-8">
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="mr-3">
-                                    <div style="width: 60px; height: 60px; background: rgba(255,255,255,0.2); border-radius: 15px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px);">
-                                        <i class="fas fa-building" style="font-size: 24px; color: white;"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h2 class="mb-1 font-weight-bold">Welcome back, {{ Auth::user()->name }}! 👋</h2>
-                                    <p class="mb-0 h5 font-weight-light opacity-90">{{ Auth::user()->franchise->name ?? 'Your Franchise' }}</p>
-                                </div>
-                            </div>
-                            <div class="d-flex align-items-center text-white-50">
-                                <i class="fas fa-map-marker-alt mr-2"></i>
-                                <span>{{ Auth::user()->franchise->address ?? 'Location not specified' }}</span>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-right d-none d-md-block">
-                            <i class="fas fa-graduation-cap" style="font-size: 5rem; opacity: 0.2;"></i>
-                        </div>
+    <!-- Stats Grid -->
+    <div class="row g-3 mb-4">
+        <!-- Total Students -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-number text-primary">{{ $stats['total_students'] }}</p>
+                        <p class="stat-label mb-0">Total Students</p>
+                    </div>
+                    <div class="text-primary" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Students -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-number text-success">{{ $stats['active_students'] }}</p>
+                        <p class="stat-label mb-0">Active Students</p>
+                    </div>
+                    <div class="text-success" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graduated -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-number text-info">{{ $stats['graduated_students'] }}</p>
+                        <p class="stat-label mb-0">Graduated</p>
+                    </div>
+                    <div class="text-info" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dropped -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-number text-warning">{{ $stats['dropped_students'] }}</p>
+                        <p class="stat-label mb-0">Dropped</p>
+                    </div>
+                    <div class="text-warning" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-user-times"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Enhanced Statistics Cards -->
-    <div class="row">
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-info">
-                <div class="inner">
-                    <h3 class="font-weight-bold">{{ $stats['students'] }}</h3>
-                    <p class="mb-0">My Students</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <a href="{{ route('franchise.students.index') }}" class="small-box-footer">
-                    View Details <i class="fas fa-arrow-circle-right ml-1"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-success">
-                <div class="inner">
-                    <h3 class="font-weight-bold">{{ $stats['active_students'] }}</h3>
-                    <p class="mb-0">Active Students</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-user-check"></i>
-                </div>
-                <a href="{{ route('franchise.students.index') }}?status=active" class="small-box-footer">
-                    View Active <i class="fas fa-arrow-circle-right ml-1"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-warning">
-                <div class="inner">
-                    <h3 class="font-weight-bold">{{ $stats['courses'] }}</h3>
-                    <p class="mb-0">Available Courses</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-book"></i>
-                </div>
-                <a href="{{ route('franchise.courses.index') }}" class="small-box-footer">
-                    Browse Courses <i class="fas fa-arrow-circle-right ml-1"></i>
-                </a>
-            </div>
-        </div>
-
-        <div class="col-lg-3 col-6">
-            <div class="small-box bg-danger">
-                <div class="inner">
-                    <h3 class="font-weight-bold">{{ $stats['certificates'] }}</h3>
-                    <p class="mb-0">Certificates Issued</p>
-                </div>
-                <div class="icon">
-                    <i class="fas fa-certificate"></i>
-                </div>
-                <a href="{{ route('franchise.certificates.index') }}" class="small-box-footer">
-                    View Certificates <i class="fas fa-arrow-circle-right ml-1"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Enhanced Recent Students Section -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h3 class="card-title font-weight-bold">
-                        <i class="fas fa-user-graduate mr-2 text-success"></i>Recent Students
-                    </h3>
-                    <div class="card-tools">
-                        <span class="badge badge-success">{{ count($recent_students) }} students</span>
+    <!-- Second Row Stats -->
+    <div class="row g-3 mb-4">
+        <!-- Total Certificates -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-number text-primary">{{ $stats['total_certificates'] }}</p>
+                        <p class="stat-label mb-0">Total Certificates</p>
+                    </div>
+                    <div class="text-primary" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-certificate"></i>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    @forelse($recent_students as $student)
-                        <div class="d-flex align-items-center p-3 border-bottom">
-                            <div class="mr-3">
-                                <div style="width: 45px; height: 45px; background: linear-gradient(45deg, #28a745, #20c997); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 16px; box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);">
-                                    {{ substr($student->name, 0, 1) }}
-                                </div>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="font-weight-bold text-dark">{{ $student->name }}</div>
-                                <div class="text-muted small">
-                                    <i class="fas fa-id-card mr-1"></i>{{ $student->student_id }}
-                                    <span class="mx-2">•</span>
-                                    <i class="fas fa-clock mr-1"></i>{{ $student->created_at->diffForHumans() }}
-                                </div>
-                            </div>
-                            <div>
-                                <span class="badge badge-{{ $student->status == 'active' ? 'success' : ($student->status == 'graduated' ? 'primary' : 'secondary') }} px-3 py-2">
-                                    {{ ucfirst($student->status) }}
-                                </span>
-                            </div>
-                        </div>
-                    @empty
-                        <div class="text-center py-5">
-                            <div class="mb-3">
-                                <i class="fas fa-users fa-4x text-muted"></i>
-                            </div>
-                            <h4 class="text-muted font-weight-bold">No Students Yet</h4>
-                            <p class="text-muted mb-4">Start building your student base by enrolling your first student.</p>
-                            <a href="{{ route('franchise.students.create') }}" class="btn btn-success btn-lg rounded-pill">
-                                <i class="fas fa-plus mr-2"></i>Add First Student
-                            </a>
-                        </div>
-                    @endforelse
+            </div>
+        </div>
+
+        <!-- Pending Certificates -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-number text-warning">{{ $stats['pending_certificates'] }}</p>
+                        <p class="stat-label mb-0">Pending Approval</p>
+                    </div>
+                    <div class="text-warning" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-number text-success">₹{{ number_format($stats['total_payments']) }}</p>
+                        <p class="stat-label mb-0">Total Revenue</p>
+                    </div>
+                    <div class="text-success" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Payments -->
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="stat-number text-danger">{{ $stats['pending_payments_count'] }}</p>
+                        <p class="stat-label mb-0">Pending Payments</p>
+                    </div>
+                    <div class="text-danger" style="font-size: 3rem; opacity: 0.2;">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Recent Activities -->
+    <div class="row g-3">
+        <!-- Recent Students -->
+        <div class="col-md-4">
+            <div class="recent-list">
+                <h5 class="mb-3"><i class="fas fa-user-plus text-primary mr-2"></i>Recent Students</h5>
+                @forelse($recentStudents as $student)
+                <div class="list-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ $student->name }}</strong>
+                            <small class="d-block text-muted">{{ $student->email }}</small>
+                        </div>
+                        <span class="badge-status bg-{{ $student->status == 'active' ? 'success' : 'secondary' }}">
+                            {{ ucfirst($student->status) }}
+                        </span>
+                    </div>
+                </div>
+                @empty
+                <p class="text-muted text-center py-3">No recent students</p>
+                @endforelse
+                <div class="text-center mt-3">
+                    <a href="{{ route('franchise.students.index') }}" class="btn btn-sm btn-outline-primary">
+                        View All Students <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Certificates -->
+        <div class="col-md-4">
+            <div class="recent-list">
+                <h5 class="mb-3"><i class="fas fa-certificate text-info mr-2"></i>Recent Certificates</h5>
+                @forelse($recentCertificates as $certificate)
+                <div class="list-item">
+                    <div>
+                        <strong>{{ $certificate->student->name }}</strong>
+                        <small class="d-block text-muted">{{ $certificate->course->name ?? 'N/A' }}</small>
+                        <span class="badge-status bg-{{ $certificate->status == 'approved' ? 'success' : ($certificate->status == 'pending' ? 'warning' : 'danger') }}">
+                            {{ ucfirst($certificate->status) }}
+                        </span>
+                    </div>
+                </div>
+                @empty
+                <p class="text-muted text-center py-3">No recent certificates</p>
+                @endforelse
+                <div class="text-center mt-3">
+                    <a href="{{ route('franchise.certificates.index') }}" class="btn btn-sm btn-outline-info">
+                        View All Certificates <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Payments -->
+        <div class="col-md-4">
+            <div class="recent-list">
+                <h5 class="mb-3"><i class="fas fa-rupee-sign text-success mr-2"></i>Recent Payments</h5>
+                @forelse($recentPayments as $payment)
+                <div class="list-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>{{ $payment->student->name }}</strong>
+                            <small class="d-block text-muted">₹{{ number_format($payment->amount) }}</small>
+                        </div>
+                        <span class="badge-status bg-{{ $payment->status == 'completed' ? 'success' : ($payment->status == 'pending' ? 'warning' : 'danger') }}">
+                            {{ ucfirst($payment->status) }}
+                        </span>
+                    </div>
+                </div>
+                @empty
+                <p class="text-muted text-center py-3">No recent payments</p>
+                @endforelse
+                <div class="text-center mt-3">
+                    <a href="{{ route('franchise.payments.index') }}" class="btn btn-sm btn-outline-success">
+                        View All Payments <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
