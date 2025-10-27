@@ -64,7 +64,7 @@ class Student extends Model
     // Relationships
     public function franchise()
     {
-        return $this->belongsTo(Franchise::class);
+        return $this->belongsTo(User::class, 'franchise_id');
     }
 
     public function course()

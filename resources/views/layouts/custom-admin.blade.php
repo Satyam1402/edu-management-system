@@ -228,6 +228,12 @@
                         </a>
                     </li>
 
+                   <li class="nav-item">
+                     <a href="{{ route('franchise.certificate-requests.index') }}" class="nav-link {{ request()->routeIs('franchise.certificate-requests.*') ? 'active' : '' }}">
+                        <i class="fas fa-file-signature"></i> Certificate Requests
+                     </a>
+                   </li>
+
                     <li class="nav-item">
                         <a href="{{ route($routePrefix.'.payments.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.payments.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-credit-card"></i>

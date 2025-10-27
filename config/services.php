@@ -38,6 +38,6 @@ return [
 
     'upi' => [
         'id' => env('UPI_ID', 'default@upi'),
-        'business_name' => env('BUSINESS_NAME', 'Your Business'),
+        'business_name' => env('BUSINESS_NAME', 'skills Academy'),
     ],
 ];

@@ -17,7 +17,9 @@ class CertificateController extends Controller
         if ($request->ajax()) {
             $certificates = Certificate::with('student')
                 ->whereHas('student', function ($q) {
-                    $q->where('franchise_id', Auth::user()->franchise_id);
+                    // $q->where('franchise_id', Auth::user()->franchise_id);
+                    $q->where('franchise_id', auth()->id());
+
                 })
                 ->select('certificates.*');
 
@@ -32,7 +34,7 @@ class CertificateController extends Controller
                     // Only include 'View' action to match restrictions
                     return '<a href="'.route('franchise.certificates.show', $cert).'" class="btn btn-sm btn-info">View</a>';
                 })
-                ->rawColumns(['action']) // allow html for action buttons
+                ->rawColumns(['action'])
                 ->make(true);
         }
 
@@ -44,10 +46,4 @@ class CertificateController extends Controller
         $this->authorize('view', $certificate);
         return view('franchise.certificates.show', compact('certificate'));
     }
-
-
-    // public function view(User $user, Certificate $certificate)
-    // {
-    //     return $certificate->student && $certificate->student->franchise_id === $user->franchise_id;
-    // }
 }
