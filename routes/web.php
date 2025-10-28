@@ -1,5 +1,6 @@
 <?php
-// routes/web.php (COMPLETE UPDATED VERSION WITH COMPLETE PAYMENT SYSTEM)
+// routes/web.php (COMPLETE UPDATED VERSION WITH CERTIFICATE SYSTEM)
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\ExamController;
@@ -9,14 +10,15 @@ use App\Http\Controllers\Admin\PaymentController;
 use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\FranchiseController;
 use App\Http\Controllers\Admin\CertificateController;
+use App\Http\Controllers\Admin\CertificateRequestController;
 
 // Franchise Controllers
-use App\Http\Controllers\Admin\CertificateRequestController;
 use App\Http\Controllers\Franchise\CourseController as FranchiseCourseController;
 use App\Http\Controllers\Franchise\PaymentController as FranchisePaymentController;
 use App\Http\Controllers\Franchise\StudentController as FranchiseStudentController;
 use App\Http\Controllers\Franchise\DashboardController as FranchiseDashboardController;
 use App\Http\Controllers\Franchise\CertificateController as FranchiseCertificateController;
+use App\Http\Controllers\Franchise\CertificateRequestController as FranchiseCertificateRequestController;
 
 // Public routes
 Route::get('/', function () {
@@ -58,157 +60,42 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::resource('franchises', FranchiseController::class);
     Route::post('franchises/{franchise}/create-user', [FranchiseController::class, 'createUser'])->name('franchises.create-user');
     Route::post('/franchises/{franchise}/toggle-status', [FranchiseController::class, 'toggleStatus'])->name('franchises.toggle-status');
-    Route::post('/franchises/{franchise}/create-user', [FranchiseController::class, 'createUser'])->name('franchises.create-user');
 
     // =============================================================================
     // COURSE MANAGEMENT (Global Courses)
     // =============================================================================
-
-    // Core Course CRUD Operations
     Route::resource('courses', CourseController::class);
-
-    // Course Status Management
     Route::post('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
     Route::post('/courses/{course}/toggle-featured', [CourseController::class, 'toggleFeatured'])->name('courses.toggle-featured');
     Route::post('/courses/{course}/activate', [CourseController::class, 'activate'])->name('courses.activate');
     Route::post('/courses/{course}/deactivate', [CourseController::class, 'deactivate'])->name('courses.deactivate');
     Route::post('/courses/{course}/archive', [CourseController::class, 'archive'])->name('courses.archive');
-
-    // Bulk Operations
     Route::post('/courses/bulk-action', [CourseController::class, 'bulkAction'])->name('courses.bulk-action');
     Route::post('/courses/bulk-delete', [CourseController::class, 'bulkDelete'])->name('courses.bulk-delete');
     Route::post('/courses/bulk-status-update', [CourseController::class, 'bulkStatusUpdate'])->name('courses.bulk-status-update');
-    Route::post('/courses/bulk-feature', [CourseController::class, 'bulkFeature'])->name('courses.bulk-feature');
-    Route::post('/courses/bulk-unfeature', [CourseController::class, 'bulkUnfeature'])->name('courses.bulk-unfeature');
-
-    // Import/Export Operations
     Route::get('/courses/export', [CourseController::class, 'export'])->name('courses.export');
     Route::post('/courses/import', [CourseController::class, 'import'])->name('courses.import');
-    Route::get('/courses/download-template', [CourseController::class, 'downloadTemplate'])->name('courses.download-template');
-
-    // Course Analytics & Reports
     Route::get('/courses/{course}/analytics', [CourseController::class, 'analytics'])->name('courses.analytics');
-    Route::get('/courses/{course}/performance-report', [CourseController::class, 'performanceReport'])->name('courses.performance-report');
-    Route::get('/courses/{course}/enrollment-report', [CourseController::class, 'enrollmentReport'])->name('courses.enrollment-report');
-    Route::get('/courses/{course}/revenue-report', [CourseController::class, 'revenueReport'])->name('courses.revenue-report');
-
-    // Course Relationships & Data
     Route::get('/courses/{course}/students', [CourseController::class, 'getStudents'])->name('courses.students');
-    Route::get('/courses/{course}/exams', [CourseController::class, 'getExams'])->name('courses.exams');
-    Route::get('/courses/{course}/certificates', [CourseController::class, 'getCertificates'])->name('courses.certificates');
-    Route::get('/courses/{course}/payments', [CourseController::class, 'getPayments'])->name('courses.payments');
-    Route::get('/courses/{course}/instructors', [CourseController::class, 'getInstructors'])->name('courses.instructors');
-
-    // Filtering & Search
     Route::get('/courses/category/{category}', [CourseController::class, 'byCategory'])->name('courses.by-category');
-    Route::get('/courses/level/{level}', [CourseController::class, 'byLevel'])->name('courses.by-level');
-    Route::get('/courses/status/{status}', [CourseController::class, 'byStatus'])->name('courses.by-status');
-    Route::get('/courses/featured', [CourseController::class, 'featured'])->name('courses.featured');
-    Route::get('/courses/popular', [CourseController::class, 'popular'])->name('courses.popular');
     Route::get('/courses/search', [CourseController::class, 'search'])->name('courses.search');
-
-    // Advanced Course Operations
-    Route::post('/courses/{course}/duplicate', [CourseController::class, 'duplicate'])->name('courses.duplicate');
-    Route::post('/courses/{course}/assign-instructor', [CourseController::class, 'assignInstructor'])->name('courses.assign-instructor');
-    Route::post('/courses/{course}/update-pricing', [CourseController::class, 'updatePricing'])->name('courses.update-pricing');
-    Route::post('/courses/{course}/update-curriculum', [CourseController::class, 'updateCurriculum'])->name('courses.update-curriculum');
-
-    // Course Content Management
-    Route::post('/courses/{course}/upload-material', [CourseController::class, 'uploadMaterial'])->name('courses.upload-material');
-    Route::get('/courses/{course}/materials', [CourseController::class, 'getMaterials'])->name('courses.materials');
-    Route::delete('/courses/{course}/materials/{material}', [CourseController::class, 'deleteMaterial'])->name('courses.delete-material');
-
-    // Course Settings & Configuration
-    Route::post('/courses/{course}/update-settings', [CourseController::class, 'updateSettings'])->name('courses.update-settings');
-    Route::post('/courses/{course}/reset-progress', [CourseController::class, 'resetProgress'])->name('courses.reset-progress');
-    Route::post('/courses/{course}/generate-certificates', [CourseController::class, 'generateCertificates'])->name('courses.generate-certificates');
-
-    // Course Communication
-    Route::post('/courses/{course}/send-announcement', [CourseController::class, 'sendAnnouncement'])->name('courses.send-announcement');
-    Route::post('/courses/{course}/notify-students', [CourseController::class, 'notifyStudents'])->name('courses.notify-students');
-    Route::post('/courses/{course}/send-reminder', [CourseController::class, 'sendReminder'])->name('courses.send-reminder');
-
-    // Course Enrollment Management
-    Route::post('/courses/{course}/enroll-student/{student}', [CourseController::class, 'enrollStudent'])->name('courses.enroll-student');
-    Route::post('/courses/{course}/unenroll-student/{student}', [CourseController::class, 'unenrollStudent'])->name('courses.unenroll-student');
-    Route::post('/courses/{course}/transfer-students', [CourseController::class, 'transferStudents'])->name('courses.transfer-students');
-
-    // Course Scheduling & Batches
-    Route::get('/courses/{course}/batches', [CourseController::class, 'getBatches'])->name('courses.batches');
-    Route::post('/courses/{course}/create-batch', [CourseController::class, 'createBatch'])->name('courses.create-batch');
-    Route::post('/courses/{course}/schedule-session', [CourseController::class, 'scheduleSession'])->name('courses.schedule-session');
-
-    // Course Prerequisites & Requirements
-    Route::post('/courses/{course}/update-prerequisites', [CourseController::class, 'updatePrerequisites'])->name('courses.update-prerequisites');
-    Route::post('/courses/{course}/add-requirement', [CourseController::class, 'addRequirement'])->name('courses.add-requirement');
-    Route::delete('/courses/{course}/requirements/{requirement}', [CourseController::class, 'removeRequirement'])->name('courses.remove-requirement');
-
-    // Course Reviews & Feedback
-    Route::get('/courses/{course}/reviews', [CourseController::class, 'getReviews'])->name('courses.reviews');
-    Route::post('/courses/{course}/request-feedback', [CourseController::class, 'requestFeedback'])->name('courses.request-feedback');
-    Route::get('/courses/{course}/feedback-summary', [CourseController::class, 'getFeedbackSummary'])->name('courses.feedback-summary');
 
     // =============================================================================
     // STUDENT MANAGEMENT (All Students Across All Franchises)
     // =============================================================================
-
-    // Core Student CRUD Operations
     Route::resource('students', StudentController::class);
-
-    // Bulk Operations
-    Route::post('/students/bulk-action', [StudentController::class, 'bulkAction'])->name('students.bulk-action');
-    Route::post('/students/bulk-delete', [StudentController::class, 'bulkDelete'])->name('students.bulk-delete');
-    Route::post('/students/bulk-status-update', [StudentController::class, 'bulkStatusUpdate'])->name('students.bulk-status-update');
-
-    // Import/Export Operations
-    Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
-    Route::post('/students/import', [StudentController::class, 'import'])->name('students.import');
-    Route::get('/students/download-template', [StudentController::class, 'downloadTemplate'])->name('students.download-template');
-
-    // Status Management
     Route::post('/students/{student}/toggle-status', [StudentController::class, 'toggleStatus'])->name('students.toggle-status');
     Route::post('/students/{student}/activate', [StudentController::class, 'activate'])->name('students.activate');
     Route::post('/students/{student}/deactivate', [StudentController::class, 'deactivate'])->name('students.deactivate');
-    Route::post('/students/{student}/graduate', [StudentController::class, 'graduate'])->name('students.graduate');
-    Route::post('/students/{student}/suspend', [StudentController::class, 'suspend'])->name('students.suspend');
-
-    // Student Relationships & Data
+    Route::post('/students/bulk-action', [StudentController::class, 'bulkAction'])->name('students.bulk-action');
+    Route::post('/students/bulk-delete', [StudentController::class, 'bulkDelete'])->name('students.bulk-delete');
+    Route::get('/students/export', [StudentController::class, 'export'])->name('students.export');
+    Route::post('/students/import', [StudentController::class, 'import'])->name('students.import');
     Route::get('/students/{student}/payments', [StudentController::class, 'getPayments'])->name('students.payments');
     Route::get('/students/{student}/certificates', [StudentController::class, 'getCertificates'])->name('students.certificates');
-    Route::get('/students/{student}/exams', [StudentController::class, 'getExams'])->name('students.exams');
-    Route::get('/students/{student}/attendance', [StudentController::class, 'getAttendance'])->name('students.attendance');
-    Route::get('/students/{student}/progress', [StudentController::class, 'getProgress'])->name('students.progress');
-
-    // Filtering & Search
     Route::get('/students/franchise/{franchise}', [StudentController::class, 'byFranchise'])->name('students.by-franchise');
     Route::get('/students/course/{course}', [StudentController::class, 'byCourse'])->name('students.by-course');
-    Route::get('/students/status/{status}', [StudentController::class, 'byStatus'])->name('students.by-status');
     Route::get('/students/search', [StudentController::class, 'search'])->name('students.search');
-
-    // Advanced Student Operations
-    Route::post('/students/{student}/enroll-course', [StudentController::class, 'enrollCourse'])->name('students.enroll-course');
-    Route::post('/students/{student}/transfer-franchise', [StudentController::class, 'transferFranchise'])->name('students.transfer-franchise');
-    Route::post('/students/{student}/change-course', [StudentController::class, 'changeCourse'])->name('students.change-course');
-
-    // Student Documents & Files
-    Route::post('/students/{student}/upload-document', [StudentController::class, 'uploadDocument'])->name('students.upload-document');
-    Route::get('/students/{student}/documents', [StudentController::class, 'getDocuments'])->name('students.documents');
-    Route::delete('/students/{student}/documents/{document}', [StudentController::class, 'deleteDocument'])->name('students.delete-document');
-
-    // Communication & Notifications
-    Route::post('/students/{student}/send-notification', [StudentController::class, 'sendNotification'])->name('students.send-notification');
-    Route::post('/students/{student}/send-email', [StudentController::class, 'sendEmail'])->name('students.send-email');
-    Route::post('/students/{student}/send-sms', [StudentController::class, 'sendSms'])->name('students.send-sms');
-
-    // Student Analytics & Reports
-    Route::get('/students/{student}/analytics', [StudentController::class, 'analytics'])->name('students.analytics');
-    Route::get('/students/{student}/performance-report', [StudentController::class, 'performanceReport'])->name('students.performance-report');
-    Route::get('/students/{student}/attendance-report', [StudentController::class, 'attendanceReport'])->name('students.attendance-report');
-
-    // Quick Actions (AJAX endpoints)
-    Route::post('/students/{student}/quick-note', [StudentController::class, 'addQuickNote'])->name('students.quick-note');
-    Route::post('/students/{student}/quick-payment', [StudentController::class, 'addQuickPayment'])->name('students.quick-payment');
-    Route::post('/students/{student}/quick-certificate', [StudentController::class, 'issueQuickCertificate'])->name('students.quick-certificate');
 
     // =============================================================================
     // CERTIFICATE MANAGEMENT (Issue & Approve Certificates)
@@ -221,19 +108,14 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::get('certificates-export', [CertificateController::class, 'export'])->name('certificates.export');
 
     // =============================================================================
-    // 🆕 CERTIFICATE REQUEST MANAGEMENT (NEW - Admin Approval System)
+    // CERTIFICATE REQUEST MANAGEMENT (Admin Approval System)
     // =============================================================================
-    Route::resource('certificate-requests',CertificateRequestController::class)->only(['index', 'show']);
-
-    // Certificate Request Actions
+    Route::resource('certificate-requests', CertificateRequestController::class)->only(['index', 'show']);
     Route::post('/certificate-requests/{certificateRequest}/approve', [CertificateRequestController::class, 'approve'])->name('certificate-requests.approve');
     Route::post('/certificate-requests/{certificateRequest}/reject', [CertificateRequestController::class, 'reject'])->name('certificate-requests.reject');
-
-    // Bulk Actions for Certificate Requests
     Route::post('/certificate-requests/bulk-action', [CertificateRequestController::class, 'bulkAction'])->name('certificate-requests.bulk-action');
-
-    // Quick Stats for Dashboard
     Route::get('/certificate-requests/stats', [CertificateRequestController::class, 'getStats'])->name('certificate-requests.stats');
+    Route::get('/certificate-requests/export', [CertificateRequestController::class, 'export'])->name('certificate-requests.export');
 
     // Exam Management
     Route::resource('exams', ExamController::class);
@@ -243,27 +125,15 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     // =============================================================================
     // PAYMENT MANAGEMENT (COMPLETE WITH ALL GATEWAYS)
     // =============================================================================
-
-    // Basic Payment CRUD
     Route::resource('payments', PaymentController::class);
-
-    // Payment Gateway Routes
     Route::get('payments/{payment}/razorpay', [PaymentController::class, 'handleRazorpayPayment'])->name('payments.razorpay');
     Route::get('payments/{payment}/upi', [PaymentController::class, 'handleUpiPayment'])->name('payments.upi');
     Route::post('payments/verify-razorpay', [PaymentController::class, 'verifyRazorpay'])->name('payments.verify-razorpay');
-
-    // UPI Payment Routes
     Route::post('payments/{payment}/confirm-upi', [PaymentController::class, 'confirmUpi'])->name('payments.confirm-upi');
-
-    // Payment Status Management
     Route::post('payments/{payment}/mark-completed', [PaymentController::class, 'markAsCompleted'])->name('payments.mark-completed');
     Route::post('payments/{payment}/mark-failed', [PaymentController::class, 'markAsFailed'])->name('payments.mark-failed');
     Route::get('payments/{payment}/mark-paid', [PaymentController::class, 'markAsCompleted'])->name('payments.mark-paid');
-
-    // Payment Actions
     Route::post('payments/{payment}/refund', [PaymentController::class, 'processRefund'])->name('payments.refund');
-
-    // Export & Reports
     Route::get('payments-export', [PaymentController::class, 'export'])->name('payments.export');
 
     // =============================================================================
@@ -297,82 +167,84 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franchise.')->group(function () {
 
     // Franchise Dashboard
-    Route::get('/', [App\Http\Controllers\Franchise\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/', [FranchiseDashboardController::class, 'index'])->name('dashboard');
 
     // =============================================================================
     // FRANCHISE STUDENT MANAGEMENT (Own Students Only)
     // =============================================================================
-    Route::resource('students', App\Http\Controllers\Franchise\StudentController::class);
-    Route::post('/students/{student}/toggle-status', [App\Http\Controllers\Franchise\StudentController::class, 'toggleStatus'])->name('students.toggle-status');
-    Route::get('/students/{student}/profile', [App\Http\Controllers\Franchise\StudentController::class, 'profile'])->name('students.profile');
+    Route::resource('students', FranchiseStudentController::class);
+    Route::post('/students/{student}/toggle-status', [FranchiseStudentController::class, 'toggleStatus'])->name('students.toggle-status');
+    Route::get('/students/{student}/profile', [FranchiseStudentController::class, 'profile'])->name('students.profile');
 
     // =============================================================================
     // COURSE MANAGEMENT (View Available Courses)
     // =============================================================================
-    Route::resource('courses', App\Http\Controllers\Franchise\CourseController::class)->only(['index', 'show']);
-    Route::post('/courses/{course}/enroll-student', [App\Http\Controllers\Franchise\CourseController::class, 'enrollStudent'])->name('courses.enroll-student');
+    Route::resource('courses', FranchiseCourseController::class)->only(['index', 'show']);
+    Route::post('/courses/{course}/enroll-student', [FranchiseCourseController::class, 'enrollStudent'])->name('courses.enroll-student');
 
     // =============================================================================
-    // CERTIFICATE MANAGEMENT (View Issued Certificates Only)
+    // 🆕 FRANCHISE CERTIFICATE MANAGEMENT (View & Download Issued Certificates)
     // =============================================================================
-    Route::resource('certificates', App\Http\Controllers\Franchise\CertificateController::class)->only(['index', 'show']);
-    Route::post('/certificates/{certificate}/download', [App\Http\Controllers\Franchise\CertificateController::class, 'download'])->name('certificates.download');
-    Route::get('/certificates/student/{student}', [App\Http\Controllers\Franchise\CertificateController::class, 'byStudent'])->name('certificates.by-student');
+    Route::prefix('certificates')->name('certificates.')->group(function () {
+        Route::get('/', [FranchiseCertificateController::class, 'index'])->name('index');
+        Route::get('/{certificate}', [FranchiseCertificateController::class, 'show'])->name('show');
+        Route::get('/{certificate}/download', [FranchiseCertificateController::class, 'download'])->name('download');
+        Route::get('/{certificate}/print', [FranchiseCertificateController::class, 'print'])->name('print');
+    });
 
     // =============================================================================
     // 🆕 CERTIFICATE REQUEST MANAGEMENT (Payment Required First)
     // =============================================================================
-    Route::resource('certificate-requests', App\Http\Controllers\Franchise\CertificateRequestController::class)->only(['index', 'create', 'store', 'show']);
-    Route::get('/certificate-requests/student/{student}', [App\Http\Controllers\Franchise\CertificateRequestController::class, 'createForStudent'])->name('certificate-requests.create-for-student');
-    Route::post('/certificate-requests/check-payment', [App\Http\Controllers\Franchise\CertificateRequestController::class, 'checkPayment'])->name('certificate-requests.check-payment');
+    Route::resource('certificate-requests', FranchiseCertificateRequestController::class);
+    Route::get('/certificate-requests/student/{student}', [FranchiseCertificateRequestController::class, 'createForStudent'])->name('certificate-requests.create-for-student');
+    Route::post('/certificate-requests/check-payment', [FranchiseCertificateRequestController::class, 'checkPayment'])->name('certificate-requests.check-payment');
 
     // =============================================================================
-    // 🆕 FRANCHISE PAYMENT MANAGEMENT (Simplified & Streamlined)
+    // FRANCHISE PAYMENT MANAGEMENT (Simplified & Streamlined)
     // =============================================================================
-Route::prefix('payments')->name('payments.')->group(function () {
+    Route::prefix('payments')->name('payments.')->group(function () {
+        // Basic CRUD Operations
+        Route::get('/', [FranchisePaymentController::class, 'index'])->name('index');
+        Route::get('/create', [FranchisePaymentController::class, 'create'])->name('create');
+        Route::post('/', [FranchisePaymentController::class, 'store'])->name('store');
+        Route::get('/{payment}', [FranchisePaymentController::class, 'show'])->name('show');
 
-    // ===== BASIC CRUD OPERATIONS =====
-    Route::get('/', [App\Http\Controllers\Franchise\PaymentController::class, 'index'])->name('index');
-    Route::get('/create', [App\Http\Controllers\Franchise\PaymentController::class, 'create'])->name('create');
-    Route::post('/', [App\Http\Controllers\Franchise\PaymentController::class, 'store'])->name('store');
-    Route::get('/{payment}', [App\Http\Controllers\Franchise\PaymentController::class, 'show'])->name('show');
+        // QR Code Payment Routes
+        Route::post('/generate-qr', [FranchisePaymentController::class, 'generateQR'])->name('generate-qr');
+        Route::post('/generate-payment-qr', [FranchisePaymentController::class, 'generatePaymentQR'])->name('generate-payment-qr');
 
-    // ===== QR CODE PAYMENT ROUTES (🆕 New Feature) =====
-    Route::post('/generate-qr', [App\Http\Controllers\Franchise\PaymentController::class, 'generateQR'])->name('generate-qr');
-    Route::post('/generate-payment-qr', [App\Http\Controllers\Franchise\PaymentController::class, 'generatePaymentQR'])->name('generate-payment-qr');
+        // Razorpay Integration
+        Route::get('/{payment}/pay', [FranchisePaymentController::class, 'pay'])->name('pay');
+        Route::get('/{payment}/razorpay', [FranchisePaymentController::class, 'handleRazorpayPayment'])->name('razorpay');
+        Route::post('/verify-razorpay', [FranchisePaymentController::class, 'verifyRazorpay'])->name('verify-razorpay');
 
-    // ===== RAZORPAY INTEGRATION (Enhanced) =====
-    Route::get('/{payment}/pay', [App\Http\Controllers\Franchise\PaymentController::class, 'pay'])->name('pay');
-    Route::get('/{payment}/razorpay', [App\Http\Controllers\Franchise\PaymentController::class, 'handleRazorpayPayment'])->name('razorpay');
-    Route::post('/verify-razorpay', [App\Http\Controllers\Franchise\PaymentController::class, 'verifyRazorpay'])->name('verify-razorpay');
+        // UPI Payment Routes
+        Route::get('/{payment}/upi', [FranchisePaymentController::class, 'handleUpiPayment'])->name('upi');
+        Route::post('/{payment}/confirm-upi', [FranchisePaymentController::class, 'confirmUpi'])->name('confirm-upi');
 
-    // ===== UPI PAYMENT ROUTES (🆕 QR-based UPI) =====
-    Route::get('/{payment}/upi', [App\Http\Controllers\Franchise\PaymentController::class, 'handleUpiPayment'])->name('upi');
-    Route::post('/{payment}/confirm-upi', [App\Http\Controllers\Franchise\PaymentController::class, 'confirmUpi'])->name('confirm-upi');
+        // Payment Status Management
+        Route::post('/{payment}/mark-completed', [FranchisePaymentController::class, 'markAsCompleted'])->name('mark-completed');
+        Route::post('/{payment}/mark-failed', [FranchisePaymentController::class, 'markAsFailed'])->name('mark-failed');
 
-    // ===== PAYMENT STATUS MANAGEMENT =====
-    Route::post('/{payment}/mark-completed', [App\Http\Controllers\Franchise\PaymentController::class, 'markAsCompleted'])->name('mark-completed');
-    Route::post('/{payment}/mark-failed', [App\Http\Controllers\Franchise\PaymentController::class, 'markAsFailed'])->name('mark-failed');
+        // Student-specific Payment Routes
+        Route::get('/student/{student}', [FranchisePaymentController::class, 'byStudent'])->name('by-student');
 
-    // ===== STUDENT-SPECIFIC PAYMENT ROUTES =====
-    Route::get('/student/{student}', [App\Http\Controllers\Franchise\PaymentController::class, 'byStudent'])->name('by-student');
+        // Success/Failure Callbacks
+        Route::get('/success', [FranchisePaymentController::class, 'paymentSuccess'])->name('success');
+        Route::get('/failed', [FranchisePaymentController::class, 'paymentFailed'])->name('failed');
 
-    // ===== SUCCESS/FAILURE CALLBACKS =====
-    Route::get('/success', [App\Http\Controllers\Franchise\PaymentController::class, 'paymentSuccess'])->name('success');
-    Route::get('/failed', [App\Http\Controllers\Franchise\PaymentController::class, 'paymentFailed'])->name('failed');
+        // Payment Analytics & Reports
+        Route::get('/stats/overview', [FranchisePaymentController::class, 'getStats'])->name('stats');
+        Route::get('/recent-payments', [FranchisePaymentController::class, 'getRecentPayments'])->name('recent');
 
-    // ===== PAYMENT ANALYTICS & REPORTS (🆕 Enhanced) =====
-    Route::get('/stats/overview', [App\Http\Controllers\Franchise\PaymentController::class, 'getStats'])->name('stats');
-    Route::get('/recent-payments', [App\Http\Controllers\Franchise\PaymentController::class, 'getRecentPayments'])->name('recent');
+        // Bulk Operations
+        Route::post('/bulk/mark-completed', [FranchisePaymentController::class, 'bulkMarkCompleted'])->name('bulk.completed');
+        Route::post('/bulk/export', [FranchisePaymentController::class, 'exportPayments'])->name('export');
 
-    // ===== BULK OPERATIONS (🆕 Added for efficiency) =====
-    Route::post('/bulk/mark-completed', [App\Http\Controllers\Franchise\PaymentController::class, 'bulkMarkCompleted'])->name('bulk.completed');
-    Route::post('/bulk/export', [App\Http\Controllers\Franchise\PaymentController::class, 'exportPayments'])->name('export');
-
-    // ===== PAYMENT VERIFICATION (🆕 Enhanced Security) =====
-    Route::post('/verify-qr-payment', [App\Http\Controllers\Franchise\PaymentController::class, 'verifyQrPayment'])->name('verify-qr');
-    Route::get('/{payment}/receipt', [App\Http\Controllers\Franchise\PaymentController::class, 'generateReceipt'])->name('receipt');
-});
+        // Payment Verification
+        Route::post('/verify-qr-payment', [FranchisePaymentController::class, 'verifyQrPayment'])->name('verify-qr');
+        Route::get('/{payment}/receipt', [FranchisePaymentController::class, 'generateReceipt'])->name('receipt');
+    });
 
     // =============================================================================
     // FRANCHISE REPORTS (Own Data Only)
@@ -393,12 +265,10 @@ Route::prefix('payments')->name('payments.')->group(function () {
     });
 });
 
-
 // =============================================================================
 // ADDITIONAL SHARED ROUTES (Available to both roles)
 // =============================================================================
 Route::middleware('auth')->group(function () {
-
     // Search functionality
     Route::get('/search/students', function() {
         // Global student search logic here
@@ -422,7 +292,6 @@ Route::middleware('auth')->group(function () {
 // API ROUTES (for AJAX requests)
 // =============================================================================
 Route::middleware('auth')->prefix('api')->name('api.')->group(function () {
-
     // Student API endpoints
     Route::get('/students/search', [StudentController::class, 'search'])->name('students.search');
     Route::get('/students/{student}/payments', [StudentController::class, 'getPayments'])->name('students.payments');

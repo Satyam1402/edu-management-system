@@ -1,41 +1,61 @@
-@extends('layouts.custom-admin')
+<div class="certificate-preview-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="certificate-info mb-4">
+                <h6><strong>Certificate Details</strong></h6>
+                <table class="table table-sm">
+                    <tr>
+                        <td width="150"><strong>Certificate Number:</strong></td>
+                        <td>{{ $certificate->number }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Student Name:</strong></td>
+                        <td>{{ $certificate->student->name }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Course:</strong></td>
+                        <td>{{ $certificate->course->name ?? 'General Certificate' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Issued Date:</strong></td>
+                        <td>{{ $certificate->issued_at->format('F j, Y') }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Status:</strong></td>
+                        <td>
+                            <span class="badge badge-success">
+                                <i class="fas fa-certificate"></i> {{ ucfirst($certificate->status) }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
 
-@section('page-title', 'Certificate Details')
-@section('css')
-<style>
-    .card{border-radius:15px;box-shadow:0 4px 14px #667eea16;border:none;}
-    .card-header{background:linear-gradient(135deg,#667eea,#764ba2);color:white;}
-</style>
-@endsection
+            <div class="certificate-preview">
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Certificate Preview</strong><br>
+                    This is a preview of the certificate. Click "Download PDF" to get the full certificate.
+                </div>
 
-@section('content')
-<div class="container-fluid">
-    <div class="row mb-3">
-        <div class="col">
-            <h4>Certificate Details</h4>
-        </div>
-        <div class="col text-right">
-            <a href="{{ route('franchise.certificates.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
-        </div>
-    </div>
-    <div class="card">
-        <div class="card-header">
-            {{ $certificate->title }}
-        </div>
-        <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Student</dt>
-                <dd class="col-sm-9">{{ $certificate->student->name ?? '-' }}</dd>
-
-                <dt class="col-sm-3">Issued Date</dt>
-                <dd class="col-sm-9">{{ \Carbon\Carbon::parse($certificate->issued_date)->format('d M Y') }}</dd>
-
-                <dt class="col-sm-3">Description</dt>
-                <dd class="col-sm-9">{{ $certificate->description }}</dd>
-            </dl>
-            {{-- Removed Edit button --}}
-            <a href="{{ route('franchise.certificates.index') }}" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Back</a>
+                <div class="preview-container p-4" style="border: 2px solid #ddd; background: #f9f9f9;">
+                    <div class="text-center">
+                        <h2 style="color: #2c3e50; margin-bottom: 20px;">🎓 Certificate of Completion</h2>
+                        <p style="font-size: 18px;">This is to certify that</p>
+                        <h3 style="color: #667eea; margin: 20px 0; text-decoration: underline;">
+                            {{ $certificate->student->name }}
+                        </h3>
+                        <p style="font-size: 16px;">has successfully completed the course</p>
+                        <h4 style="color: #2c3e50; margin: 15px 0;">
+                            {{ $certificate->course->name ?? 'General Course' }}
+                        </h4>
+                        <p style="font-size: 14px; color: #7f8c8d; margin-top: 30px;">
+                            Certificate No: {{ $certificate->number }}<br>
+                            Date: {{ $certificate->issued_at->format('F j, Y') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-@endsection

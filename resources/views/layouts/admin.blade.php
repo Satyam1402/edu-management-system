@@ -57,7 +57,7 @@
                     <div class="flex h-16 shrink-0 items-center">
                         <h1 class="text-xl font-bold text-gray-900">Edu Management</h1>
                     </div>
-                    @include('partials.sidebar-nav')
+                    {{-- @include('partials.sidebar-nav') --}}
                 </div>
             </div>
         </div>
@@ -69,7 +69,7 @@
             <div class="flex h-16 shrink-0 items-center">
                 <h1 class="text-xl font-bold text-gray-900">Edu Management</h1>
             </div>
-            @include('partials.sidebar-nav')
+            {{-- @include('partials.sidebar-nav') --}}
         </div>
     </div>
 

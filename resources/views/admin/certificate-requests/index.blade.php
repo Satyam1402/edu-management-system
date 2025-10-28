@@ -1,38 +1,47 @@
-@extends('layouts.admin')
+@extends('layouts.custom-admin')
 
-@section('page-title', 'Certificate Requests Management')
+@section('page-title', 'Certificate Request Management')
 
 @section('css')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap4.min.css">
 <style>
-    .card {
-        border-radius: 15px;
-        box-shadow: 0 4px 14px #667eea16;
-        border: none;
-    }
-    .card-header {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border-radius: 15px 15px 0 0;
-    }
     .status-badge {
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 12px;
+        font-size: 0.875rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
         font-weight: 600;
     }
+    .student-info {
+        line-height: 1.4;
+    }
+    .payment-info {
+        text-align: center;
+    }
+    .btn-group-actions .btn {
+        margin: 0 2px;
+        border-radius: 4px;
+    }
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        border-bottom: none;
+    }
     .stats-card {
-        transition: transform 0.3s ease;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
     }
     .stats-card:hover {
         transform: translateY(-5px);
     }
     .bulk-actions {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 8px;
-        margin-bottom: 20px;
         display: none;
+        margin-bottom: 1rem;
+    }
+    .bulk-actions.show {
+        display: block;
     }
 </style>
 @endsection
@@ -40,193 +49,178 @@
 @section('content')
 <div class="container-fluid">
 
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="text-muted mb-0">Manage and approve certificate requests</h4>
+                </div>
+                <div class="d-flex">
+                    <button type="button" class="btn btn-secondary mr-2" onclick="refreshTable()">
+                        <i class="fas fa-sync-alt mr-1"></i>Refresh
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="exportRequests()">
+                        <i class="fas fa-download mr-1"></i>Export
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Stats Cards -->
     <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card stats-card bg-warning text-white">
+        <div class="col-lg-3 col-md-6">
+            <div class="card stats-card bg-primary text-white">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between">
+                    <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <h4 class="mb-0" id="pendingCount">{{ $requests->where('status', 'pending')->count() }}</h4>
-                            <p class="mb-0">Pending Requests</p>
-                        </div>
-                        <i class="fas fa-clock fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="approvedCount">{{ $requests->where('status', 'approved')->count() }}</h4>
-                            <p class="mb-0">Approved</p>
-                        </div>
-                        <i class="fas fa-check fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card bg-danger text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="rejectedCount">{{ $requests->where('status', 'rejected')->count() }}</h4>
-                            <p class="mb-0">Rejected</p>
-                        </div>
-                        <i class="fas fa-times fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card stats-card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="mb-0" id="totalCount">{{ $requests->count() }}</h4>
+                            <h3 class="mb-0">{{ $stats['total'] }}</h3>
                             <p class="mb-0">Total Requests</p>
                         </div>
-                        <i class="fas fa-certificate fa-2x"></i>
+                        <div class="text-primary-50">
+                            <i class="fas fa-clipboard-list fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card stats-card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">{{ $stats['pending'] }}</h3>
+                            <p class="mb-0">Pending Approval</p>
+                        </div>
+                        <div class="text-warning-50">
+                            <i class="fas fa-clock fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card stats-card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">{{ $stats['approved'] }}</h3>
+                            <p class="mb-0">Approved</p>
+                        </div>
+                        <div class="text-success-50">
+                            <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="card stats-card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">{{ $stats['rejected'] }}</h3>
+                            <p class="mb-0">Rejected</p>
+                        </div>
+                        <div class="text-danger-50">
+                            <i class="fas fa-times-circle fa-2x opacity-75"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Main Card -->
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-                <i class="fas fa-certificate"></i> Certificate Requests Management
-            </h5>
-            <div>
-                <button class="btn btn-success btn-sm" id="refreshData">
-                    <i class="fas fa-sync"></i> Refresh
+    <!-- Bulk Actions -->
+    <div class="bulk-actions" id="bulk-actions">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="mb-0"><span id="selected-count">0</span> requests selected</p>
+                    </div>
+                    <div class="col-md-6 text-right">
+                        <button type="button" class="btn btn-success btn-sm mr-2" onclick="bulkApprove()">
+                            <i class="fas fa-check"></i> Bulk Approve
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="showBulkRejectModal()">
+                            <i class="fas fa-times"></i> Bulk Reject
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm ml-2" onclick="clearSelection()">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Certificate Requests DataTable -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 font-weight-bold text-white">
+                        <i class="fas fa-certificate mr-2"></i>All Certificate Requests
+                    </h6>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" class="btn btn-light" onclick="refreshTable()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button type="button" class="btn btn-light dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" onclick="filterByStatus('all')">All Requests</a>
+                            <a class="dropdown-item" href="#" onclick="filterByStatus('pending')">Pending Only</a>
+                            <a class="dropdown-item" href="#" onclick="filterByStatus('approved')">Approved Only</a>
+                            <a class="dropdown-item" href="#" onclick="filterByStatus('rejected')">Rejected Only</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped mb-0" id="certificateRequestsTable">
+                        <thead>
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox" id="select-all">
+                                </th>
+                                <th width="250">Student & Franchise</th>
+                                <th width="150">Course</th>
+                                <th width="120">Payment Status</th>
+                                <th width="100">Status</th>
+                                <th width="120">Request Date</th>
+                                <th width="150" class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Reject Modal -->
+<div class="modal fade" id="bulkRejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Reject Requests</h5>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="bulk-rejection-reason">Rejection Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="bulk-rejection-reason" rows="3"
+                              placeholder="Provide reason for bulk rejection..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmBulkReject()">
+                    <i class="fas fa-times"></i> Reject Selected
                 </button>
-            </div>
-        </div>
-        <div class="card-body">
-
-            <!-- Bulk Actions Panel -->
-            <div class="bulk-actions" id="bulkActions">
-                <h6><i class="fas fa-tasks"></i> Bulk Actions</h6>
-                <div class="d-flex justify-content-between align-items-center">
-                    <span id="selectedCount">0 requests selected</span>
-                    <div>
-                        <button class="btn btn-success btn-sm" id="bulkApprove">
-                            <i class="fas fa-check"></i> Approve Selected
-                        </button>
-                        <button class="btn btn-danger btn-sm" id="bulkReject">
-                            <i class="fas fa-times"></i> Reject Selected
-                        </button>
-                        <button class="btn btn-secondary btn-sm" id="clearSelection">Clear</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Filter Section -->
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <select class="form-control" id="statusFilter">
-                        <option value="">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-control" id="franchiseFilter">
-                        <option value="">All Franchises</option>
-                        @foreach($franchises as $franchise)
-                            <option value="{{ $franchise->id }}">{{ $franchise->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <input type="text" class="form-control" id="searchFilter" placeholder="Search by student name or email...">
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-secondary w-100" id="clearFilters">Clear Filters</button>
-                </div>
-            </div>
-
-            <!-- Requests Table -->
-            <div class="table-responsive">
-                <table class="table table-striped" id="requests-table">
-                    <thead class="thead-light">
-                        <tr>
-                            <th width="30">
-                                <input type="checkbox" id="selectAll">
-                            </th>
-                            <th>#</th>
-                            <th>Franchise</th>
-                            <th>Student</th>
-                            <th>Certificate Type</th>
-                            <th>Payment</th>
-                            <th>Status</th>
-                            <th>Request Date</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- DataTables will populate this -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Approve Modal -->
-<div class="modal fade" id="approveModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Approve Certificate Request</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="approveForm">
-                    <div class="form-group">
-                        <label>Certificate Title</label>
-                        <input type="text" class="form-control" name="title" value="Certificate of Completion">
-                    </div>
-                    <div class="form-group">
-                        <label>Description</label>
-                        <textarea class="form-control" name="description" rows="3">This certifies that the student has successfully completed the requirements.</textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmApprove">Approve & Issue Certificate</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Reject Modal -->
-<div class="modal fade" id="rejectModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Reject Certificate Request</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="rejectForm">
-                    <div class="form-group">
-                        <label>Rejection Reason (Optional)</label>
-                        <textarea class="form-control" name="rejection_reason" rows="3" placeholder="Enter reason for rejection..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmReject">Reject Request</button>
             </div>
         </div>
     </div>
@@ -236,176 +230,203 @@
 @section('js')
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
+
 <script>
 $(document).ready(function() {
-    let selectedRequests = [];
-    let currentRequestId = null;
-
-    // Initialize DataTable
-    const table = $('#requests-table').DataTable({
+    window.certificateRequestsTable = $('#certificateRequestsTable').DataTable({
         processing: true,
         serverSide: true,
-        ajax: {
-            url: '{{ route("admin.certificate-requests.index") }}',
-            data: function(d) {
-                d.status = $('#statusFilter').val();
-                d.franchise_id = $('#franchiseFilter').val();
-                d.search = $('#searchFilter').val();
-            }
-        },
+        ajax: "{{ route('admin.certificate-requests.index') }}",
         columns: [
-            { data: 'checkbox', name: 'checkbox', orderable: false, searchable: false },
-            { data: 'DT_RowIndex', name: 'DT_RowIndex' },
-            { data: 'franchise_name', name: 'franchise.name' },
+            {
+                data: 'id',
+                name: 'id',
+                orderable: false,
+                searchable: false,
+                render: function(data) {
+                    return `<input type="checkbox" class="select-row" value="${data}">`;
+                }
+            },
             { data: 'student_info', name: 'student.name' },
-            { data: 'course.name', name: 'course.name', defaultContent: 'General Certificate' },
-            { data: 'payment_status', name: 'payment_status', orderable: false },
+            { data: 'course_info', name: 'course.name', orderable: false },
+            { data: 'payment_info', name: 'payment.status', orderable: false, className: 'payment-info' },
             { data: 'status_badge', name: 'status' },
-            { data: 'requested_at', name: 'requested_at' },
-            { data: 'action', name: 'action', orderable: false, searchable: false }
+            { data: 'request_date', name: 'created_at' },
+            { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-center' }
         ],
-        order: [[7, 'desc']], // Order by request date
-        pageLength: 25
-    });
-
-    // Filter functionality
-    $('#statusFilter, #franchiseFilter').on('change', function() {
-        table.draw();
-    });
-
-    $('#searchFilter').on('keyup', function() {
-        table.draw();
-    });
-
-    $('#clearFilters').on('click', function() {
-        $('#statusFilter, #franchiseFilter, #searchFilter').val('');
-        table.draw();
-    });
-
-    // Refresh data
-    $('#refreshData').on('click', function() {
-        table.ajax.reload();
-    });
-
-    // Selection handling
-    $(document).on('change', '.request-checkbox', function() {
-        const requestId = $(this).val();
-        if ($(this).is(':checked')) {
-            selectedRequests.push(requestId);
-        } else {
-            selectedRequests = selectedRequests.filter(id => id !== requestId);
+        order: [[5, 'desc']],
+        responsive: true,
+        pageLength: 25,
+        language: {
+            processing: "Loading certificate requests...",
+            emptyTable: "No certificate requests found"
+        },
+        drawCallback: function() {
+            updateBulkActions();
         }
+    });
+
+    // Select all functionality
+    $('#select-all').on('change', function() {
+        $('.select-row').prop('checked', this.checked);
         updateBulkActions();
     });
 
-    $('#selectAll').on('change', function() {
-        $('.request-checkbox').prop('checked', $(this).is(':checked'));
-        selectedRequests = $(this).is(':checked') ?
-            $('.request-checkbox').map(function() { return $(this).val(); }).get() : [];
+    // Individual checkbox functionality
+    $(document).on('change', '.select-row', function() {
         updateBulkActions();
     });
+});
 
-    function updateBulkActions() {
-        const count = selectedRequests.length;
-        if (count > 0) {
-            $('#bulkActions').show();
-            $('#selectedCount').text(`${count} request${count > 1 ? 's' : ''} selected`);
-        } else {
-            $('#bulkActions').hide();
-        }
+function updateBulkActions() {
+    const selected = $('.select-row:checked').length;
+    $('#selected-count').text(selected);
+
+    if (selected > 0) {
+        $('#bulk-actions').addClass('show');
+    } else {
+        $('#bulk-actions').removeClass('show');
     }
 
-    // Individual actions
-    window.approveRequest = function(id) {
-        currentRequestId = id;
-        $('#approveModal').modal('show');
-    };
+    // Update select all checkbox
+    const total = $('.select-row').length;
+    $('#select-all').prop('checked', selected === total && total > 0);
+}
 
-    window.rejectRequest = function(id) {
-        currentRequestId = id;
-        $('#rejectModal').modal('show');
-    };
+function clearSelection() {
+    $('.select-row, #select-all').prop('checked', false);
+    updateBulkActions();
+}
 
-    // Confirm approve
-    $('#confirmApprove').on('click', function() {
-        const formData = $('#approveForm').serialize();
-        $.post(`/admin/certificate-requests/${currentRequestId}/approve`, formData)
-            .done(function(response) {
-                if (response.success) {
-                    $('#approveModal').modal('hide');
-                    table.ajax.reload();
-                    showAlert('success', response.message);
-                } else {
-                    showAlert('error', response.message);
-                }
-            })
-            .fail(function() {
-                showAlert('error', 'An error occurred while approving the request.');
-            });
-    });
+function refreshTable() {
+    certificateRequestsTable.ajax.reload();
+}
 
-    // Confirm reject
-    $('#confirmReject').on('click', function() {
-        const formData = $('#rejectForm').serialize();
-        $.post(`/admin/certificate-requests/${currentRequestId}/reject`, formData)
-            .done(function(response) {
-                if (response.success) {
-                    $('#rejectModal').modal('hide');
-                    table.ajax.reload();
-                    showAlert('success', response.message);
-                } else {
-                    showAlert('error', response.message);
-                }
-            })
-            .fail(function() {
-                showAlert('error', 'An error occurred while rejecting the request.');
-            });
-    });
+function filterByStatus(status) {
+    if (status === 'all') {
+        certificateRequestsTable.search('').draw();
+    } else {
+        certificateRequestsTable.search(status).draw();
+    }
+}
 
-    // Bulk actions
-    $('#bulkApprove').on('click', function() {
-        if (confirm('Are you sure you want to approve all selected requests?')) {
-            performBulkAction('approve');
-        }
-    });
+function bulkApprove() {
+    const selected = getSelectedIds();
+    if (selected.length === 0) {
+        alert('Please select requests to approve.');
+        return;
+    }
 
-    $('#bulkReject').on('click', function() {
-        if (confirm('Are you sure you want to reject all selected requests?')) {
-            performBulkAction('reject');
-        }
-    });
-
-    function performBulkAction(action) {
-        $.post('{{ route("admin.certificate-requests.bulk-action") }}', {
-            action: action,
-            requests: selectedRequests,
-            _token: '{{ csrf_token() }}'
-        })
-        .done(function(response) {
+    if (confirm(`Are you sure you want to approve ${selected.length} certificate request(s)?`)) {
+        $.post("{{ route('admin.certificate-requests.bulk-action') }}", {
+            _token: '{{ csrf_token() }}',
+            action: 'approve',
+            request_ids: selected
+        }).done(function(response) {
             if (response.success) {
-                selectedRequests = [];
-                $('#bulkActions').hide();
-                table.ajax.reload();
                 showAlert('success', response.message);
+                certificateRequestsTable.ajax.reload();
+                clearSelection();
             } else {
                 showAlert('error', response.message);
             }
-        })
-        .fail(function() {
-            showAlert('error', 'An error occurred while processing the requests.');
+        }).fail(function() {
+            showAlert('error', 'Error processing bulk approval.');
         });
     }
+}
 
-    $('#clearSelection').on('click', function() {
-        selectedRequests = [];
-        $('.request-checkbox, #selectAll').prop('checked', false);
-        $('#bulkActions').hide();
-    });
-
-    function showAlert(type, message) {
-        // Implement your alert system here
-        alert(message);
+function showBulkRejectModal() {
+    const selected = getSelectedIds();
+    if (selected.length === 0) {
+        alert('Please select requests to reject.');
+        return;
     }
-});
+    $('#bulkRejectModal').modal('show');
+}
+
+function confirmBulkReject() {
+    const selected = getSelectedIds();
+    const reason = $('#bulk-rejection-reason').val();
+
+    if (!reason.trim()) {
+        alert('Please provide a rejection reason.');
+        return;
+    }
+
+    $.post("{{ route('admin.certificate-requests.bulk-action') }}", {
+        _token: '{{ csrf_token() }}',
+        action: 'reject',
+        request_ids: selected,
+        reason: reason
+    }).done(function(response) {
+        if (response.success) {
+            showAlert('success', response.message);
+            certificateRequestsTable.ajax.reload();
+            clearSelection();
+            $('#bulkRejectModal').modal('hide');
+            $('#bulk-rejection-reason').val('');
+        } else {
+            showAlert('error', response.message);
+        }
+    }).fail(function() {
+        showAlert('error', 'Error processing bulk rejection.');
+    });
+}
+
+function getSelectedIds() {
+    return $('.select-row:checked').map(function() {
+        return $(this).val();
+    }).get();
+}
+
+function exportRequests() {
+    window.location.href = "{{ route('admin.certificate-requests.export') }}";
+}
+
+function showAlert(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+
+    const toast = $(`
+        <div class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
+            <div class="alert ${alertClass} alert-dismissible fade show">
+                <i class="fas ${icon}"></i> ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        </div>
+    `);
+
+    $('body').append(toast);
+    setTimeout(() => toast.find('.alert').alert('close'), 5000);
+}
+
+// Individual action functions (called from DataTable buttons)
+function approveRequest(requestId) {
+    if (confirm('Are you sure you want to approve this certificate request?')) {
+        $.post(`/admin/certificate-requests/${requestId}/approve`, {
+            _token: '{{ csrf_token() }}'
+        }).done(function(response) {
+            if (response.success) {
+                showAlert('success', response.message);
+                certificateRequestsTable.ajax.reload();
+            } else {
+                showAlert('error', response.message);
+            }
+        }).fail(function() {
+            showAlert('error', 'Error approving request.');
+        });
+    }
+}
+
+function showRejectModal(requestId) {
+    // You can implement individual reject modal here if needed
+    // Or redirect to the detailed view for individual actions
+    window.location.href = `/admin/certificate-requests/${requestId}`;
+}
 </script>
 @endsection

@@ -1,371 +1,597 @@
-@extends('layouts.admin')
+@extends('layouts.custom-admin')
 
 @section('page-title', 'Certificate Request Details')
 
 @section('css')
 <style>
-    .card {
-        border-radius: 15px;
-        box-shadow: 0 4px 14px #667eea16;
+    .detail-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         border: none;
+        margin-bottom: 20px;
+        transition: transform 0.2s ease;
     }
-    .card-header {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        border-radius: 15px 15px 0 0;
+    .detail-card:hover {
+        transform: translateY(-2px);
     }
     .status-badge {
+        font-size: 1.1rem;
         padding: 8px 16px;
         border-radius: 20px;
-        font-size: 14px;
         font-weight: 600;
     }
-    .status-pending { background-color: #fff3cd; color: #856404; }
-    .status-approved { background-color: #d4edda; color: #155724; }
-    .status-rejected { background-color: #f8d7da; color: #721c24; }
-    .info-section {
-        background-color: #f8f9fa;
-        padding: 20px;
-        border-radius: 8px;
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: linear-gradient(to bottom, #007bff, #6c757d);
+    }
+    .timeline-item {
+        position: relative;
         margin-bottom: 20px;
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .info-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -23px;
+        top: 20px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #007bff;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #007bff;
     }
-    .info-row:last-child {
-        border-bottom: none;
+    .timeline-item.success::before {
+        background: #28a745;
+        box-shadow: 0 0 0 2px #28a745;
     }
-    .info-label {
-        font-weight: 600;
-        color: #666;
-        min-width: 150px;
+    .timeline-item.danger::before {
+        background: #dc3545;
+        box-shadow: 0 0 0 2px #dc3545;
     }
-    .info-value {
-        flex: 1;
-        text-align: right;
+    .timeline-item.warning::before {
+        background: #ffc107;
+        box-shadow: 0 0 0 2px #ffc107;
     }
     .action-buttons {
         position: sticky;
         top: 20px;
-        background: white;
-        padding: 20px;
+    }
+    .card-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white;
+        border-bottom: none;
+        border-radius: 10px 10px 0 0 !important;
+    }
+    .info-icon {
+        width: 40px;
+        height: 40px;
+        background: #e3f2fd;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+    }
+    .info-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border-left: 4px solid #007bff;
+    }
+    .quick-stat {
+        text-align: center;
+        padding: 1rem;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border-radius: 10px;
+        transition: all 0.3s ease;
+    }
+    .quick-stat:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .alert-custom {
+        border-radius: 10px;
+        border: none;
         box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .approval-section {
-        background: linear-gradient(135deg, #28a745, #20c997);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
-    }
-    .rejection-section {
-        background: linear-gradient(135deg, #dc3545, #fd7e14);
-        color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
     }
 </style>
 @endsection
 
 @section('content')
 <div class="container-fluid">
+
+    {{-- HEADER --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="text-muted mb-0">Review and manage certificate request details</h4>
+                    <nav aria-label="breadcrumb" class="mt-2">
+                        <ol class="breadcrumb bg-transparent p-0 mb-0">
+                            <li class="breadcrumb-item">
+                                <a href="{{ route('admin.certificate-requests.index') }}">Certificate Requests</a>
+                            </li>
+                            <li class="breadcrumb-item active">Request #{{ $certificateRequest->id }}</li>
+                        </ol>
+                    </nav>
+                </div>
+                <div>
+                    <a href="{{ route('admin.certificate-requests.index') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left mr-1"></i>Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
-        <div class="col-md-8">
-            <!-- Request Details Card -->
-            <div class="card">
+        {{-- MAIN DETAILS --}}
+        <div class="col-lg-8">
+
+            {{-- REQUEST OVERVIEW --}}
+            <div class="card detail-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-certificate"></i> Certificate Request #{{ $certificateRequest->id }}
-                    </h5>
-                    <span class="status-badge status-{{ $certificateRequest->status }}">
-                        {{ ucfirst($certificateRequest->status) }}
+                    <h6 class="mb-0 font-weight-bold">
+                        <i class="fas fa-certificate mr-2"></i>Request Overview
+                    </h6>
+                    @php
+                        $statusColors = [
+                            'pending' => 'warning',
+                            'approved' => 'success',
+                            'rejected' => 'danger',
+                            'issued' => 'info'
+                        ];
+                        $statusIcons = [
+                            'pending' => 'clock',
+                            'approved' => 'check-circle',
+                            'rejected' => 'times-circle',
+                            'issued' => 'certificate'
+                        ];
+                        $color = $statusColors[$certificateRequest->status] ?? 'secondary';
+                        $icon = $statusIcons[$certificateRequest->status] ?? 'question';
+                    @endphp
+                    <span class="badge badge-{{ $color }} status-badge">
+                        <i class="fas fa-{{ $icon }} mr-1"></i>{{ ucfirst($certificateRequest->status) }}
                     </span>
                 </div>
                 <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-hashtag text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Request ID</h6>
+                                    <strong>#{{ $certificateRequest->id }}</strong>
+                                </div>
+                            </div>
 
-                    <!-- Franchise Information -->
-                    <div class="info-section">
-                        <h6 class="mb-3"><i class="fas fa-building"></i> Franchise Information</h6>
-                        <div class="info-row">
-                            <span class="info-label">Franchise Name:</span>
-                            <span class="info-value">{{ $certificateRequest->franchise->name }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Franchise Email:</span>
-                            <span class="info-value">{{ $certificateRequest->franchise->email }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Contact Number:</span>
-                            <span class="info-value">{{ $certificateRequest->franchise->phone ?? 'N/A' }}</span>
-                        </div>
-                    </div>
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-calendar text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Request Date</h6>
+                                    <strong>{{ $certificateRequest->created_at->format('d M Y, h:i A') }}</strong>
+                                </div>
+                            </div>
 
-                    <!-- Student Information -->
-                    <div class="info-section">
-                        <h6 class="mb-3"><i class="fas fa-user-graduate"></i> Student Information</h6>
-                        <div class="info-row">
-                            <span class="info-label">Student Name:</span>
-                            <span class="info-value">{{ $certificateRequest->student->name }}</span>
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-book text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Course</h6>
+                                    <strong>{{ $certificateRequest->course->name ?? 'General Certificate' }}</strong>
+                                </div>
+                            </div>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Email:</span>
-                            <span class="info-value">{{ $certificateRequest->student->email }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Phone:</span>
-                            <span class="info-value">{{ $certificateRequest->student->phone ?? 'N/A' }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Enrollment Number:</span>
-                            <span class="info-value">{{ $certificateRequest->student->enrollment_number ?? 'N/A' }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Student Status:</span>
-                            <span class="info-value">
-                                <span class="badge badge-{{ $certificateRequest->student->status === 'active' ? 'success' : 'warning' }}">
-                                    {{ ucfirst($certificateRequest->student->status) }}
-                                </span>
-                            </span>
-                        </div>
-                    </div>
+                        <div class="col-md-6">
+                            @if($certificateRequest->approved_at)
+                                <div class="info-row">
+                                    <div class="info-icon bg-success text-white">
+                                        <i class="fas fa-check-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 text-success">Approved Date</h6>
+                                        <strong>{{ $certificateRequest->approved_at->format('d M Y, h:i A') }}</strong>
+                                    </div>
+                                </div>
+                            @endif
 
-                    <!-- Certificate Information -->
-                    <div class="info-section">
-                        <h6 class="mb-3"><i class="fas fa-certificate"></i> Certificate Information</h6>
-                        <div class="info-row">
-                            <span class="info-label">Certificate Type:</span>
-                            <span class="info-value">{{ $certificateRequest->course->name ?? 'General Certificate' }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Request Date:</span>
-                            <span class="info-value">{{ $certificateRequest->requested_at->format('M d, Y H:i A') }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Days Since Request:</span>
-                            <span class="info-value">{{ $certificateRequest->requested_at->diffInDays(now()) }} days ago</span>
-                        </div>
-                        @if($certificateRequest->note)
-                        <div class="info-row">
-                            <span class="info-label">Special Note:</span>
-                            <span class="info-value">{{ $certificateRequest->note }}</span>
-                        </div>
-                        @endif
-                    </div>
+                            @if($certificateRequest->rejected_at)
+                                <div class="info-row">
+                                    <div class="info-icon bg-danger text-white">
+                                        <i class="fas fa-times-circle"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 text-danger">Rejected Date</h6>
+                                        <strong>{{ $certificateRequest->rejected_at->format('d M Y, h:i A') }}</strong>
+                                    </div>
+                                </div>
+                            @endif
 
-                    <!-- Payment Verification -->
-                    @if($certificateRequest->payment)
-                    <div class="info-section border-success">
-                        <h6 class="mb-3 text-success"><i class="fas fa-check-circle"></i> Payment Verified</h6>
-                        <div class="info-row">
-                            <span class="info-label">Payment ID:</span>
-                            <span class="info-value">
-                                <a href="{{ route('admin.payments.show', $certificateRequest->payment) }}" class="text-primary">
-                                    #{{ $certificateRequest->payment->id }}
-                                </a>
-                            </span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Amount Paid:</span>
-                            <span class="info-value"><strong>₹{{ number_format($certificateRequest->payment->amount, 2) }}</strong></span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Payment Method:</span>
-                            <span class="info-value">{{ ucfirst($certificateRequest->payment->payment_method ?? 'N/A') }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Payment Status:</span>
-                            <span class="info-value">
-                                <span class="badge badge-success">{{ ucfirst($certificateRequest->payment->status) }}</span>
-                            </span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Transaction Date:</span>
-                            <span class="info-value">{{ $certificateRequest->payment->created_at->format('M d, Y H:i A') }}</span>
-                        </div>
-                        @if($certificateRequest->payment->transaction_id)
-                        <div class="info-row">
-                            <span class="info-label">Transaction ID:</span>
-                            <span class="info-value"><code>{{ $certificateRequest->payment->transaction_id }}</code></span>
-                        </div>
-                        @endif
-                    </div>
-                    @else
-                    <div class="info-section border-warning">
-                        <h6 class="mb-3 text-warning"><i class="fas fa-exclamation-triangle"></i> Payment Not Found</h6>
-                        <p class="text-muted mb-0">No payment information is linked to this request. This may indicate an issue with the request.</p>
-                    </div>
-                    @endif
+                            @if($certificateRequest->admin_notes)
+                                <div class="info-row">
+                                    <div class="info-icon bg-info text-white">
+                                        <i class="fas fa-sticky-note"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1 text-info">Admin Notes</h6>
+                                        <p class="mb-0">{{ $certificateRequest->admin_notes }}</p>
+                                    </div>
+                                </div>
+                            @endif
 
-                    <!-- Admin Actions History -->
-                    @if($certificateRequest->status !== 'pending')
-                    <div class="info-section">
-                        <h6 class="mb-3"><i class="fas fa-history"></i> Action History</h6>
-                        <div class="info-row">
-                            <span class="info-label">Status Changed:</span>
-                            <span class="info-value">{{ $certificateRequest->updated_at->format('M d, Y H:i A') }}</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Processed By:</span>
-                            <span class="info-value">{{ auth()->user()->name }} (Admin)</span>
+                            @if($certificateRequest->rejection_reason)
+                                <div class="alert alert-danger alert-custom">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                                    <strong>Rejection Reason:</strong><br>
+                                    {{ $certificateRequest->rejection_reason }}
+                                </div>
+                            @endif
                         </div>
                     </div>
-                    @endif
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-4">
-            <!-- Action Panel -->
-            @if($certificateRequest->status === 'pending')
-            <div class="action-buttons">
-                <h6><i class="fas fa-tasks"></i> Quick Actions</h6>
-
-                <!-- Approve Section -->
-                <div class="approval-section mb-3">
-                    <h6 class="mb-2"><i class="fas fa-check"></i> Approve Request</h6>
-                    <p class="small mb-3">This will create and issue the certificate automatically.</p>
-                    <button class="btn btn-light btn-block" onclick="showApprovalModal()">
-                        <i class="fas fa-check"></i> Approve & Issue Certificate
-                    </button>
+            {{-- STUDENT DETAILS --}}
+            <div class="card detail-card">
+                <div class="card-header">
+                    <h6 class="mb-0 font-weight-bold">
+                        <i class="fas fa-user mr-2"></i>Student Information
+                    </h6>
                 </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-user text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Student Name</h6>
+                                    <strong>{{ $certificateRequest->student->name }}</strong>
+                                </div>
+                            </div>
 
-                <!-- Reject Section -->
-                <div class="rejection-section">
-                    <h6 class="mb-2"><i class="fas fa-times"></i> Reject Request</h6>
-                    <p class="small mb-3">Provide a reason for rejection to the franchise.</p>
-                    <button class="btn btn-light btn-block" onclick="showRejectionModal()">
-                        <i class="fas fa-times"></i> Reject Request
-                    </button>
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-envelope text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Email</h6>
+                                    <strong>{{ $certificateRequest->student->email }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-phone text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Phone</h6>
+                                    <strong>{{ $certificateRequest->student->phone ?? 'N/A' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-building text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Franchise</h6>
+                                    <strong>{{ $certificateRequest->franchise->name ?? 'N/A' }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-calendar-alt text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Enrolled Date</h6>
+                                    <strong>{{ $certificateRequest->student->created_at->format('d M Y') }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-id-badge text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Student ID</h6>
+                                    <strong>#{{ $certificateRequest->student->id }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- PAYMENT DETAILS --}}
+            @if($certificateRequest->payment)
+            <div class="card detail-card">
+                <div class="card-header">
+                    <h6 class="mb-0 font-weight-bold">
+                        <i class="fas fa-credit-card mr-2"></i>Payment Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-icon bg-success text-white">
+                                    <i class="fas fa-rupee-sign"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Amount</h6>
+                                    <strong class="text-success">₹{{ number_format($certificateRequest->payment->amount, 2) }}</strong>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-credit-card text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Payment Method</h6>
+                                    <strong>{{ ucfirst($certificateRequest->payment->gateway) }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            @php
+                                $paymentStatusColor = $certificateRequest->payment->status === 'completed' ? 'success' : 'warning';
+                                $paymentIcon = $certificateRequest->payment->status === 'completed' ? 'check-circle' : 'clock';
+                            @endphp
+                            <div class="info-row">
+                                <div class="info-icon bg-{{ $paymentStatusColor }} text-white">
+                                    <i class="fas fa-{{ $paymentIcon }}"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Payment Status</h6>
+                                    <span class="badge badge-{{ $paymentStatusColor }} status-badge">
+                                        {{ ucfirst($certificateRequest->payment->status) }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="info-row">
+                                <div class="info-icon">
+                                    <i class="fas fa-calendar text-primary"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1">Payment Date</h6>
+                                    <strong>{{ $certificateRequest->payment->created_at->format('d M Y, h:i A') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if($certificateRequest->payment->gateway_payment_id)
+                        <div class="alert alert-info alert-custom mt-3">
+                            <i class="fas fa-receipt mr-2"></i>
+                            <strong>Transaction ID:</strong> {{ $certificateRequest->payment->gateway_payment_id }}
+                        </div>
+                    @endif
                 </div>
             </div>
             @else
-            <!-- Status Display -->
-            <div class="action-buttons">
-                <h6><i class="fas fa-info-circle"></i> Request Status</h6>
-                @if($certificateRequest->status === 'approved')
-                <div class="alert alert-success">
-                    <i class="fas fa-check-circle"></i> <strong>Approved</strong><br>
-                    Certificate has been issued successfully.
+            <div class="card detail-card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-exclamation-triangle text-warning fa-4x mb-4"></i>
+                    <h5 class="text-warning mb-3">No Payment Found</h5>
+                    <p class="text-muted">This certificate request doesn't have an associated payment.</p>
                 </div>
-                @else
-                <div class="alert alert-danger">
-                    <i class="fas fa-times-circle"></i> <strong>Rejected</strong><br>
-                    This request was rejected by admin.
-                </div>
-                @endif
             </div>
             @endif
 
-            <!-- Related Links -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-link"></i> Related Information</h6>
-                </div>
-                <div class="card-body">
-                    <div class="d-grid gap-2">
-                        <a href="{{ route('admin.students.show', $certificateRequest->student) }}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-user"></i> View Student Profile
-                        </a>
-                        <a href="{{ route('admin.franchises.show', $certificateRequest->franchise) }}" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-building"></i> View Franchise Details
-                        </a>
-                        @if($certificateRequest->payment)
-                        <a href="{{ route('admin.payments.show', $certificateRequest->payment) }}" class="btn btn-outline-success btn-sm">
-                            <i class="fas fa-receipt"></i> View Payment Details
-                        </a>
+        </div>
+
+        {{-- ACTION SIDEBAR --}}
+        <div class="col-lg-4">
+            <div class="action-buttons">
+
+                {{-- QUICK ACTIONS --}}
+                @if($certificateRequest->status === 'pending')
+                <div class="card detail-card">
+                    <div class="card-header">
+                        <h6 class="mb-0 font-weight-bold">
+                            <i class="fas fa-cogs mr-2"></i>Quick Actions
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        @if($certificateRequest->payment && $certificateRequest->payment->status === 'completed')
+                            <button class="btn btn-success btn-block mb-3 btn-lg" onclick="approveRequest({{ $certificateRequest->id }})">
+                                <i class="fas fa-check mr-2"></i>Approve Request
+                            </button>
+                        @else
+                            <div class="alert alert-warning alert-custom">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Payment Required</strong><br>
+                                <small>Payment must be completed before approval.</small>
+                            </div>
                         @endif
-                        @if($certificateRequest->course)
-                        <a href="{{ route('admin.courses.show', $certificateRequest->course) }}" class="btn btn-outline-warning btn-sm">
-                            <i class="fas fa-book"></i> View Course Details
-                        </a>
-                        @endif
+
+                        <button class="btn btn-danger btn-block btn-lg" onclick="showRejectModal({{ $certificateRequest->id }})">
+                            <i class="fas fa-times mr-2"></i>Reject Request
+                        </button>
                     </div>
                 </div>
-            </div>
+                @endif
 
-            <!-- Quick Stats -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Quick Stats</h6>
+                {{-- QUICK STATS --}}
+                <div class="card detail-card">
+                    <div class="card-header">
+                        <h6 class="mb-0 font-weight-bold">
+                            <i class="fas fa-chart-line mr-2"></i>Quick Stats
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="quick-stat">
+                                    <i class="fas fa-calendar-day text-primary fa-2x mb-2"></i>
+                                    <h6 class="mb-1">{{ $certificateRequest->created_at->diffForHumans() }}</h6>
+                                    <small class="text-muted">Request Age</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="quick-stat">
+                                    <i class="fas fa-building text-info fa-2x mb-2"></i>
+                                    <h6 class="mb-1">{{ $certificateRequest->franchise->name ?? 'N/A' }}</h6>
+                                    <small class="text-muted">Franchise</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <small class="text-muted">Franchise Statistics:</small>
-                    <ul class="list-unstyled mt-2">
-                        <li><i class="fas fa-users text-info"></i> Students: <span class="float-right">{{ $certificateRequest->franchise->students_count ?? 0 }}</span></li>
-                        <li><i class="fas fa-certificate text-success"></i> Total Requests: <span class="float-right">{{ $certificateRequest->franchise->certificate_requests_count ?? 0 }}</span></li>
-                        <li><i class="fas fa-credit-card text-warning"></i> Payments: <span class="float-right">₹{{ number_format($certificateRequest->franchise->total_payments ?? 0, 2) }}</span></li>
-                    </ul>
+
+                {{-- ACTIVITY TIMELINE --}}
+                <div class="card detail-card">
+                    <div class="card-header">
+                        <h6 class="mb-0 font-weight-bold">
+                            <i class="fas fa-history mr-2"></i>Activity Timeline
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <h6 class="mb-1"><i class="fas fa-plus-circle text-primary mr-2"></i>Request Created</h6>
+                                <small class="text-muted">{{ $certificateRequest->created_at->format('d M Y, h:i A') }}</small>
+                                <p class="mb-0 small mt-1">Certificate request submitted by franchise.</p>
+                            </div>
+
+                            @if($certificateRequest->payment)
+                            <div class="timeline-item {{ $certificateRequest->payment->status === 'completed' ? 'success' : 'warning' }}">
+                                <h6 class="mb-1">
+                                    <i class="fas fa-{{ $certificateRequest->payment->status === 'completed' ? 'check-circle' : 'clock' }} mr-2"></i>
+                                    Payment {{ ucfirst($certificateRequest->payment->status) }}
+                                </h6>
+                                <small class="text-muted">{{ $certificateRequest->payment->created_at->format('d M Y, h:i A') }}</small>
+                                <p class="mb-0 small mt-1">Payment of ₹{{ $certificateRequest->payment->amount }} {{ $certificateRequest->payment->status }}.</p>
+                            </div>
+                            @endif
+
+                            @if($certificateRequest->approved_at)
+                            <div class="timeline-item success">
+                                <h6 class="mb-1"><i class="fas fa-check-circle text-success mr-2"></i>Request Approved</h6>
+                                <small class="text-muted">{{ $certificateRequest->approved_at->format('d M Y, h:i A') }}</small>
+                                <p class="mb-0 small mt-1">Certificate request approved by admin.</p>
+                            </div>
+                            @endif
+
+                            @if($certificateRequest->rejected_at)
+                            <div class="timeline-item danger">
+                                <h6 class="mb-1"><i class="fas fa-times-circle text-danger mr-2"></i>Request Rejected</h6>
+                                <small class="text-muted">{{ $certificateRequest->rejected_at->format('d M Y, h:i A') }}</small>
+                                <p class="mb-0 small mt-1">{{ $certificateRequest->rejection_reason }}</p>
+                            </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
+
+                {{-- ADDITIONAL INFO CARD --}}
+                @if($certificateRequest->note)
+                <div class="card detail-card">
+                    <div class="card-header">
+                        <h6 class="mb-0 font-weight-bold">
+                            <i class="fas fa-sticky-note mr-2"></i>Franchise Notes
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-0">{{ $certificateRequest->note }}</p>
+                    </div>
+                </div>
+                @endif
+
+                {{-- CERTIFICATE PREVIEW (if approved) --}}
+                @if($certificateRequest->status === 'approved' && $certificateRequest->certificate)
+                <div class="card detail-card">
+                    <div class="card-header">
+                        <h6 class="mb-0 font-weight-bold">
+                            <i class="fas fa-certificate mr-2"></i>Generated Certificate
+                        </h6>
+                    </div>
+                    <div class="card-body text-center">
+                        <i class="fas fa-certificate text-success fa-3x mb-3"></i>
+                        <h6 class="mb-2">Certificate Number</h6>
+                        <p class="mb-3 font-weight-bold">{{ $certificateRequest->certificate->certificate_number }}</p>
+
+                        <a href="{{ route('admin.certificates.show', $certificateRequest->certificate->id) }}"
+                           class="btn btn-primary btn-block">
+                            <i class="fas fa-eye mr-2"></i>View Certificate
+                        </a>
+                    </div>
+                </div>
+                @endif
+
             </div>
         </div>
     </div>
 </div>
 
-<!-- Approval Modal -->
-<div class="modal fade" id="approvalModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title"><i class="fas fa-check"></i> Approve Certificate Request</h5>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> This will automatically create and issue the certificate for <strong>{{ $certificateRequest->student->name }}</strong>.
-                </div>
-                <form id="approvalForm">
-                    @csrf
-                    <div class="form-group">
-                        <label>Certificate Title</label>
-                        <input type="text" class="form-control" name="title" value="Certificate of Completion" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Certificate Description</label>
-                        <textarea class="form-control" name="description" rows="3" required>This certifies that {{ $certificateRequest->student->name }} has successfully completed the requirements for {{ $certificateRequest->course->name ?? 'the program' }}.</textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" onclick="confirmApproval()">
-                    <i class="fas fa-check"></i> Approve & Issue Certificate
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Rejection Modal -->
-<div class="modal fade" id="rejectionModal" tabindex="-1">
-    <div class="modal-dialog">
+{{-- REJECT MODAL --}}
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title"><i class="fas fa-times"></i> Reject Certificate Request</h5>
+                <h5 class="modal-title">
+                    <i class="fas fa-times-circle mr-2"></i>Reject Certificate Request
+                </h5>
                 <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i> This request will be marked as rejected and the franchise will be notified.
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <strong>Warning:</strong> This action will reject the certificate request and notify the franchise.
                 </div>
-                <form id="rejectionForm">
-                    @csrf
+                <form id="reject-form">
+                    <input type="hidden" id="reject-request-id" value="{{ $certificateRequest->id }}">
                     <div class="form-group">
-                        <label>Rejection Reason <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="rejection_reason" rows="4" placeholder="Please provide a clear reason for rejection..." required></textarea>
-                        <small class="form-text text-muted">This reason will be visible to the franchise.</small>
+                        <label for="rejection-reason">
+                            <i class="fas fa-exclamation-triangle text-danger mr-1"></i>
+                            Rejection Reason <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" id="rejection-reason" rows="4"
+                                  placeholder="Please provide a detailed reason for rejection..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="admin-notes">
+                            <i class="fas fa-sticky-note text-info mr-1"></i>
+                            Additional Notes (Optional)
+                        </label>
+                        <textarea class="form-control" id="admin-notes" rows="3"
+                                  placeholder="Any additional notes for internal use..."></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="confirmRejection()">
-                    <i class="fas fa-times"></i> Reject Request
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-arrow-left mr-1"></i>Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="confirm-reject">
+                    <i class="fas fa-times mr-1"></i>Reject Request
                 </button>
             </div>
         </div>
@@ -375,71 +601,108 @@
 
 @section('js')
 <script>
-function showApprovalModal() {
-    $('#approvalModal').modal('show');
-}
+function approveRequest(requestId) {
+    if (confirm('Are you sure you want to approve this certificate request?\n\nThis will create a certificate for the student.')) {
+        // Show loading state
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Approving...';
+        btn.disabled = true;
 
-function showRejectionModal() {
-    $('#rejectionModal').modal('show');
-}
-
-function confirmApproval() {
-    const formData = $('#approvalForm').serialize();
-
-    $.ajax({
-        url: '{{ route("admin.certificate-requests.approve", $certificateRequest) }}',
-        method: 'POST',
-        data: formData,
-        success: function(response) {
+        $.post('/admin/certificate-requests/' + requestId + '/approve', {
+            _token: '{{ csrf_token() }}'
+        }).done(function(response) {
             if (response.success) {
-                $('#approvalModal').modal('hide');
                 showAlert('success', response.message);
-                // Reload page to show updated status
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
+                setTimeout(function() {
+                    location.reload();
+                }, 1500);
             } else {
-                showAlert('error', response.message || 'Failed to approve request');
+                showAlert('error', response.message);
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
-        },
-        error: function() {
-            showAlert('error', 'An error occurred while processing the approval');
-        }
-    });
+        }).fail(function() {
+            showAlert('error', 'Error approving request. Please try again.');
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
 }
 
-function confirmRejection() {
-    const formData = $('#rejectionForm').serialize();
-
-    $.ajax({
-        url: '{{ route("admin.certificate-requests.reject", $certificateRequest) }}',
-        method: 'POST',
-        data: formData,
-        success: function(response) {
-            if (response.success) {
-                $('#rejectionModal').modal('hide');
-                showAlert('success', response.message);
-                // Reload page to show updated status
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            } else {
-                showAlert('error', response.message || 'Failed to reject request');
-            }
-        },
-        error: function() {
-            showAlert('error', 'An error occurred while processing the rejection');
-        }
-    });
+function showRejectModal(requestId) {
+    $('#reject-request-id').val(requestId);
+    $('#rejection-reason').val('');
+    $('#admin-notes').val('');
+    $('#rejectModal').modal('show');
 }
+
+$('#confirm-reject').on('click', function() {
+    const requestId = $('#reject-request-id').val();
+    const reason = $('#rejection-reason').val();
+    const notes = $('#admin-notes').val();
+
+    if (!reason.trim()) {
+        alert('Please provide a rejection reason.');
+        $('#rejection-reason').focus();
+        return;
+    }
+
+    // Show loading state
+    const btn = $(this);
+    const originalText = btn.html();
+    btn.html('<i class="fas fa-spinner fa-spin mr-1"></i>Rejecting...').prop('disabled', true);
+
+    $.post('/admin/certificate-requests/' + requestId + '/reject', {
+        _token: '{{ csrf_token() }}',
+        reason: reason,
+        notes: notes
+    }).done(function(response) {
+        if (response.success) {
+            showAlert('success', response.message);
+            $('#rejectModal').modal('hide');
+            setTimeout(function() {
+                location.reload();
+            }, 1500);
+        } else {
+            showAlert('error', response.message);
+            btn.html(originalText).prop('disabled', false);
+        }
+    }).fail(function() {
+        showAlert('error', 'Error rejecting request. Please try again.');
+        btn.html(originalText).prop('disabled', false);
+    });
+});
 
 function showAlert(type, message) {
-    // You can integrate with your existing alert system
-    // For now, using simple alert
-    alert(message);
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
 
-    // Or if you have a toast system:
-    // toastr[type](message);
+    const alertHtml = `
+        <div class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
+            <div class="alert ${alertClass} alert-dismissible fade show alert-custom">
+                <i class="fas ${icon}"></i> ${message}
+                <button type="button" class="close" data-dismiss="alert">
+                    <span>&times;</span>
+                </button>
+            </div>
+        </div>
+    `;
+
+    $('body').append(alertHtml);
+
+    setTimeout(function() {
+        $('.alert').fadeOut(function() {
+            $(this).parent().remove();
+        });
+    }, 5000);
 }
+
+// Auto-hide alerts on click
+$(document).on('click', '.alert', function() {
+    $(this).fadeOut(function() {
+        $(this).parent().remove();
+    });
+});
 </script>
 @endsection

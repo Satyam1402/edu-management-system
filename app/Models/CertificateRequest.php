@@ -16,14 +16,26 @@ class CertificateRequest extends Model
         'payment_id',
         'status',
         'note',
-        'requested_at'
+        'requested_at',
+        // New admin approval fields
+        'approved_by',
+        'approved_at',
+        'rejected_by',
+        'rejected_at',
+        'rejection_reason',
+        'admin_notes'
     ];
 
     protected $casts = [
         'requested_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'rejected_at' => 'datetime',
     ];
 
-    // Relationships
+    // ========================================
+    // EXISTING RELATIONSHIPS (Keep as they are)
+    // ========================================
+
     public function franchise()
     {
         return $this->belongsTo(User::class, 'franchise_id');
@@ -44,7 +56,38 @@ class CertificateRequest extends Model
         return $this->belongsTo(Payment::class);
     }
 
-    // Scopes
+    // ========================================
+    // NEW ADMIN APPROVAL RELATIONSHIPS
+    // ========================================
+
+    /**
+     * Get the admin who approved this request
+     */
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    /**
+     * Get the admin who rejected this request
+     */
+    public function rejectedBy()
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    /**
+     * Get the certificate created from this request (if approved)
+     */
+    public function certificate()
+    {
+        return $this->hasOne(Certificate::class);
+    }
+
+    // ========================================
+    // EXISTING SCOPES (Keep as they are)
+    // ========================================
+
     public function scopePending($query)
     {
         return $query->where('status', 'pending');
@@ -58,5 +101,58 @@ class CertificateRequest extends Model
     public function scopeRejected($query)
     {
         return $query->where('status', 'rejected');
+    }
+
+    // ========================================
+    // NEW HELPER METHODS
+    // ========================================
+
+    /**
+     * Check if request can be approved
+     */
+    public function canBeApproved()
+    {
+        return $this->status === 'pending' &&
+               $this->payment &&
+               $this->payment->status === 'completed';
+    }
+
+    /**
+     * Check if request can be rejected
+     */
+    public function canBeRejected()
+    {
+        return $this->status === 'pending';
+    }
+
+    /**
+     * Get status color for badges
+     */
+    public function getStatusColorAttribute()
+    {
+        $colors = [
+            'pending' => 'warning',
+            'approved' => 'success',
+            'rejected' => 'danger',
+            'issued' => 'info'
+        ];
+
+        return $colors[$this->status] ?? 'secondary';
+    }
+
+    /**
+     * Get formatted status text
+     */
+    public function getStatusTextAttribute()
+    {
+        return ucfirst($this->status);
+    }
+
+    /**
+     * Check if payment is completed
+     */
+    public function hasCompletedPayment()
+    {
+        return $this->payment && $this->payment->status === 'completed';
     }
 }

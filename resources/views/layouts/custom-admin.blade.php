@@ -189,6 +189,7 @@
             <nav class="mt-2">
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
 
+                    {{-- DASHBOARD --}}
                     <li class="nav-item">
                         <a href="{{ route($routePrefix.'.dashboard') }}" class="nav-link {{ request()->routeIs($routePrefix.'.dashboard') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -198,6 +199,7 @@
 
                     <li class="nav-header text-light">MANAGEMENT</li>
 
+                    {{-- FRANCHISES (Admin Only) --}}
                     @if($isAdmin)
                         <li class="nav-item">
                             <a href="{{ route('admin.franchises.index') }}" class="nav-link {{ request()->routeIs('admin.franchises.*') ? 'active' : '' }}">
@@ -207,6 +209,7 @@
                         </li>
                     @endif
 
+                    {{-- STUDENTS --}}
                     <li class="nav-item">
                         <a href="{{ route($routePrefix.'.students.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.students.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-users"></i>
@@ -214,6 +217,7 @@
                         </a>
                     </li>
 
+                    {{-- COURSES --}}
                     <li class="nav-item">
                         <a href="{{ route($routePrefix.'.courses.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.courses.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-book"></i>
@@ -221,6 +225,7 @@
                         </a>
                     </li>
 
+                    {{-- CERTIFICATES --}}
                     <li class="nav-item">
                         <a href="{{ route($routePrefix.'.certificates.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.certificates.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-certificate"></i>
@@ -228,12 +233,33 @@
                         </a>
                     </li>
 
-                   <li class="nav-item">
-                     <a href="{{ route('franchise.certificate-requests.index') }}" class="nav-link {{ request()->routeIs('franchise.certificate-requests.*') ? 'active' : '' }}">
-                        <i class="fas fa-file-signature"></i> Certificate Requests
-                     </a>
-                   </li>
+                    {{-- CERTIFICATE REQUESTS (Role-based) --}}
+                    @if($isAdmin)
+                        {{-- ADMIN: View All Certificate Requests (with pending count) --}}
+                        <li class="nav-item">
+                            <a href="{{ route('admin.certificate-requests.index') }}" class="nav-link {{ request()->routeIs('admin.certificate-requests.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-file-signature"></i>
+                                <p>Certificate Requests
+                                    @php
+                                        $pendingCount = \App\Models\CertificateRequest::where('status', 'pending')->count();
+                                    @endphp
+                                    @if($pendingCount > 0)
+                                        <span class="badge badge-warning ml-2">{{ $pendingCount }}</span>
+                                    @endif
+                                </p>
+                            </a>
+                        </li>
+                    @elseif($isFranchise)
+                        {{-- FRANCHISE: Manage Their Certificate Requests --}}
+                        <li class="nav-item">
+                            <a href="{{ route('franchise.certificate-requests.index') }}" class="nav-link {{ request()->routeIs('franchise.certificate-requests.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-file-signature"></i>
+                                <p>Certificate Requests</p>
+                            </a>
+                        </li>
+                    @endif
 
+                    {{-- PAYMENTS --}}
                     <li class="nav-item">
                         <a href="{{ route($routePrefix.'.payments.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.payments.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-credit-card"></i>
@@ -241,6 +267,7 @@
                         </a>
                     </li>
 
+                    {{-- REPORTS --}}
                     <li class="nav-item">
                         <a href="{{ route($routePrefix.'.reports.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.reports.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-chart-bar"></i>
@@ -250,8 +277,9 @@
 
                     <li class="nav-header text-light">SETTINGS</li>
 
+                    {{-- PROFILE --}}
                     <li class="nav-item">
-                        <a href="{{ route('profile.edit') }}" class="nav-link">
+                        <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-user-cog"></i>
                             <p>Profile</p>
                         </a>

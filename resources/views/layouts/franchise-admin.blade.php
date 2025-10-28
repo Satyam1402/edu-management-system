@@ -1,4 +1,3 @@
-{{-- resources/views/layouts/franchise-admin.blade.php - PROFESSIONAL UI DESIGN --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
