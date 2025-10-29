@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Str; // 🆕 ADDED
 
 class CertificateRequestController extends Controller
 {
@@ -176,27 +177,29 @@ class CertificateRequestController extends Controller
                 'admin_notes' => $request->notes ?? null
             ]);
 
-            // Create actual certificate record using YOUR existing Certificate model structure
+            // 🆕 UPDATED: Create actual certificate record with franchise_id
             $certificate = Certificate::create([
                 'student_id' => $certificateRequest->student_id,
                 'course_id' => $certificateRequest->course_id,
-                'certificate_request_id' => $certificateRequest->id, // Link to request
-                'number' => Certificate::generateCertificateNumber($certificateRequest->student_id), // Use your 'number' field
-                'status' => 'issued', // Set as issued
-                'issued_at' => now(), // Use your 'issued_at' field
-                'issued_by' => auth()->id() // Who issued it
+                'franchise_id' => $certificateRequest->franchise_id, // 🆕 ADDED
+                'certificate_request_id' => $certificateRequest->id,
+                'number' => $this->generateCertificateNumber(), // 🆕 UPDATED
+                'status' => 'issued',
+                'issued_at' => now(),
+                'issued_by' => auth()->id()
             ]);
 
             // Log the approval
             Log::info('Certificate request approved', [
                 'request_id' => $certificateRequest->id,
                 'approved_by' => auth()->id(),
-                'certificate_id' => $certificate->id
+                'certificate_id' => $certificate->id,
+                'certificate_number' => $certificate->number
             ]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Certificate request approved successfully! Certificate created.'
+                'message' => 'Certificate request approved successfully! Certificate created with number: ' . $certificate->number
             ]);
 
         } catch (\Exception $e) {
@@ -286,12 +289,13 @@ class CertificateRequestController extends Controller
                             'approved_at' => now()
                         ]);
 
-                        // Create certificate using YOUR Certificate model structure
+                        // 🆕 UPDATED: Create certificate with franchise_id
                         Certificate::create([
                             'student_id' => $certificateRequest->student_id,
                             'course_id' => $certificateRequest->course_id,
+                            'franchise_id' => $certificateRequest->franchise_id, // 🆕 ADDED
                             'certificate_request_id' => $certificateRequest->id,
-                            'number' => Certificate::generateCertificateNumber($certificateRequest->student_id),
+                            'number' => $this->generateCertificateNumber(), // 🆕 UPDATED
                             'status' => 'issued',
                             'issued_at' => now(),
                             'issued_by' => auth()->id()
@@ -380,5 +384,17 @@ class CertificateRequestController extends Controller
         ];
 
         return response()->json($stats);
+    }
+
+    /**
+     * 🆕 Generate unique certificate number
+     */
+    private function generateCertificateNumber()
+    {
+        do {
+            $number = 'CERT-' . date('Y') . '-' . strtoupper(Str::random(6));
+        } while (Certificate::where('number', $number)->exists());
+
+        return $number;
     }
 }

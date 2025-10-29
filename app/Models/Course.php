@@ -364,4 +364,9 @@ class Course extends Model
                   ->orWhere('category', 'like', "%{$term}%");
         });
     }
+
+    public function enrollments()
+    {
+        return $this->hasMany(CourseEnrollment::class);
+    }
 }

@@ -1,4 +1,3 @@
-{{-- resources/views/layouts/custom-admin.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>

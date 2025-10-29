@@ -12,17 +12,22 @@ class Certificate extends Model
     protected $fillable = [
         'student_id',
         'course_id',
-        'certificate_request_id', // ← ADDED: Link to certificate request
-        'number', // ← Your existing certificate number field
+        'franchise_id', // 🆕 ADDED: Link to franchise
+        'certificate_request_id', // Link to certificate request
+        'number', // Certificate number field
         'status',
-        'issued_at', // ← Your existing issued_at field
-        'issued_by', // ← ADDED: Who issued the certificate
-        'valid_until' // ← ADDED: Certificate validity
+        'issued_at', // When certificate was issued
+        'issued_by', // Who issued the certificate
+        'valid_until', // Certificate validity
+        'revocation_reason', // 🆕 ADDED: Why certificate was revoked
+        'revoked_at', // 🆕 ADDED: When certificate was revoked
+        'revoked_by' // 🆕 ADDED: Who revoked the certificate
     ];
 
     protected $casts = [
         'issued_at' => 'datetime',
-        'valid_until' => 'datetime'
+        'valid_until' => 'datetime',
+        'revoked_at' => 'datetime'
     ];
 
     // ===== RELATIONSHIPS =====
@@ -44,6 +49,14 @@ class Certificate extends Model
     }
 
     /**
+     * 🆕 Get the franchise that issued this certificate
+     */
+    public function franchise()
+    {
+        return $this->belongsTo(Franchise::class);
+    }
+
+    /**
      * Get the certificate request that generated this certificate
      */
     public function certificateRequest()
@@ -57,6 +70,14 @@ class Certificate extends Model
     public function issuedBy()
     {
         return $this->belongsTo(User::class, 'issued_by');
+    }
+
+    /**
+     * 🆕 Get the user who revoked this certificate
+     */
+    public function revokedBy()
+    {
+        return $this->belongsTo(User::class, 'revoked_by');
     }
 
     // ===== SCOPES =====
@@ -96,6 +117,22 @@ class Certificate extends Model
         return $query->where('valid_until', '<=', now());
     }
 
+    /**
+     * 🆕 Scope for certificates by franchise
+     */
+    public function scopeByFranchise($query, $franchiseId)
+    {
+        return $query->where('franchise_id', $franchiseId);
+    }
+
+    /**
+     * 🆕 Scope for revoked certificates
+     */
+    public function scopeRevoked($query)
+    {
+        return $query->where('status', 'revoked');
+    }
+
     // ===== ACCESSORS =====
 
     public function getStatusBadgeAttribute(): string
@@ -104,9 +141,9 @@ class Certificate extends Model
             'requested' => '<span class="badge badge-warning">Requested</span>',
             'approved' => '<span class="badge badge-success">Approved</span>',
             'issued' => '<span class="badge badge-primary">Issued</span>',
-            'active' => '<span class="badge badge-success">Active</span>', // ← ADDED
-            'expired' => '<span class="badge badge-danger">Expired</span>', // ← ADDED
-            'revoked' => '<span class="badge badge-dark">Revoked</span>', // ← ADDED
+            'active' => '<span class="badge badge-success">Active</span>',
+            'expired' => '<span class="badge badge-danger">Expired</span>',
+            'revoked' => '<span class="badge badge-dark">Revoked</span>',
             default => '<span class="badge badge-light">Unknown</span>'
         };
     }
@@ -117,11 +154,11 @@ class Certificate extends Model
     }
 
     /**
-     * Get formatted certificate number
+     * 🆕 UPDATED: Get formatted certificate number (using the actual number field)
      */
     public function getFormattedNumberAttribute(): string
     {
-        return 'CERT-' . str_pad($this->id, 6, '0', STR_PAD_LEFT);
+        return $this->number ?? 'CERT-' . str_pad($this->id, 6, '0', STR_PAD_LEFT);
     }
 
     /**
@@ -129,6 +166,10 @@ class Certificate extends Model
      */
     public function getValidityStatusAttribute(): string
     {
+        if ($this->status === 'revoked') {
+            return 'Certificate Revoked';
+        }
+
         if (!$this->valid_until) {
             return 'Lifetime Valid';
         }
@@ -163,10 +204,22 @@ class Certificate extends Model
     }
 
     /**
+     * 🆕 Check if certificate is revoked
+     */
+    public function isRevoked(): bool
+    {
+        return $this->status === 'revoked';
+    }
+
+    /**
      * Check if certificate is currently valid
      */
     public function isValid(): bool
     {
+        if ($this->status === 'revoked') {
+            return false;
+        }
+
         if ($this->status !== 'issued' && $this->status !== 'active') {
             return false;
         }
@@ -191,17 +244,9 @@ class Certificate extends Model
     }
 
     /**
-     * Generate unique certificate number
+     * 🆕 REMOVED: generateCertificateNumber() method (moved to controller)
+     * This was causing conflicts - the controller now handles this
      */
-    public static function generateCertificateNumber($studentId = null): string
-    {
-        $prefix = 'CERT';
-        $timestamp = time();
-        $random = rand(100, 999);
-        $studentPart = $studentId ? str_pad($studentId, 4, '0', STR_PAD_LEFT) : rand(1000, 9999);
-
-        return "{$prefix}-{$timestamp}-{$studentPart}-{$random}";
-    }
 
     /**
      * Issue the certificate
@@ -224,7 +269,7 @@ class Certificate extends Model
     /**
      * Revoke the certificate
      */
-    public function revoke($reason = null): bool
+    public function revoke($reason = null, $revokedBy = null): bool
     {
         if (!$this->isIssued()) {
             return false; // Can only revoke issued certificates
@@ -234,7 +279,7 @@ class Certificate extends Model
             'status' => 'revoked',
             'revocation_reason' => $reason,
             'revoked_at' => now(),
-            'revoked_by' => auth()->id()
+            'revoked_by' => $revokedBy ?? auth()->id()
         ]);
 
         return true;
@@ -254,5 +299,40 @@ class Certificate extends Model
                 'valid_until' => null // Lifetime valid
             ]);
         }
+    }
+
+    /**
+     * 🆕 Get certificate template data for PDF generation
+     */
+    public function getTemplateData(): array
+    {
+        return [
+            'certificate_number' => $this->number,
+            'student_name' => $this->student->name ?? 'Unknown Student',
+            'course_name' => $this->course->name ?? 'General Certificate',
+            'franchise_name' => $this->franchise->name ?? 'Unknown Franchise',
+            'issued_date' => $this->issued_at ? $this->issued_at->format('F d, Y') : now()->format('F d, Y'),
+            'validity_status' => $this->validity_status,
+            'is_valid' => $this->isValid()
+        ];
+    }
+
+    /**
+     * 🆕 Get download filename
+     */
+    public function getDownloadFilename(): string
+    {
+        $studentName = str_replace(' ', '_', $this->student->name ?? 'Certificate');
+        $courseCode = $this->course ? str_replace(' ', '_', substr($this->course->name, 0, 10)) : 'General';
+
+        return "Certificate_{$studentName}_{$courseCode}_{$this->number}.pdf";
+    }
+
+    /**
+     * 🆕 Check if certificate belongs to franchise
+     */
+    public function belongsToFranchise($franchiseId): bool
+    {
+        return $this->franchise_id == $franchiseId;
     }
 }

@@ -1,149 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Certificate - {{ $certificate->number }}</title>
     <style>
         @page {
-            margin: 0;
+            margin: 15mm;
             size: A4 landscape;
         }
-        body {
-            font-family: 'Arial', sans-serif;
+
+        * {
             margin: 0;
-            padding: 40px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #333;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .certificate-container {
+
+        body {
+            font-family: 'Times New Roman', serif;
             background: white;
-            padding: 60px;
-            border-radius: 20px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+            color: #000;
+        }
+
+        .certificate-container {
+            width: 100%;
+            height: 100vh;
+            display: table;
+        }
+
+        .certificate-frame {
+            display: table-cell;
+            vertical-align: middle;
             text-align: center;
-            height: calc(100vh - 80px);
+            border: 10px solid #2c3e50;
+            padding: 50px;
             position: relative;
+            min-height: 600px;
         }
-        .header {
-            margin-bottom: 40px;
+
+        .certificate-number {
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 16px;
         }
-        .logo {
+
+        .certificate-title {
             font-size: 48px;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-        .company-name {
-            font-size: 24px;
             font-weight: bold;
             color: #2c3e50;
-            margin-bottom: 10px;
-        }
-        .title {
-            font-size: 64px;
-            font-weight: bold;
-            color: #2c3e50;
-            margin: 30px 0;
+            margin-bottom: 30px;
             text-transform: uppercase;
-            letter-spacing: 4px;
+            letter-spacing: 5px;
         }
-        .subtitle {
+
+        .decorative-line {
+            width: 250px;
+            height: 5px;
+            background: #3498db;
+            margin: 25px auto;
+        }
+
+        .certificate-subtitle {
             font-size: 24px;
             color: #7f8c8d;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
+            font-style: italic;
         }
+
         .student-name {
             font-size: 42px;
             font-weight: bold;
-            color: #667eea;
+            color: #e74c3c;
             margin: 30px 0;
-            text-decoration: underline;
+            padding: 20px;
+            border-bottom: 5px solid #3498db;
+            display: inline-block;
         }
-        .course-info {
-            font-size: 28px;
-            color: #2c3e50;
-            margin: 20px 0;
-        }
-        .completion-text {
+
+        .certificate-text {
             font-size: 20px;
-            color: #7f8c8d;
-            margin: 30px 0;
-            line-height: 1.6;
+            color: #2c3e50;
+            margin: 25px 0;
+            line-height: 1.7;
         }
-        .certificate-number {
+
+        .course-name {
+            font-size: 32px;
+            color: #27ae60;
+            font-weight: 600;
+            margin: 30px 0;
+        }
+
+        .certificate-date {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 18px;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        .seal-area {
             position: absolute;
             bottom: 40px;
             left: 60px;
-            font-size: 14px;
-            color: #95a5a6;
+            width: 100px;
+            height: 100px;
+            border: 3px solid #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #3498db;
+            font-weight: bold;
         }
-        .issue-date {
+
+        .signature-area {
             position: absolute;
-            bottom: 40px;
-            right: 60px;
-            font-size: 14px;
-            color: #95a5a6;
-        }
-        .decorative-border {
-            border: 8px solid #667eea;
-            border-radius: 20px;
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            bottom: 20px;
-            pointer-events: none;
-        }
-        .signature-section {
-            position: absolute;
-            bottom: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-        }
-        .signature-line {
+            bottom: 60px;
+            right: 80px;
             width: 200px;
-            border-bottom: 2px solid #333;
-            margin: 20px auto 10px;
+            border-bottom: 2px solid #2c3e50;
+            text-align: center;
+            padding-top: 5px;
+            font-size: 14px;
+            color: #7f8c8d;
         }
     </style>
 </head>
 <body>
     <div class="certificate-container">
-        <div class="decorative-border"></div>
+        <div class="certificate-frame">
 
-        <div class="header">
-            <div class="logo">🎓</div>
-            <div class="company-name">EduManagement System</div>
-        </div>
+            <div class="certificate-number">{{ $certificate->number }}</div>
 
-        <h2 class="title">Certificate of Completion</h2>
+            <div class="certificate-title">Certificate of Completion</div>
+            <div class="decorative-line"></div>
+            <div class="certificate-subtitle">This is to certify that</div>
 
-        <p class="subtitle">This is to certify that</p>
+            <div class="student-name">
+                {{ $certificate->student->name ?? 'Unknown Student' }}
+            </div>
 
-        <h3 class="student-name">{{ $certificate->student->name }}</h3>
+            <div class="certificate-text">has successfully completed the course</div>
 
-        <p class="completion-text">
-            has successfully completed the course
-        </p>
+            <div class="course-name">
+                {{ $certificate->course->name ?? 'General Certificate' }}
+            </div>
 
-        <h4 class="course-info">{{ $certificate->course->name ?? 'General Course' }}</h4>
+            <div class="decorative-line"></div>
 
-        <p class="completion-text">
-            and has demonstrated proficiency in all required competencies.<br>
-            This certificate is awarded in recognition of their dedication and achievement.
-        </p>
+            <div class="certificate-text">
+                and is hereby awarded this certificate in recognition<br>
+                of their dedication and outstanding achievement.
+            </div>
 
-        <div class="signature-section">
-            <div class="signature-line"></div>
-            <p style="margin: 0; font-size: 14px; color: #7f8c8d;">Authorized Signature</p>
-        </div>
+            <div class="certificate-date">
+                Issued on {{ $certificate->issued_at ? $certificate->issued_at->format('F d, Y') : 'Not specified' }}
+            </div>
 
-        <div class="certificate-number">
-            Certificate No: {{ $certificate->number }}
-        </div>
+            <div class="seal-area">
+                OFFICIAL<br>SEAL
+            </div>
 
-        <div class="issue-date">
-            Date: {{ $certificate->issued_at->format('F j, Y') }}
+            <div class="signature-area">
+                Authorized Signature
+            </div>
+
         </div>
     </div>
 </body>

@@ -239,4 +239,10 @@ class Student extends Model
             'other' => 'Other'
         ];
     }
+
+    public function setDateOfBirthAttribute($value)
+    {
+        // Convert empty strings to null for database compatibility
+        $this->attributes['date_of_birth'] = empty($value) || $value === '' ? null : $value;
+    }
 }

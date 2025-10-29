@@ -14,61 +14,117 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode; // ✅ Added for QR generation
 
 class PaymentController extends Controller
 {
-    // =============================================================================
-    // BASIC CRUD OPERATIONS
-    // =============================================================================
-
-    public function index(Request $request)
+public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $userFranchiseId = Auth::user()->franchise_id;
+        try {
+            if ($request->ajax()) {
+                $userFranchiseId = Auth::user()->franchise_id;
 
-            $payments = Payment::with(['student', 'course'])
-                ->whereHas('student', function($q) use ($userFranchiseId) {
-                    $q->where('franchise_id', $userFranchiseId);
-                })
-                ->orderBy('created_at', 'desc')
-                ->select('payments.*');
+                $payments = Payment::with(['student', 'course'])
+                    ->whereHas('student', function($q) use ($userFranchiseId) {
+                        $q->where('franchise_id', $userFranchiseId);
+                    })
+                    ->orderBy('created_at', 'desc')
+                    ->select('payments.*');
 
-            return DataTables::of($payments)
-                ->addIndexColumn()
-                ->addColumn('student_name', function($row) {
-                    return $row->student ? $row->student->name : 'N/A';
-                })
-                ->addColumn('course_name', function($row) {
-                    return $row->course ? $row->course->name : 'Certificate Fee';
-                })
-                ->addColumn('formatted_amount', function($row) {
-                    return $row->formatted_amount;
-                })
-                ->addColumn('status_badge', function($row) {
-                    $badgeClass = $row->status_badge;
-                    $statusText = ucfirst($row->status);
-                    return "<span class='badge badge-{$badgeClass}'>{$statusText}</span>";
-                })
-                ->addColumn('payment_method', function($row) {
-                    $badgeClass = $row->payment_method_badge;
-                    $methodText = $row->payment_method_text;
-                    $icon = $row->payment_method_icon;
-                    return "<span class='badge badge-{$badgeClass}'><i class='{$icon}'></i> {$methodText}</span>";
-                })
-                ->addColumn('action', function($row) {
-                    $btn = '<div class="btn-group btn-group-sm">';
-                    $btn .= '<a href="'.route('franchise.payments.show', $row->id).'" class="btn btn-info btn-sm" title="View"><i class="fas fa-eye"></i></a>';
+                return DataTables::of($payments)
+                    ->addIndexColumn()
+                    ->editColumn('student_name', function($payment) {
+                        if ($payment->student) {
+                            return '<div>
+                                <strong>' . htmlspecialchars($payment->student->name) . '</strong><br>
+                                <small class="text-muted">' . htmlspecialchars($payment->student->email ?? 'No email') . '</small>
+                            </div>';
+                        }
+                        return '<span class="text-muted">N/A</span>';
+                    })
+                    ->editColumn('course_name', function($payment) {
+                        return $payment->course ? htmlspecialchars($payment->course->name) : '<em class="text-muted">Certificate Fee</em>';
+                    })
+                    ->editColumn('formatted_amount', function($payment) {
+                        return '<strong class="text-success">₹' . number_format($payment->amount, 2) . '</strong>';
+                    })
+                    ->editColumn('formatted_date', function($payment) {
+                        return '<div>
+                            <strong>' . $payment->created_at->format('M d, Y') . '</strong><br>
+                            <small class="text-muted">' . $payment->created_at->format('h:i A') . '</small>
+                        </div>';
+                    })
+                    ->editColumn('status_badge', function($payment) {
+                        $statusClasses = [
+                            'pending' => 'warning',
+                            'completed' => 'success',
+                            'failed' => 'danger',
+                            'refunded' => 'info'
+                        ];
+                        $class = $statusClasses[$payment->status] ?? 'secondary';
+                        return '<span class="badge badge-' . $class . '">' . ucfirst($payment->status) . '</span>';
+                    })
+                    ->editColumn('payment_method', function($payment) {
+                        $icons = [
+                            'cash' => 'fas fa-money-bill-wave',
+                            'card' => 'fas fa-credit-card',
+                            'online' => 'fas fa-globe',
+                            'bank' => 'fas fa-university',
+                            'upi' => 'fab fa-google-pay'
+                        ];
+                        $icon = $icons[$payment->payment_method] ?? 'fas fa-question-circle';
+                        return '<i class="' . $icon . '"></i> ' . ucfirst($payment->payment_method ?? 'N/A');
+                    })
+                    ->addColumn('action', function($payment) {
+                        $actions = '<div class="btn-group btn-group-sm" role="group">';
 
-                    if ($row->status == 'pending') {
-                        $btn .= '<a href="'.route('franchise.payments.pay', $row->id).'" class="btn btn-success btn-sm" title="Pay Now"><i class="fas fa-credit-card"></i></a>';
-                    }
+                        $actions .= '<a href="' . route('franchise.payments.show', $payment->id) . '"
+                                       class="btn btn-info btn-sm"
+                                       data-toggle="tooltip"
+                                       title="View Details">
+                                       <i class="fas fa-eye"></i>
+                                    </a>';
 
-                    $btn .= '</div>';
-                    return $btn;
-                })
-                ->rawColumns(['status_badge', 'payment_method', 'action'])
-                ->make(true);
+                        if ($payment->status == 'pending') {
+                            $actions .= '<a href="' . route('franchise.payments.pay', $payment->id) . '"
+                                           class="btn btn-success btn-sm"
+                                           data-toggle="tooltip"
+                                           title="Pay Now">
+                                           <i class="fas fa-credit-card"></i>
+                                        </a>';
+                        }
+
+                        if ($payment->status == 'completed') {
+                            $actions .= '<a href="' . route('franchise.payments.receipt', $payment->id) . '"
+                                           class="btn btn-primary btn-sm"
+                                           data-toggle="tooltip"
+                                           title="Download Receipt">
+                                           <i class="fas fa-download"></i>
+                                        </a>';
+                        }
+
+                        $actions .= '</div>';
+                        return $actions;
+                    })
+                    ->rawColumns(['student_name', 'course_name', 'formatted_amount', 'formatted_date', 'status_badge', 'payment_method', 'action'])
+                    ->make(true);
+            }
+
+            return view('franchise.payments.index');
+
+        } catch (\Exception $e) {
+            Log::error('Payment Index Error: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'draw' => $request->get('draw'),
+                    'recordsTotal' => 0,
+                    'recordsFiltered' => 0,
+                    'data' => [],
+                    'error' => 'Unable to load payments: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return view('franchise.payments.index')->with('error', 'Unable to load payments.');
         }
-
-        return view('franchise.payments.index');
     }
+
 
     public function create()
     {
@@ -148,11 +204,14 @@ class PaymentController extends Controller
         }
     }
 
-    public function show(Payment $payment)
+ public function show($id)
     {
-        $this->authorizePayment($payment);
+        $payment = Payment::with(['student', 'course'])
+            ->whereHas('student', function($q) {
+                $q->where('franchise_id', Auth::user()->franchise_id);
+            })
+            ->findOrFail($id);
 
-        $payment->load(['student', 'course']);
         return view('franchise.payments.show', compact('payment'));
     }
 

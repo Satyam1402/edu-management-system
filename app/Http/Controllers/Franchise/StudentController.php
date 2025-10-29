@@ -7,6 +7,8 @@ use App\Models\Student;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Str;
 
@@ -17,51 +19,135 @@ class StudentController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $franchiseId = Auth::user()->franchise_id;
-            
-            $students = Student::where('franchise_id', $franchiseId)
-                              ->with(['course'])
-                              ->select('students.*');
-            
-            return DataTables::of($students)
-                ->addIndexColumn()
-                ->addColumn('course_name', function($row) {
-                    return $row->course ? $row->course->name : '<span class="text-muted">Not Enrolled</span>';
-                })
-                ->addColumn('status_badge', function($row) {
-                    $badges = [
-                        'active' => '<span class="badge badge-success">Active</span>',
-                        'inactive' => '<span class="badge badge-secondary">Inactive</span>',
-                        'graduated' => '<span class="badge badge-info">Graduated</span>',
-                        'dropped' => '<span class="badge badge-warning">Dropped</span>',
-                    ];
-                    return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
-                })
-                ->addColumn('action', function($row) {
-                    $btn = '<div class="btn-group btn-group-sm" role="group">';
-                    $btn .= '<a href="'.route('franchise.students.show', $row->id).'" class="btn btn-info" title="View"><i class="fas fa-eye"></i></a>';
-                    $btn .= '<a href="'.route('franchise.students.edit', $row->id).'" class="btn btn-primary" title="Edit"><i class="fas fa-edit"></i></a>';
-                    $btn .= '<button type="button" class="btn btn-danger" onclick="deleteStudent('.$row->id.')" title="Delete"><i class="fas fa-trash"></i></button>';
-                    $btn .= '</div>';
-                    return $btn;
-                })
-                ->rawColumns(['course_name', 'status_badge', 'action'])
-                ->make(true);
+        try {
+            if ($request->ajax()) {
+                $franchiseId = Auth::user()->franchise_id;
+
+                $students = Student::where('franchise_id', $franchiseId)
+                                  ->with(['course'])
+                                  ->orderBy('created_at', 'desc')
+                                  ->select('students.*');
+
+                return DataTables::of($students)
+                    ->addIndexColumn()
+                    ->editColumn('student_id', function($student) {
+                        return '<span class="badge badge-info font-weight-bold">' . $student->student_id . '</span>';
+                    })
+                    ->editColumn('name', function($student) {
+                        return '<div>
+                            <strong>' . htmlspecialchars($student->name) . '</strong><br>
+                            <small class="text-muted">' . ($student->email ?? 'No email') . '</small>
+                        </div>';
+                    })
+                    ->editColumn('email', function($student) {
+                        return $student->email ?
+                            '<a href="mailto:' . $student->email . '" class="text-primary">' . $student->email . '</a>' :
+                            '<span class="text-muted">Not provided</span>';
+                    })
+                    ->editColumn('phone', function($student) {
+                        return $student->phone ?
+                            '<a href="tel:' . $student->phone . '" class="text-success">' . $student->phone . '</a>' :
+                            '<span class="text-muted">Not provided</span>';
+                    })
+                    ->addColumn('course_name', function($student) {
+                        if ($student->course) {
+                            return '<span class="badge badge-primary">' . htmlspecialchars($student->course->name) . '</span>';
+                        }
+                        return '<span class="badge badge-secondary">Not Enrolled</span>';
+                    })
+                    ->editColumn('status_badge', function($student) {
+                        $badges = [
+                            'active' => '<span class="badge badge-success">Active</span>',
+                            'inactive' => '<span class="badge badge-secondary">Inactive</span>',
+                            'graduated' => '<span class="badge badge-primary">Graduated</span>',
+                            'dropped' => '<span class="badge badge-warning">Dropped</span>',
+                        ];
+                        return $badges[$student->status] ?? '<span class="badge badge-secondary">Unknown</span>';
+                    })
+                    ->editColumn('enrollment_date', function($student) {
+                        if ($student->enrollment_date) {
+                            $date = \Carbon\Carbon::parse($student->enrollment_date);
+                            return '<div class="text-center">
+                                <strong>' . $date->format('M d, Y') . '</strong><br>
+                                <small class="text-muted">' . $date->diffForHumans() . '</small>
+                            </div>';
+                        }
+                        return '<div class="text-center">
+                            <strong>' . $student->created_at->format('M d, Y') . '</strong><br>
+                            <small class="text-muted">' . $student->created_at->diffForHumans() . '</small>
+                        </div>';
+                    })
+                    ->addColumn('action', function($student) {
+                        $actions = '
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="' . route('franchise.students.show', $student->id) . '"
+                               class="btn btn-info btn-sm"
+                               data-toggle="tooltip"
+                               title="View Details">
+                               <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="' . route('franchise.students.edit', $student->id) . '"
+                               class="btn btn-warning btn-sm"
+                               data-toggle="tooltip"
+                               title="Edit Student">
+                               <i class="fas fa-edit"></i>
+                            </a>';
+
+                        // Only show delete if student has no certificates or payments
+                        if (!$student->certificates()->exists() && !$student->payments()->exists()) {
+                            $actions .= '
+                            <button onclick="deleteStudent(' . $student->id . ')"
+                                    class="btn btn-danger btn-sm"
+                                    data-toggle="tooltip"
+                                    title="Delete Student">
+                                <i class="fas fa-trash"></i>
+                            </button>';
+                        }
+
+                        $actions .= '</div>';
+                        return $actions;
+                    })
+                    ->rawColumns(['student_id', 'name', 'email', 'phone', 'course_name', 'status_badge', 'enrollment_date', 'action'])
+                    ->make(true);
+            }
+
+            return view('franchise.students.index');
+
+        } catch (\Exception $e) {
+            Log::error('Students Index Error: ' . $e->getMessage() . ' - Line: ' . $e->getLine());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'draw' => $request->get('draw'),
+                    'recordsTotal' => 0,
+                    'recordsFiltered' => 0,
+                    'data' => [],
+                    'error' => 'Unable to load students: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return view('franchise.students.index')->with('error', 'Unable to load students.');
         }
-        
-        return view('franchise.students.index');
     }
-    
+
     /**
      * Show form for creating new student
      */
     public function create()
     {
-        $courses = Course::where('status', 'active')->get();
-        return view('franchise.students.create', compact('courses'));
+        try {
+            // 🔧 FIXED: Get all active courses (no franchise filtering)
+            $courses = Course::where('status', 'active')->get();
+
+            return view('franchise.students.create', compact('courses'));
+
+        } catch (\Exception $e) {
+            Log::error('Student Create Error: ' . $e->getMessage());
+            return redirect()->route('franchise.students.index')
+                ->with('error', 'Unable to load create form.');
+        }
     }
-    
+
     /**
      * Store new student
      */
@@ -72,119 +158,403 @@ class StudentController extends Controller
             'email' => 'required|email|unique:students,email',
             'phone' => 'required|string|max:20',
             'course_id' => 'nullable|exists:courses,id',
-            'date_of_birth' => 'nullable|date',
-            'address' => 'nullable|string',
+            'gender' => 'nullable|in:male,female,other',
+            'date_of_birth' => 'nullable|date|before:today',
+            'address' => 'nullable|string|max:500',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
             'pincode' => 'nullable|string|max:10',
             'enrollment_date' => 'required|date',
             'status' => 'required|in:active,inactive,graduated,dropped'
         ]);
-        
-        // Add franchise ID from authenticated user
-        $validated['franchise_id'] = Auth::user()->franchise_id;
-        $validated['student_id'] = 'STU' . strtoupper(Str::random(8));
-        
-        Student::create($validated);
-        
-        return redirect()->route('franchise.students.index')
-                       ->with('success', 'Student added successfully!');
+
+        try {
+            // 🔧 FIXED: Remove franchise validation for courses (courses are global)
+            if ($validated['course_id']) {
+                $course = Course::where('id', $validated['course_id'])
+                              ->where('status', 'active')
+                              ->first();
+
+                if (!$course) {
+                    return redirect()->back()
+                        ->with('error', 'Invalid course selected.')
+                        ->withInput();
+                }
+            }
+
+            // Add franchise ID and generate student ID
+            $validated['franchise_id'] = Auth::user()->franchise_id;
+            $validated['student_id'] = $this->generateStudentId();
+            $validated['password'] = Hash::make('password123'); // Default password
+
+            $student = Student::create($validated);
+
+            return redirect()->route('franchise.students.index')
+                           ->with('success', 'Student "' . $student->name . '" added successfully!');
+
+        } catch (\Exception $e) {
+            Log::error('Student Store Error: ' . $e->getMessage() . ' - Data: ' . json_encode($validated));
+            return redirect()->back()
+                ->with('error', 'Failed to create student. Please try again.')
+                ->withInput();
+        }
     }
-    
+
     /**
      * Display student details
      */
-    public function show(Student $student)
+    public function show($id)
     {
-        // Verify student belongs to franchise
-        $this->authorizeStudent($student);
-        
-        $student->load(['course', 'certificates', 'payments']);
-        
-        return view('franchise.students.show', compact('student'));
+        try {
+            $franchiseId = Auth::user()->franchise_id;
+
+            // Find student with proper franchise check
+            $student = Student::where('id', $id)
+                            ->where('franchise_id', $franchiseId)
+                            ->with(['course', 'certificates', 'payments'])
+                            ->first();
+
+            if (!$student) {
+                Log::warning('Student not found in show method', [
+                    'student_id' => $id,
+                    'franchise_id' => $franchiseId
+                ]);
+
+                return redirect()->route('franchise.students.index')
+                    ->with('error', 'Student not found or access denied.');
+            }
+
+            return view('franchise.students.show', compact('student'));
+
+        } catch (\Exception $e) {
+            Log::error('Student Show Error: ' . $e->getMessage() . ' - Student ID: ' . $id);
+            return redirect()->route('franchise.students.index')
+                ->with('error', 'Student not found or access denied.');
+        }
     }
-    
+
     /**
-     * Show form for editing student
+     * Show form for editing student - 🔧 COMPLETELY FIXED
      */
-    public function edit(Student $student)
+    public function edit($id)
     {
-        // Verify student belongs to franchise
-        $this->authorizeStudent($student);
-        
-        $courses = Course::where('status', 'active')->get();
-        
-        return view('franchise.students.edit', compact('student', 'courses'));
+        try {
+            $franchiseId = Auth::user()->franchise_id;
+
+            Log::info('Student Edit Debug:', [
+                'student_id' => $id,
+                'franchise_id' => $franchiseId,
+                'user_id' => Auth::user()->id
+            ]);
+
+            // Find student with proper franchise check
+            $student = Student::where('id', $id)
+                            ->where('franchise_id', $franchiseId)
+                            ->first();
+
+            if (!$student) {
+                Log::error('Student not found in edit method', [
+                    'student_id' => $id,
+                    'franchise_id' => $franchiseId
+                ]);
+
+                return redirect()->route('franchise.students.index')
+                    ->with('error', "Student with ID {$id} not found in your franchise.");
+            }
+
+            // 🔧 FIXED: Get all active courses (courses are global, no franchise filtering)
+            $courses = Course::where('status', 'active')->get();
+
+            Log::info('Student Edit Success:', [
+                'student_id' => $student->id,
+                'student_name' => $student->name,
+                'courses_count' => $courses->count()
+            ]);
+
+            return view('franchise.students.edit', compact('student', 'courses'));
+
+        } catch (\Exception $e) {
+            Log::error('Student Edit Exception: ' . $e->getMessage() . ' - Student ID: ' . $id);
+            return redirect()->route('franchise.students.index')
+                ->with('error', 'Unable to edit student: ' . $e->getMessage());
+        }
     }
-    
+
     /**
      * Update student
      */
-    public function update(Request $request, Student $student)
+    public function update(Request $request, $id)
     {
-        // Verify student belongs to franchise
-        $this->authorizeStudent($student);
-        
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:students,email,' . $student->id,
-            'phone' => 'required|string|max:20',
-            'course_id' => 'nullable|exists:courses,id',
-            'date_of_birth' => 'nullable|date',
-            'address' => 'nullable|string',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
-            'pincode' => 'nullable|string|max:10',
-            'enrollment_date' => 'required|date',
-            'status' => 'required|in:active,inactive,graduated,dropped'
+        Log::info('=== STUDENT UPDATE STARTED ===', [
+            'student_id' => $id,
+            'user_id' => Auth::user()->id,
+            'franchise_id' => Auth::user()->franchise_id
         ]);
-        
-        $student->update($validated);
-        
-        return redirect()->route('franchise.students.index')
-                       ->with('success', 'Student updated successfully!');
+
+        try {
+            $franchiseId = Auth::user()->franchise_id;
+
+            // Find student with proper franchise check
+            $student = Student::where('id', $id)
+                            ->where('franchise_id', $franchiseId)
+                            ->first();
+
+            if (!$student) {
+                Log::error('Student not found for update', [
+                    'student_id' => $id,
+                    'franchise_id' => $franchiseId
+                ]);
+
+                return redirect('/franchise/students')
+                    ->with('error', 'Student not found or access denied.');
+            }
+
+            Log::info('Student found for update:', [
+                'student_id' => $student->id,
+                'student_name' => $student->name
+            ]);
+
+            // Validate the request
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:students,email,' . $student->id,
+                'phone' => 'required|string|max:20',
+                'course_id' => 'nullable|exists:courses,id',
+                'gender' => 'nullable|in:male,female,other',
+                'date_of_birth' => 'nullable|date|before:today',
+                'address' => 'nullable|string|max:500',
+                'city' => 'nullable|string|max:100',
+                'state' => 'nullable|string|max:100',
+                'pincode' => 'nullable|string|max:10',
+                'enrollment_date' => 'required|date',
+                'status' => 'required|in:active,inactive,graduated,dropped'
+            ]);
+
+            // 🔧 FIX: Handle empty date_of_birth
+            if (empty($validated['date_of_birth']) || $validated['date_of_birth'] === '') {
+                $validated['date_of_birth'] = null;
+            }
+
+            Log::info('Validation successful:', $validated);
+
+            // Validate course exists and is active (if provided)
+            if (!empty($validated['course_id'])) {
+                $course = Course::where('id', $validated['course_id'])
+                            ->where('status', 'active')
+                            ->first();
+
+                if (!$course) {
+                    Log::error('Invalid course selected:', ['course_id' => $validated['course_id']]);
+
+                    return redirect()->back()
+                        ->with('error', 'Invalid course selected.')
+                        ->withInput();
+                }
+
+                Log::info('Course validation passed:', [
+                    'course_id' => $course->id,
+                    'course_name' => $course->name
+                ]);
+            }
+
+            // Update student
+            $student->update($validated);
+
+            Log::info('Student updated successfully:', [
+                'student_id' => $student->id,
+                'student_name' => $student->name
+            ]);
+
+            // Success message
+            $successMessage = 'Student "' . $student->name . '" updated successfully!';
+
+            Log::info('Attempting redirect to index', [
+                'message' => $successMessage
+            ]);
+
+            // Use direct path redirect
+            return redirect('/franchise/students')->with('success', $successMessage);
+
+        } catch (\Exception $e) {
+            Log::error('=== STUDENT UPDATE EXCEPTION ===', [
+                'student_id' => $id,
+                'exception_message' => $e->getMessage(),
+                'exception_file' => $e->getFile(),
+                'exception_line' => $e->getLine()
+            ]);
+
+            return redirect()->back()
+                ->with('error', 'Failed to update student: ' . $e->getMessage())
+                ->withInput();
+        }
     }
-    
+
+
+
+
+
     /**
      * Delete student
      */
-    public function destroy(Student $student)
+    public function destroy($id)
     {
-        // Verify student belongs to franchise
-        $this->authorizeStudent($student);
-        
-        $student->delete();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Student deleted successfully!'
-        ]);
+        try {
+            $franchiseId = Auth::user()->franchise_id;
+
+            // Find student with proper franchise check
+            $student = Student::where('id', $id)
+                            ->where('franchise_id', $franchiseId)
+                            ->first();
+
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student not found or access denied.'
+                ], 404);
+            }
+
+            // Check if student has any certificates or payments
+            if ($student->certificates()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete student with existing certificates.'
+                ], 400);
+            }
+
+            if ($student->payments()->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot delete student with existing payment records.'
+                ], 400);
+            }
+
+            $studentName = $student->name;
+            $student->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Student "' . $studentName . '" deleted successfully!'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Student Delete Error: ' . $e->getMessage() . ' - Student ID: ' . $id);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete student. Please try again.'
+            ], 500);
+        }
     }
-    
+
     /**
      * Toggle student status
      */
-    public function toggleStatus(Request $request, Student $student)
+    public function toggleStatus(Request $request, $id)
     {
-        // Verify student belongs to franchise
-        $this->authorizeStudent($student);
-        
-        $student->status = $request->status;
-        $student->save();
-        
-        return response()->json([
-            'success' => true,
-            'message' => 'Student status updated successfully!'
-        ]);
-    }
-    
-    /**
-     * Verify student belongs to current franchise
-     */
-    private function authorizeStudent(Student $student)
-    {
-        if ($student->franchise_id !== Auth::user()->franchise_id) {
-            abort(403, 'Unauthorized access to this student.');
+        try {
+            $franchiseId = Auth::user()->franchise_id;
+
+            // Find student with proper franchise check
+            $student = Student::where('id', $id)
+                            ->where('franchise_id', $franchiseId)
+                            ->first();
+
+            if (!$student) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student not found or access denied.'
+                ], 404);
+            }
+
+            $request->validate([
+                'status' => 'required|in:active,inactive,graduated,dropped'
+            ]);
+
+            $student->status = $request->status;
+            $student->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Student status updated to "' . ucfirst($request->status) . '" successfully!'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Student Status Update Error: ' . $e->getMessage() . ' - Student ID: ' . $id);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update student status.'
+            ], 500);
         }
+    }
+
+    /**
+     * Get student statistics
+     */
+    public function getStats()
+    {
+        try {
+            $franchiseId = Auth::user()->franchise_id;
+
+            // Get all students for this franchise
+            $totalStudents = Student::where('franchise_id', $franchiseId)->count();
+
+            // Get active students
+            $activeStudents = Student::where('franchise_id', $franchiseId)
+                                    ->where('status', 'active')
+                                    ->count();
+
+            // Get graduated students
+            $graduatedStudents = Student::where('franchise_id', $franchiseId)
+                                    ->where('status', 'graduated')
+                                    ->count();
+
+            // Get students enrolled this month
+            $thisMonthStudents = Student::where('franchise_id', $franchiseId)
+                                    ->whereMonth('enrollment_date', now()->month)
+                                    ->whereYear('enrollment_date', now()->year)
+                                    ->count();
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'total_students' => $totalStudents,
+                    'active_students' => $activeStudents,
+                    'graduated_students' => $graduatedStudents,
+                    'this_month' => $thisMonthStudents
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching student stats', [
+                'error' => $e->getMessage(),
+                'franchise_id' => Auth::user()->franchise_id ?? null
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error fetching statistics',
+                'data' => [
+                    'total_students' => 0,
+                    'active_students' => 0,
+                    'graduated_students' => 0,
+                    'this_month' => 0
+                ]
+            ], 500);
+        }
+    }
+
+    /**
+     * Generate unique student ID
+     */
+    private function generateStudentId()
+    {
+        $prefix = 'STU';
+        $franchiseCode = strtoupper(substr(Auth::user()->name ?? 'FR', 0, 3));
+
+        do {
+            $random = strtoupper(substr(uniqid(), -6));
+            $studentId = $prefix . $franchiseCode . $random;
+        } while (Student::where('student_id', $studentId)->exists());
+
+        return $studentId;
     }
 }

@@ -30,7 +30,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Form Card -->
     <div class="card">
         <div class="card-header">
@@ -40,10 +40,10 @@
             <form action="{{ route('franchise.students.update', $student->id) }}" method="POST">
                 @csrf
                 @method('PUT')
-                
+
                 <!-- Personal Information -->
                 <h6 class="section-title"><i class="fas fa-user mr-2"></i>Personal Information</h6>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -69,19 +69,21 @@
                             @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
+
                     <div class="col-md-6">
                         <div class="form-group">
                             <label>Date of Birth</label>
                             <input type="date" name="date_of_birth" class="form-control @error('date_of_birth') is-invalid @enderror"
-                                   value="{{ old('date_of_birth', $student->date_of_birth) }}">
+                                value="{{ old('date_of_birth', $student->date_of_birth ? $student->date_of_birth->format('Y-m-d') : '') }}">
                             @error('date_of_birth') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>
+
                 </div>
-                
+
                 <!-- Address Information -->
                 <h6 class="section-title"><i class="fas fa-map-marker-alt mr-2"></i>Address Information</h6>
-                
+
                 <div class="row">
                     <div class="col-md-12">
                         <div class="form-group">
@@ -115,10 +117,10 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Academic Information -->
                 <h6 class="section-title"><i class="fas fa-graduation-cap mr-2"></i>Academic Information</h6>
-                
+
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
@@ -155,7 +157,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Action Buttons -->
                 <div class="row mt-4">
                     <div class="col-12">

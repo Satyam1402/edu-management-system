@@ -1,4 +1,4 @@
-@extends('layouts.franchise-admin')
+@extends('layouts.custom-admin')
 
 @section('title', 'My Certificates')
 @section('page-title', 'My Certificates')
@@ -96,6 +96,15 @@
     .stats-row .small-box p,
     .stats-row .small-box .small-box-footer {
         color: #ffffff !important;
+    }
+
+    /* Custom modal styling */
+    .modal-xl {
+        max-width: 1200px;
+    }
+    .certificate-modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
     }
 </style>
 @endsection
@@ -233,20 +242,35 @@
 
 {{-- CERTIFICATE PREVIEW MODAL --}}
 <div class="modal fade" id="certificateModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                <h4 class="modal-title">Certificate Preview</h4>
-                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">
+                    <i class="fas fa-certificate mr-2"></i>Certificate Preview
+                </h4>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
             </div>
-            <div class="modal-body" id="certificatePreview">
+            <div class="modal-body certificate-modal-body" id="certificatePreview">
                 <!-- Certificate preview will be loaded here -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                    <p class="mt-2">Loading certificate...</p>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="downloadFromModal" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none;">
-                    <i class="fas fa-download mr-1"></i>Download PDF
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Close
                 </button>
+                <a href="#" class="btn btn-success" id="downloadFromModal" style="background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%); border: none;">
+                    <i class="fas fa-download mr-1"></i>Download PDF
+                </a>
+                <a href="#" class="btn btn-info" id="printFromModal" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); border: none;">
+                    <i class="fas fa-print mr-1"></i>Print
+                </a>
             </div>
         </div>
     </div>
@@ -259,6 +283,8 @@
 
 <script>
 $(document).ready(function() {
+    var currentCertificateId = null;
+
     // Initialize DataTable with AJAX
     var table = $('#certificates-table').DataTable({
         processing: true,
@@ -361,26 +387,131 @@ $(document).ready(function() {
         table.ajax.reload();
     };
 
-    // Certificate preview function
+    // Certificate preview function - CORRECTED VERSION
     window.viewCertificate = function(certificateId) {
-        fetch(`/franchise/certificates/${certificateId}`)
-            .then(response => response.text())
-            .then(html => {
-                $('#certificatePreview').html(html);
-                $('#certificateModal').modal('show');
+        currentCertificateId = certificateId;
 
-                // Set download button
-                $('#downloadFromModal').off('click').on('click', function() {
-                    window.open(`/franchise/certificates/${certificateId}/download`, '_blank');
-                });
-            })
-            .catch(error => {
-                alert('Error loading certificate preview');
-            });
+        // Show modal first with loading state
+        $('#certificateModal').modal('show');
+
+        // Reset modal content
+        $('#certificatePreview').html(`
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                <p class="mt-2">Loading certificate...</p>
+            </div>
+        `);
+
+        // Set up download and print links immediately
+        $('#downloadFromModal').attr('href', `/franchise/certificates/${certificateId}/download`);
+        $('#printFromModal').attr('href', `/franchise/certificates/${certificateId}/print`).attr('target', '_blank');
+
+        // Create an invisible iframe to load the certificate page
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = `/franchise/certificates/${certificateId}`;
+
+        iframe.onload = function() {
+            try {
+                // Get the certificate content from iframe
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const certificateContainer = iframeDoc.querySelector('.certificate-container');
+
+                if (certificateContainer) {
+                    // Clone the entire container with styles
+                    const clonedContainer = certificateContainer.cloneNode(true);
+
+                    // Remove action buttons from the clone
+                    const actionButtons = clonedContainer.querySelector('.action-buttons');
+                    if (actionButtons) {
+                        actionButtons.remove();
+                    }
+
+                    // Get all styles from the iframe document
+                    const iframeHead = iframeDoc.head;
+                    const styles = iframeHead.querySelector('style');
+
+                    // Create a container with styles
+                    const styledContainer = document.createElement('div');
+                    if (styles) {
+                        const styleElement = document.createElement('style');
+                        styleElement.textContent = styles.textContent;
+                        styledContainer.appendChild(styleElement);
+                    }
+                    styledContainer.appendChild(clonedContainer);
+
+                    // Update modal with styled certificate
+                    $('#certificatePreview').html(styledContainer.outerHTML);
+                } else {
+                    throw new Error('Certificate content not found');
+                }
+            } catch (error) {
+                console.error('Error loading certificate:', error);
+                $('#certificatePreview').html(`
+                    <div class="text-center py-5">
+                        <i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                        <h4 class="mt-3">Error Loading Certificate</h4>
+                        <p class="text-muted">Unable to load certificate preview. Please try again.</p>
+                    </div>
+                `);
+            } finally {
+                // Clean up iframe
+                document.body.removeChild(iframe);
+            }
+        };
+
+        iframe.onerror = function() {
+            $('#certificatePreview').html(`
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                    <h4 class="mt-3">Error Loading Certificate</h4>
+                    <p class="text-muted">Unable to load certificate. Please try again.</p>
+                </div>
+            `);
+            document.body.removeChild(iframe);
+        };
+
+        // Append iframe to body to load content
+        document.body.appendChild(iframe);
     };
+
+
+    // Direct download function
+    window.downloadCertificate = function(certificateId) {
+        window.open(`/franchise/certificates/${certificateId}/download`, '_blank');
+    };
+
+    // Direct print function
+    window.printCertificate = function(certificateId) {
+        window.open(`/franchise/certificates/${certificateId}/print`, '_blank');
+    };
+
+    // Modal download button click
+    $('#downloadFromModal').on('click', function(e) {
+        e.preventDefault();
+        if (currentCertificateId) {
+            downloadCertificate(currentCertificateId);
+        }
+    });
+
+    // Modal print button click
+    $('#printFromModal').on('click', function(e) {
+        e.preventDefault();
+        if (currentCertificateId) {
+            printCertificate(currentCertificateId);
+        }
+    });
 
     // Tooltip initialization (if using Bootstrap tooltips)
     $('[data-toggle="tooltip"]').tooltip();
+
+    // Reset modal when closed
+    $('#certificateModal').on('hidden.bs.modal', function() {
+        currentCertificateId = null;
+        $('#certificatePreview').html('');
+    });
 });
 </script>
 @endsection

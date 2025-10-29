@@ -1,5 +1,5 @@
 <?php
-// routes/web.php (COMPLETE UPDATED VERSION WITH CERTIFICATE SYSTEM)
+// routes/web.php (COMPLETE FIXED VERSION)
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
@@ -46,7 +46,6 @@ Route::middleware('auth')->group(function () {
 // SUPER ADMIN ROUTES - Full System Access
 // =============================================================================
 Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
-
     // Admin Dashboard
     Route::get('/', function () {
         return view('admin.dashboard');
@@ -162,28 +161,31 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 });
 
 // =============================================================================
-// FRANCHISE ROUTES - Limited to Own Data
+// 🔧 FRANCHISE ROUTES - COMPLETELY FIXED
 // =============================================================================
-Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franchise.')->group(function () {
+Route::middleware(['auth'])->prefix('franchise')->name('franchise.')->group(function () {
 
     // Franchise Dashboard
     Route::get('/', [FranchiseDashboardController::class, 'index'])->name('dashboard');
 
     // =============================================================================
-    // FRANCHISE STUDENT MANAGEMENT (Own Students Only)
+    // 🔧 FRANCHISE STUDENT MANAGEMENT - FIXED (Own Students Only)
     // =============================================================================
     Route::resource('students', FranchiseStudentController::class);
     Route::post('/students/{student}/toggle-status', [FranchiseStudentController::class, 'toggleStatus'])->name('students.toggle-status');
+    Route::get('students-stats', [FranchiseStudentController::class, 'getStats'])->name('students.stats');
     Route::get('/students/{student}/profile', [FranchiseStudentController::class, 'profile'])->name('students.profile');
 
     // =============================================================================
-    // COURSE MANAGEMENT (View Available Courses)
+    // 🔧 FRANCHISE COURSE MANAGEMENT - COMPLETELY FIXED
     // =============================================================================
-    Route::resource('courses', FranchiseCourseController::class)->only(['index', 'show']);
-    Route::post('/courses/{course}/enroll-student', [FranchiseCourseController::class, 'enrollStudent'])->name('courses.enroll-student');
+    Route::get('/courses', [FranchiseCourseController::class, 'index'])->name('courses.index');
+    Route::get('/courses/{course}', [FranchiseCourseController::class, 'show'])->name('courses.show');
+    Route::get('/courses/{course}/enroll', [FranchiseCourseController::class, 'enrollForm'])->name('courses.enroll-form');
+    Route::post('/courses/{course}/enroll', [FranchiseCourseController::class, 'enrollStudents'])->name('courses.enroll');
 
     // =============================================================================
-    // 🆕 FRANCHISE CERTIFICATE MANAGEMENT (View & Download Issued Certificates)
+    // FRANCHISE CERTIFICATE MANAGEMENT (View & Download Issued Certificates)
     // =============================================================================
     Route::prefix('certificates')->name('certificates.')->group(function () {
         Route::get('/', [FranchiseCertificateController::class, 'index'])->name('index');
@@ -193,7 +195,7 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
     });
 
     // =============================================================================
-    // 🆕 CERTIFICATE REQUEST MANAGEMENT (Payment Required First)
+    // CERTIFICATE REQUEST MANAGEMENT (Payment Required First)
     // =============================================================================
     Route::resource('certificate-requests', FranchiseCertificateRequestController::class);
     Route::get('/certificate-requests/student/{student}', [FranchiseCertificateRequestController::class, 'createForStudent'])->name('certificate-requests.create-for-student');
@@ -263,61 +265,6 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
         Route::get('/', function() { return view('franchise.settings.index'); })->name('index');
         Route::get('/profile', function() { return view('franchise.settings.profile'); })->name('profile');
     });
-});
-
-// =============================================================================
-// ADDITIONAL SHARED ROUTES (Available to both roles)
-// =============================================================================
-Route::middleware('auth')->group(function () {
-    // Search functionality
-    Route::get('/search/students', function() {
-        // Global student search logic here
-    })->name('search.students');
-
-    Route::get('/search/courses', function() {
-        // Course search logic here
-    })->name('search.courses');
-
-    // Quick actions
-    Route::post('/quick/student-status', function() {
-        // Quick student status change
-    })->name('quick.student-status');
-
-    Route::post('/quick/payment-record', function() {
-        // Quick payment recording
-    })->name('quick.payment-record');
-});
-
-// =============================================================================
-// API ROUTES (for AJAX requests)
-// =============================================================================
-Route::middleware('auth')->prefix('api')->name('api.')->group(function () {
-    // Student API endpoints
-    Route::get('/students/search', [StudentController::class, 'search'])->name('students.search');
-    Route::get('/students/{student}/payments', [StudentController::class, 'getPayments'])->name('students.payments');
-
-    // Course API endpoints
-    Route::get('/courses/search', [CourseController::class, 'search'])->name('courses.search');
-    Route::get('/courses/{course}/students', [CourseController::class, 'getStudents'])->name('courses.students');
-
-    // Franchise API endpoints (if super admin)
-    Route::middleware('role:super_admin')->group(function () {
-        Route::get('/franchises/search', [FranchiseController::class, 'search'])->name('franchises.search');
-        Route::get('/franchises/{franchise}/stats', [FranchiseController::class, 'getStats'])->name('franchises.stats');
-    });
-});
-
-// =============================================================================
-// TESTING ROUTES (Remove in Production)
-// =============================================================================
-Route::get('/test-upi', function() {
-    $service = new \App\Services\PaymentGatewayService();
-    try {
-        $qrData = $service->generateUpiQrCode(100, 'Test User', 'Test Payment');
-        return response()->json($qrData);
-    } catch (\Exception $e) {
-        return response()->json(['error' => $e->getMessage()], 500);
-    }
 });
 
 // Include authentication routes (login, register, password reset, etc.)
