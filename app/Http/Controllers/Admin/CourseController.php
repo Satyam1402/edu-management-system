@@ -50,9 +50,9 @@ class CourseController extends Controller
                 ->addColumn('course_details', function ($course) {
                     $featuredBadge = $course->is_featured ? '<span class="badge badge-warning badge-sm ml-1">Featured</span>' : '';
                     $levelBadge = '<span class="badge badge-' . ($course->level_badge ?? 'info') . ' badge-sm">' . ucfirst($course->level ?? 'N/A') . '</span>';
-                    
+
                     $description = $course->description ? Str::limit($course->description, 50) : 'No description available';
-                    
+
                     return '<div>
                                 <h6 class="mb-1 font-weight-bold">' . e($course->name) . '</h6>
                                 <p class="text-muted small mb-1">' . e($description) . '</p>
@@ -69,26 +69,46 @@ class CourseController extends Controller
                             </div>';
                 })
                 ->addColumn('fee', function ($course) {
-                    return '<div class="text-center">
-                                <span class="font-weight-bold text-success">' . e($course->formatted_fee) . '</span>
-                            </div>';
+                    $html = '<div class="text-center">';
+
+                    if ($course->is_free) {
+                        $html .= '<span class="badge badge-success px-3 py-2">FREE</span>';
+                    } else {
+                        // Show regular fee
+                        $html .= '<span class="font-weight-bold text-success">₹' . number_format($course->fee, 2) . '</span>';
+
+                        // Show discount if available
+                        if ($course->discount_fee && $course->discount_fee < $course->fee) {
+                            $html .= '<br><small class="text-muted"><del>₹' . number_format($course->fee, 2) . '</del></small>';
+                            $html .= '<br><span class="badge badge-warning">₹' . number_format($course->discount_fee, 2) . '</span>';
+                        }
+
+                        // Show franchise fee if different
+                        if ($course->franchise_fee && $course->franchise_fee != $course->effective_fee) {
+                            $html .= '<br><small class="badge badge-info">F: ₹' . number_format($course->franchise_fee, 2) . '</small>';
+                        }
+                    }
+
+                    $html .= '</div>';
+                    return $html;
                 })
+
                 ->addColumn('students', function ($course) {
                     $enrolledCount = $course->students_count ?? 0;
                     $maxStudents = $course->max_students;
-                    
+
                     $badgeClass = 'badge-info';
                     if ($maxStudents && $enrolledCount >= $maxStudents) {
                         $badgeClass = 'badge-danger';
                     } elseif ($maxStudents && $enrolledCount >= ($maxStudents * 0.8)) {
                         $badgeClass = 'badge-warning';
                     }
-                    
+
                     $displayText = $enrolledCount;
                     if ($maxStudents) {
                         $displayText .= '/' . $maxStudents;
                     }
-                    
+
                     return '<div class="text-center">
                                 <span class="badge ' . $badgeClass . ' px-3 py-2">' . $displayText . ' enrolled</span>
                             </div>';
@@ -96,7 +116,7 @@ class CourseController extends Controller
                 ->addColumn('status', function ($course) {
                     $statusColors = [
                         'active' => 'success',
-                        'inactive' => 'secondary', 
+                        'inactive' => 'secondary',
                         'draft' => 'warning',
                         'archived' => 'danger'
                     ];
@@ -164,26 +184,36 @@ class CourseController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'fee' => 'required|numeric|min:0',
+            'discount_fee' => 'nullable|numeric|min:0|lt:fee',
+            'franchise_fee' => 'nullable|numeric|min:0',
+            'is_free' => 'boolean',
+            'fee_notes' => 'nullable|string|max:500',
             'duration_months' => 'required|integer|min:1|max:60',
-            'level' => 'required|in:beginner,intermediate,advanced',
-            'category' => 'required|string',
+            'level' => 'nullable|in:beginner,intermediate,advanced',      // 🔧 MADE NULLABLE
+            'category' => 'nullable|in:technology,business,design,marketing,other', // 🔧 MADE NULLABLE
+            'status' => 'nullable|in:active,inactive',                   // 🔧 ADD THIS
             'max_students' => 'nullable|integer|min:1',
-            'passing_percentage' => 'nullable|numeric|min:0|max:100',
-            'instructor_name' => 'nullable|string|max:255',
-            'instructor_email' => 'nullable|email',
-            'prerequisites' => 'nullable|string',
-            'curriculum' => 'nullable|string',
-            'learning_outcomes' => 'nullable|array',
-            'tags' => 'nullable|array',
             'is_featured' => 'boolean',
-            'status' => 'required|in:active,inactive,draft'
+            // Remove other optional fields that aren't in your form
         ]);
+
+        // Set defaults for missing fields
+        $validated['status'] = $validated['status'] ?? 'active';
+        $validated['code'] = $validated['code'] ?? 'CRS-' . strtoupper(\Str::random(6));
+
+        // Handle free course logic
+        if (isset($validated['is_free']) && $validated['is_free']) {
+            $validated['discount_fee'] = null;
+            $validated['franchise_fee'] = null;
+        }
 
         $course = Course::create($validated);
 
         return redirect()->route('admin.courses.index')
             ->with('success', 'Course created successfully!');
     }
+
+
 
     /**
      * Display the specified course
@@ -193,7 +223,7 @@ class CourseController extends Controller
         if (request()->ajax()) {
             return view('admin.courses.partials.quick-view', compact('course'))->render();
         }
-        
+
         $course->load(['students', 'exams', 'certificates']);
         return view('admin.courses.show', compact('course'));
     }
@@ -211,26 +241,40 @@ class CourseController extends Controller
      */
     public function update(Request $request, Course $course)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:courses,code,' . $course->id,
             'description' => 'required|string',
             'fee' => 'required|numeric|min:0',
-            'duration_months' => 'required|integer|min:1',
+            'discount_fee' => 'nullable|numeric|min:0|lt:fee',
+            'franchise_fee' => 'nullable|numeric|min:0',
+            'is_free' => 'boolean',
+            'fee_notes' => 'nullable|string|max:500',
+            'duration_months' => 'required|integer|min:1|max:60',
             'level' => 'nullable|in:beginner,intermediate,advanced',
             'category' => 'nullable|in:technology,business,design,marketing,other',
-            'status' => 'required|in:active,inactive,draft'
+            'status' => 'required|in:active,inactive',
+            'is_featured' => 'boolean',
+            'max_students' => 'nullable|integer|min:1',
         ]);
 
-        $course->update($request->only([
-            'name', 'code', 'description', 'fee', 'duration_months', 
-            'level', 'category', 'status'
-        ]));
+        // 🔧 Handle empty strings for nullable integer fields
+        $validated['max_students'] = !empty($validated['max_students']) ? $validated['max_students'] : null;
+        $validated['discount_fee'] = !empty($validated['discount_fee']) ? $validated['discount_fee'] : null;
+        $validated['franchise_fee'] = !empty($validated['franchise_fee']) ? $validated['franchise_fee'] : null;
+
+        // Handle free course logic
+        if (isset($validated['is_free']) && $validated['is_free']) {
+            $validated['discount_fee'] = null;
+            $validated['franchise_fee'] = null;
+        }
+
+        // Update with all the validated fields
+        $course->update($validated);
 
         return redirect()->route('admin.courses.index')
                         ->with('success', 'Course updated successfully!');
     }
-
 
     /**
      * Remove the specified course
@@ -246,7 +290,7 @@ class CourseController extends Controller
             }
 
             $course->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Course deleted successfully!'
@@ -316,7 +360,7 @@ class CourseController extends Controller
         try {
             $courses = Course::whereIn('id', $request->ids);
             $count = $courses->count();
-            
+
             switch ($request->action) {
                 case 'activate':
                     $courses->update(['status' => 'active']);
@@ -371,7 +415,7 @@ class CourseController extends Controller
     public function getStudents(Course $course): JsonResponse
     {
         $students = $course->students()->with(['payments', 'certificates'])->get();
-        
+
         return response()->json([
             'success' => true,
             'data' => $students,
@@ -465,7 +509,7 @@ class CourseController extends Controller
     public function search(Request $request): JsonResponse
     {
         $query = $request->get('q', '');
-        
+
         $courses = Course::search($query)
                         ->with(['students'])
                         ->withCount('students')
@@ -513,7 +557,7 @@ class CourseController extends Controller
     {
         $format = $request->get('format', 'excel');
         $courses = Course::with(['students'])->withCount('students')->get();
-        
+
         switch ($format) {
             case 'excel':
                 // Implement Excel export
@@ -635,10 +679,10 @@ class CourseController extends Controller
 
         try {
             $studentsCount = $course->students()->where('status', 'active')->count();
-            
+
             // Implement your notification logic here
             // This could use Laravel's notification system
-            
+
             return response()->json([
                 'success' => true,
                 'message' => "Announcement sent to {$studentsCount} students successfully!",

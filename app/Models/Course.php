@@ -1,5 +1,5 @@
 <?php
-// app/Models/Course.php - COMPLETE UPDATED VERSION
+// app/Models/Course.php - COMPLETE UPDATED VERSION FOR ENROLLMENT SYSTEM
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,6 +15,10 @@ class Course extends Model
         'code',
         'description',
         'fee',
+        'discount_fee',
+        'is_free',
+        'franchise_fee',
+        'fee_notes',
         'duration_months',
         'curriculum',
         'prerequisites',
@@ -37,6 +41,9 @@ class Course extends Model
         'tags' => 'array',
         'is_featured' => 'boolean',
         'fee' => 'decimal:2',
+        'discount_fee' => 'decimal:2',
+        'franchise_fee' => 'decimal:2',
+        'is_free' => 'boolean',
         'passing_percentage' => 'decimal:2'
     ];
 
@@ -60,8 +67,53 @@ class Course extends Model
         });
     }
 
-    // Relationships
+    // =============================================================================
+    // 🔧 UPDATED: ENROLLMENT RELATIONSHIPS (CRITICAL FOR FRANCHISE SYSTEM)
+    // =============================================================================
+
+    /**
+     * Get all enrollments for this course
+     */
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class);
+    }
+
+    /**
+     * Get all students enrolled in this course (using the enrollments pivot table)
+     */
     public function students()
+    {
+        return $this->belongsToMany(User::class, 'enrollments', 'course_id', 'student_id')
+                    ->withPivot(['franchise_id', 'enrollment_date', 'payment_status', 'amount_paid', 'status'])
+                    ->withTimestamps();
+    }
+
+    /**
+     * Get students enrolled by a specific franchise
+     */
+    public function studentsByFranchise($franchiseId)
+    {
+        return $this->students()->wherePivot('franchise_id', $franchiseId);
+    }
+
+    /**
+     * Get enrollments by a specific franchise
+     */
+    public function enrollmentsByFranchise($franchiseId)
+    {
+        return $this->enrollments()->where('franchise_id', $franchiseId);
+    }
+
+    // =============================================================================
+    // 🔧 EXISTING RELATIONSHIPS (Keep These - But Updated for Consistency)
+    // =============================================================================
+
+    /**
+     * Direct relationship to Student model (if you're using a separate Student model)
+     * Note: This might conflict with enrollments - use one or the other
+     */
+    public function directStudents()
     {
         return $this->hasMany(Student::class);
     }
@@ -86,7 +138,166 @@ class Course extends Model
         return $this->hasManyThrough(ExamResult::class, Exam::class);
     }
 
-    // Accessors & Mutators
+    // =============================================================================
+    // 🔧 UPDATED PRICING ACCESSORS (Keep Your Excellent Logic)
+    // =============================================================================
+
+    /**
+     * Get the effective fee (considering discounts and franchise pricing)
+     */
+    public function getEffectiveFeeAttribute()
+    {
+        if ($this->is_free) return 0;
+
+        // If there's a franchise fee, use it for franchise users
+        if ($this->franchise_fee !== null) {
+            return $this->franchise_fee;
+        }
+
+        // If there's a discount fee, use it
+        if ($this->discount_fee !== null) {
+            return $this->discount_fee;
+        }
+
+        // Otherwise use regular fee
+        return $this->fee;
+    }
+
+    /**
+     * Get formatted price for display (replaces existing getFormattedFeeAttribute)
+     */
+    public function getFormattedPriceAttribute()
+    {
+        if ($this->is_free) return 'Free';
+
+        $effectiveFee = $this->effective_fee;
+        return '₹' . number_format($effectiveFee, 2);
+    }
+
+    /**
+     * Check if course has discount
+     */
+    public function getHasDiscountAttribute()
+    {
+        return $this->discount_fee !== null && $this->discount_fee < $this->fee;
+    }
+
+    /**
+     * Get discount percentage
+     */
+    public function getDiscountPercentageAttribute()
+    {
+        if (!$this->has_discount) return 0;
+
+        return round((($this->fee - $this->discount_fee) / $this->fee) * 100);
+    }
+
+    /**
+     * Get price for franchise users specifically
+     */
+    public function getFranchisePriceAttribute()
+    {
+        if ($this->is_free) return 'Free';
+
+        $price = $this->franchise_fee ?? $this->effective_fee;
+        return '₹' . number_format($price, 2);
+    }
+
+    // =============================================================================
+    // 🔧 UPDATED ENROLLMENT-SPECIFIC METHODS
+    // =============================================================================
+
+    /**
+     * Get total revenue from enrollments (updated to use enrollment table)
+     */
+    public function getTotalRevenue()
+    {
+        return $this->enrollments()->where('payment_status', 'paid')->sum('amount_paid');
+    }
+
+    /**
+     * Get active students count (updated to use enrollment table)
+     */
+    public function getActiveStudentsCount()
+    {
+        return $this->enrollments()->where('status', 'active')->count();
+    }
+
+    /**
+     * Get completed students count (updated to use enrollment table)
+     */
+    public function getCompletedStudentsCount()
+    {
+        return $this->enrollments()->where('status', 'completed')->count();
+    }
+
+    /**
+     * Get total enrolled students count
+     */
+    public function getTotalEnrolledCount()
+    {
+        return $this->enrollments()->count();
+    }
+
+    /**
+     * Get completion rate based on enrollments
+     */
+    public function getCompletionRate()
+    {
+        $total = $this->getTotalEnrolledCount();
+        $completed = $this->getCompletedStudentsCount();
+
+        return $total > 0 ? round(($completed / $total) * 100, 2) : 0;
+    }
+
+    /**
+     * Check if course has available seats (updated)
+     */
+    public function hasAvailableSeats()
+    {
+        if (!$this->max_students) {
+            return true;
+        }
+
+        return $this->getTotalEnrolledCount() < $this->max_students;
+    }
+
+    /**
+     * Get remaining seats (updated)
+     */
+    public function getRemainingSeats()
+    {
+        if (!$this->max_students) {
+            return 'Unlimited';
+        }
+
+        $remaining = $this->max_students - $this->getTotalEnrolledCount();
+        return max(0, $remaining);
+    }
+
+    /**
+     * Get revenue by franchise
+     */
+    public function getRevenueByFranchise($franchiseId)
+    {
+        return $this->enrollments()
+                   ->where('franchise_id', $franchiseId)
+                   ->where('payment_status', 'paid')
+                   ->sum('amount_paid');
+    }
+
+    /**
+     * Get enrollment count by franchise
+     */
+    public function getEnrollmentCountByFranchise($franchiseId)
+    {
+        return $this->enrollments()->where('franchise_id', $franchiseId)->count();
+    }
+
+    // =============================================================================
+    // 🔧 KEEP ALL YOUR EXISTING ACCESSORS & METHODS
+    // =============================================================================
+
     public function getFormattedFeeAttribute()
     {
         return $this->fee ? '₹' . number_format($this->fee, 2) : 'Free';
@@ -145,7 +356,7 @@ class Course extends Model
 
     public function getEnrollmentStatusAttribute()
     {
-        $enrolled = $this->students()->count();
+        $enrolled = $this->getTotalEnrolledCount();
         $max = $this->max_students;
 
         if (!$max) {
@@ -161,7 +372,10 @@ class Course extends Model
         }
     }
 
-    // Scopes
+    // =============================================================================
+    // 🔧 KEEP ALL YOUR EXISTING SCOPES
+    // =============================================================================
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
@@ -194,57 +408,28 @@ class Course extends Model
 
     public function scopePopular($query)
     {
-        return $query->withCount('students')
-                    ->orderBy('students_count', 'desc');
+        return $query->withCount(['enrollments'])
+                    ->orderBy('enrollments_count', 'desc');
     }
 
-    // Methods
-    public function getTotalRevenue()
+    public function scopeSearch($query, $term)
     {
-        return $this->payments()->where('status', 'completed')->sum('amount');
+        return $query->where(function ($query) use ($term) {
+            $query->where('name', 'like', "%{$term}%")
+                  ->orWhere('code', 'like', "%{$term}%")
+                  ->orWhere('description', 'like', "%{$term}%")
+                  ->orWhere('category', 'like', "%{$term}%");
+        });
     }
 
-    public function getActiveStudentsCount()
-    {
-        return $this->students()->where('status', 'active')->count();
-    }
-
-    public function getGraduatedStudentsCount()
-    {
-        return $this->students()->where('status', 'graduated')->count();
-    }
-
-    public function getCompletionRate()
-    {
-        $total = $this->students()->count();
-        $graduated = $this->getGraduatedStudentsCount();
-
-        return $total > 0 ? round(($graduated / $total) * 100, 2) : 0;
-    }
+    // =============================================================================
+    // 🔧 KEEP ALL YOUR EXISTING STATIC METHODS
+    // =============================================================================
 
     public function getAverageExamScore()
     {
         $results = $this->examResults()->where('result', 'pass')->get();
         return $results->count() > 0 ? round($results->avg('percentage'), 2) : 0;
-    }
-
-    public function hasAvailableSeats()
-    {
-        if (!$this->max_students) {
-            return true;
-        }
-
-        return $this->students()->count() < $this->max_students;
-    }
-
-    public function getRemainingSeats()
-    {
-        if (!$this->max_students) {
-            return 'Unlimited';
-        }
-
-        $remaining = $this->max_students - $this->students()->count();
-        return max(0, $remaining);
     }
 
     public function isEligibleForEnrollment()
@@ -272,7 +457,7 @@ class Course extends Model
 
     public function canBeDeleted()
     {
-        return $this->students()->count() === 0 &&
+        return $this->enrollments()->count() === 0 &&
                $this->exams()->count() === 0 &&
                $this->payments()->count() === 0;
     }
@@ -330,8 +515,8 @@ class Course extends Model
     {
         return static::active()
             ->featured()
-            ->withCount('students')
-            ->orderBy('students_count', 'desc')
+            ->withCount('enrollments')
+            ->orderBy('enrollments_count', 'desc')
             ->take($limit)
             ->get();
     }
@@ -352,21 +537,5 @@ class Course extends Model
                 return $course->getCompletionRate();
             })
             ->take($limit);
-    }
-
-    // Search functionality
-    public function scopeSearch($query, $term)
-    {
-        return $query->where(function ($query) use ($term) {
-            $query->where('name', 'like', "%{$term}%")
-                  ->orWhere('code', 'like', "%{$term}%")
-                  ->orWhere('description', 'like', "%{$term}%")
-                  ->orWhere('category', 'like', "%{$term}%");
-        });
-    }
-
-    public function enrollments()
-    {
-        return $this->hasMany(CourseEnrollment::class);
     }
 }

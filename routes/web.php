@@ -1,5 +1,5 @@
 <?php
-// routes/web.php (COMPLETE FIXED VERSION)
+// routes/web.php (COMPLETE UPDATED VERSION WITH CORRECT COURSE ROUTES)
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\CertificateRequestController;
 use App\Http\Controllers\Franchise\CourseController as FranchiseCourseController;
 use App\Http\Controllers\Franchise\PaymentController as FranchisePaymentController;
 use App\Http\Controllers\Franchise\StudentController as FranchiseStudentController;
+use App\Http\Controllers\Franchise\EnrollmentController as FranchiseEnrollmentController;
 use App\Http\Controllers\Franchise\DashboardController as FranchiseDashboardController;
 use App\Http\Controllers\Franchise\CertificateController as FranchiseCertificateController;
 use App\Http\Controllers\Franchise\CertificateRequestController as FranchiseCertificateRequestController;
@@ -61,21 +62,31 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::post('/franchises/{franchise}/toggle-status', [FranchiseController::class, 'toggleStatus'])->name('franchises.toggle-status');
 
     // =============================================================================
-    // COURSE MANAGEMENT (Global Courses)
+    // 🔧 UPDATED: ADMIN COURSE MANAGEMENT (Global Courses) - COMPLETE
     // =============================================================================
     Route::resource('courses', CourseController::class);
+
+    // Course Status Management
     Route::post('/courses/{course}/toggle-status', [CourseController::class, 'toggleStatus'])->name('courses.toggle-status');
     Route::post('/courses/{course}/toggle-featured', [CourseController::class, 'toggleFeatured'])->name('courses.toggle-featured');
     Route::post('/courses/{course}/activate', [CourseController::class, 'activate'])->name('courses.activate');
     Route::post('/courses/{course}/deactivate', [CourseController::class, 'deactivate'])->name('courses.deactivate');
     Route::post('/courses/{course}/archive', [CourseController::class, 'archive'])->name('courses.archive');
+
+    // Bulk Operations
     Route::post('/courses/bulk-action', [CourseController::class, 'bulkAction'])->name('courses.bulk-action');
     Route::post('/courses/bulk-delete', [CourseController::class, 'bulkDelete'])->name('courses.bulk-delete');
     Route::post('/courses/bulk-status-update', [CourseController::class, 'bulkStatusUpdate'])->name('courses.bulk-status-update');
+
+    // Import/Export
     Route::get('/courses/export', [CourseController::class, 'export'])->name('courses.export');
     Route::post('/courses/import', [CourseController::class, 'import'])->name('courses.import');
+
+    // Analytics & Data
     Route::get('/courses/{course}/analytics', [CourseController::class, 'analytics'])->name('courses.analytics');
     Route::get('/courses/{course}/students', [CourseController::class, 'getStudents'])->name('courses.students');
+
+    // Filtering & Search
     Route::get('/courses/category/{category}', [CourseController::class, 'byCategory'])->name('courses.by-category');
     Route::get('/courses/search', [CourseController::class, 'search'])->name('courses.search');
 
@@ -161,12 +172,42 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 });
 
 // =============================================================================
-// 🔧 FRANCHISE ROUTES - COMPLETELY FIXED
+// 🔧 FRANCHISE ROUTES - COMPLETELY UPDATED & FIXED
 // =============================================================================
-Route::middleware(['auth'])->prefix('franchise')->name('franchise.')->group(function () {
+Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franchise.')->group(function () {
 
     // Franchise Dashboard
     Route::get('/', [FranchiseDashboardController::class, 'index'])->name('dashboard');
+
+    // =============================================================================
+    // 🔧 UPDATED: FRANCHISE COURSE MANAGEMENT - COMPLETE
+    // =============================================================================
+    Route::prefix('courses')->name('courses.')->group(function () {
+        // Main course routes
+        Route::get('/', [FranchiseCourseController::class, 'index'])->name('index');
+        Route::get('/{course}', [FranchiseCourseController::class, 'show'])->name('show');
+        Route::get('/{course}/students', [FranchiseCourseController::class, 'students'])->name('students');
+
+        // Revenue tracking
+        Route::get('/revenue/tracking', [FranchiseCourseController::class, 'revenue'])->name('revenue');
+    });
+
+    // =============================================================================
+    // 🔧 UPDATED: FRANCHISE ENROLLMENT MANAGEMENT - COMPLETE & FIXED
+    // =============================================================================
+    Route::prefix('enrollments')->name('enrollments.')->group(function () {
+        // Enrollment CRUD
+        Route::post('/store', [FranchiseEnrollmentController::class, 'store'])->name('store');
+        Route::get('/my-students', [FranchiseEnrollmentController::class, 'myStudents'])->name('my-students');
+        Route::get('/{enrollment}', [FranchiseEnrollmentController::class, 'show'])->name('show'); // ← MISSING!
+
+        // Enrollment management
+        Route::patch('/{enrollment}/status', [FranchiseEnrollmentController::class, 'updateStatus'])->name('update-status');
+        Route::post('/{enrollment}/certificate', [FranchiseEnrollmentController::class, 'generateCertificate'])->name('generate-certificate');
+        Route::get('/{enrollment}/certificate/download', [FranchiseEnrollmentController::class, 'downloadCertificate'])->name('download-certificate');
+        Route::delete('/{enrollment}', [FranchiseEnrollmentController::class, 'destroy'])->name('destroy');
+    });
+
 
     // =============================================================================
     // 🔧 FRANCHISE STUDENT MANAGEMENT - FIXED (Own Students Only)
@@ -176,13 +217,9 @@ Route::middleware(['auth'])->prefix('franchise')->name('franchise.')->group(func
     Route::get('students-stats', [FranchiseStudentController::class, 'getStats'])->name('students.stats');
     Route::get('/students/{student}/profile', [FranchiseStudentController::class, 'profile'])->name('students.profile');
 
-    // =============================================================================
-    // 🔧 FRANCHISE COURSE MANAGEMENT - COMPLETELY FIXED
-    // =============================================================================
-    Route::get('/courses', [FranchiseCourseController::class, 'index'])->name('courses.index');
-    Route::get('/courses/{course}', [FranchiseCourseController::class, 'show'])->name('courses.show');
-    Route::get('/courses/{course}/enroll', [FranchiseCourseController::class, 'enrollForm'])->name('courses.enroll-form');
-    Route::post('/courses/{course}/enroll', [FranchiseCourseController::class, 'enrollStudents'])->name('courses.enroll');
+    // 🔧 NEW: Student detail routes
+    Route::get('/students/{student}/course/{course}', [FranchiseStudentController::class, 'showStudentCourse'])->name('students.show-course');
+    Route::get('/students/export', [FranchiseStudentController::class, 'export'])->name('students.export');
 
     // =============================================================================
     // FRANCHISE CERTIFICATE MANAGEMENT (View & Download Issued Certificates)
@@ -249,6 +286,15 @@ Route::middleware(['auth'])->prefix('franchise')->name('franchise.')->group(func
     });
 
     // =============================================================================
+    // 🔧 NEW: REVENUE TRACKING ROUTES
+    // =============================================================================
+    Route::prefix('revenue')->name('revenue.')->group(function () {
+        Route::get('/export', [FranchiseCourseController::class, 'exportRevenue'])->name('export');
+        Route::get('/courses/excel', [FranchiseCourseController::class, 'exportCourseRevenueExcel'])->name('courses.excel');
+        Route::get('/courses/pdf', [FranchiseCourseController::class, 'exportCourseRevenuePDF'])->name('courses.pdf');
+    });
+
+    // =============================================================================
     // FRANCHISE REPORTS (Own Data Only)
     // =============================================================================
     Route::prefix('reports')->name('reports.')->group(function () {
@@ -264,6 +310,25 @@ Route::middleware(['auth'])->prefix('franchise')->name('franchise.')->group(func
     Route::prefix('settings')->name('settings.')->group(function () {
         Route::get('/', function() { return view('franchise.settings.index'); })->name('index');
         Route::get('/profile', function() { return view('franchise.settings.profile'); })->name('profile');
+    });
+});
+
+// =============================================================================
+// 🔧 STUDENT ROUTES (Coming Next - Course Access for Students)
+// =============================================================================
+Route::middleware(['auth', 'role:student'])->prefix('student')->name('student.')->group(function () {
+    // Student Dashboard
+    Route::get('/', function() { return view('student.dashboard'); })->name('dashboard');
+
+    // Student Courses
+    Route::prefix('courses')->name('courses.')->group(function () {
+        Route::get('/', function() { return view('student.courses.index'); })->name('index');
+        Route::get('/{course}', function() { return view('student.courses.show'); })->name('show');
+    });
+
+    // Student Profile
+    Route::prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', function() { return view('student.profile.index'); })->name('index');
     });
 });
 
