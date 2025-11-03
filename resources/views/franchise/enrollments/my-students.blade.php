@@ -17,7 +17,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-lg-3 col-6">
         <div class="small-box bg-success">
             <div class="inner">
@@ -29,7 +28,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-lg-3 col-6">
         <div class="small-box bg-info">
             <div class="inner">
@@ -41,7 +39,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-lg-3 col-6">
         <div class="small-box bg-warning">
             <div class="inner">
@@ -178,6 +175,37 @@
                             @endforeach
                         </td>
                         <td>
+                            @foreach($student->enrollments as $enrollment)
+                                <div class="mb-2">
+                                    @php
+                                        $certificateRequest = $enrollment->certificateRequest ?? null;
+                                        $paymentCompleted = $enrollment->payment_status === 'completed' || ($enrollment->payment && $enrollment->payment->status === 'completed');
+                                    @endphp
+
+                                    @if($enrollment->status === 'completed')
+                                        @if($certificateRequest && $certificateRequest->status !== 'rejected')
+                                            <span class="badge badge-info">
+                                                Certificate Requested
+                                            </span>
+                                        @elseif(!$paymentCompleted)
+                                            <a href="{{ route('franchise.payments.create', ['student_id' => $student->id, 'enrollment_id' => $enrollment->id]) }}"
+                                               class="btn btn-warning btn-sm"
+                                               title="Complete Payment First">
+                                               <i class="fas fa-credit-card"></i> Payment Required
+                                            </a>
+                                        @else
+                                            <a href="{{ route('franchise.certificate-requests.create', ['student_id' => $student->id, 'enrollment_id' => $enrollment->id]) }}"
+                                               class="btn btn-success btn-sm"
+                                               title="Request Certificate">
+                                               <i class="fas fa-certificate"></i> Request Certificate
+                                            </a>
+                                        @endif
+                                    @else
+                                        <span class="text-muted" style="font-size:11px;">No cert. eligible</span>
+                                    @endif
+                                </div>
+                            @endforeach
+
                             <div class="btn-group" role="group">
                                 <a href="#" class="btn btn-sm btn-outline-primary" title="View Details">
                                     <i class="fas fa-eye"></i>
@@ -237,7 +265,6 @@
             </div>
         </div>
     </div>
-
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
@@ -259,7 +286,6 @@
 @section('js')
 <script>
 $(document).ready(function() {
-    // Auto-dismiss alerts
     setTimeout(function() {
         $('.alert').fadeOut('slow');
     }, 5000);

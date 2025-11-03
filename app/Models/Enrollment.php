@@ -63,4 +63,10 @@ class Enrollment extends Model
     {
         return $query->where('franchise_id', $franchiseId);
     }
+
+    public function certificateRequest()
+    {
+        return $this->hasOne(CertificateRequest::class, 'enrollment_id');
+    }
+
 }

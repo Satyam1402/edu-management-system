@@ -7,8 +7,10 @@ use App\Models\CertificateRequest;
 use App\Models\Student;
 use App\Models\Course;
 use App\Models\Payment;
+use App\Http\Controllers\Franchise\WalletController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Yajra\DataTables\Facades\DataTables;
 
 class CertificateRequestController extends Controller
@@ -24,12 +26,8 @@ class CertificateRequestController extends Controller
 
             return DataTables::of($requests)
                 ->addIndexColumn()
-                ->addColumn('student_name', function($row) {
-                    return $row->student ? $row->student->name : 'N/A';
-                })
-                ->addColumn('course_name', function($row) {
-                    return $row->course ? $row->course->name : 'General Certificate';
-                })
+                ->addColumn('student_name', fn($row) => $row->student ? $row->student->name : 'N/A')
+                ->addColumn('course_name', fn($row) => $row->course ? $row->course->name : 'General Certificate')
                 ->addColumn('status_badge', function($row) {
                     $badgeClass = match($row->status) {
                         'pending' => 'warning',
@@ -40,16 +38,11 @@ class CertificateRequestController extends Controller
                     };
                     return "<span class='badge badge-{$badgeClass}'>" . ucfirst($row->status) . "</span>";
                 })
-                ->addColumn('payment_status', function($row) {
-                    return $row->payment ?
-                        "<span class='badge badge-success'>Paid</span>" :
-                        "<span class='badge badge-danger'>Unpaid</span>";
-                })
+                ->addColumn('payment_status', fn($row) => $row->payment ? "<span class='badge badge-success'>Paid</span>" : "<span class='badge badge-danger'>Unpaid</span>")
                 ->addColumn('action', function($row) {
-                    $btn = '<div class="btn-group btn-group-sm">';
-                    $btn .= '<a href="'.route('franchise.certificate-requests.show', $row->id).'" class="btn btn-info btn-sm" title="View"><i class="fas fa-eye"></i></a>';
-                    $btn .= '</div>';
-                    return $btn;
+                    return '<div class="btn-group btn-group-sm">' .
+                        '<a href="'.route('franchise.certificate-requests.show', $row->id).'" class="btn btn-info btn-sm" title="View"><i class="fas fa-eye"></i></a>' .
+                        '</div>';
                 })
                 ->rawColumns(['status_badge', 'payment_status', 'action'])
                 ->make(true);
@@ -62,17 +55,14 @@ class CertificateRequestController extends Controller
     {
         $userFranchiseId = Auth::user()->franchise_id;
 
-        // Debug: Check if franchise_id exists
         if (!$userFranchiseId) {
             return redirect()->back()->with('error', 'Your account is not associated with any franchise.');
         }
 
-        // Get students belonging to this franchise
         $students = Student::where('franchise_id', $userFranchiseId)
             ->where('status', 'active')
             ->get();
 
-        // Get completed payments for students belonging to this franchise
         $payments = Payment::whereHas('student', function($q) use ($userFranchiseId) {
                 $q->where('franchise_id', $userFranchiseId);
             })
@@ -83,64 +73,101 @@ class CertificateRequestController extends Controller
         return view('franchise.certificate-requests.create', compact('students', 'payments'));
     }
 
+    // Updated store method for single and batch requests with wallet check
     public function store(Request $request)
     {
-        // ✅ CORRECT VALIDATION WITH PROPER FIELD NAMES
+        // Example to handle both single and batch certificate requests
         $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'certificate_type' => 'nullable|string',
-            'payment_id' => 'required|exists:payments,id',
-            'special_note' => 'nullable|string|max:500'
+            'certificate_requests' => 'required|array',
+            'certificate_requests.*.student_id' => 'required|exists:students,id',
+            'certificate_requests.*.payment_id' => 'required|exists:payments,id',
+            'certificate_requests.*.certificate_type' => 'nullable|string',
+            'certificate_requests.*.special_note' => 'nullable|string|max:500'
         ]);
 
         $userFranchiseId = Auth::user()->franchise_id;
 
-        // Verify student belongs to this franchise
-        $student = Student::where('id', $request->student_id)
-            ->where('franchise_id', $userFranchiseId)
-            ->first();
+        $walletController = new WalletController();
 
-        if (!$student) {
-            return redirect()->back()->with('error', 'Invalid student selection.');
-        }
+        // Calculate total required amount for all payment_ids
+        $paymentIds = collect($request->input('certificate_requests'))->pluck('payment_id')->toArray();
 
-        // Verify payment belongs to this student and is completed
-        $payment = Payment::where('id', $request->payment_id)
-            ->where('student_id', $request->student_id)
+        $payments = Payment::whereIn('id', $paymentIds)
             ->where('status', 'completed')
-            ->first();
+            ->whereHas('student', fn($q) => $q->where('franchise_id', $userFranchiseId))
+            ->get();
 
-        if (!$payment) {
-            return redirect()->back()->with('error', 'Invalid payment selection or payment not completed.');
+        if ($payments->count() !== count($paymentIds)) {
+            return redirect()->back()->with('error', 'One or more payments are invalid or not completed.');
         }
 
-        // Check if certificate request already exists for this payment
-        $existingRequest = CertificateRequest::where('payment_id', $request->payment_id)->first();
-        if ($existingRequest) {
-            return redirect()->back()->with('error', 'Certificate request already exists for this payment.');
+        $totalAmount = $payments->sum('amount');
+
+        // Check wallet balance
+        $wallet = $walletController->getWalletByFranchise($userFranchiseId);
+        if (!$wallet || $wallet->balance < $totalAmount) {
+            return redirect()->back()->with('error', 'Insufficient wallet balance. Please top-up first.');
         }
 
-        // Create certificate request
-        CertificateRequest::create([
-            'franchise_id' => $userFranchiseId, // ✅ CORRECT FRANCHISE ID
-            'student_id' => $request->student_id,
-            'course_id' => $payment->course_id, // Get course from payment
-            'payment_id' => $request->payment_id,
-            'certificate_type' => $request->certificate_type ?? 'General Certificate',
-            'special_note' => $request->special_note,
-            'status' => 'pending',
-            'requested_at' => now(),
-        ]);
+        DB::beginTransaction();
 
-        return redirect()->route('franchise.certificate-requests.index')
-            ->with('success', 'Certificate request submitted successfully! 🎉');
+        try {
+            foreach ($request->input('certificate_requests') as $reqData) {
+                $student = Student::where('id', $reqData['student_id'])
+                    ->where('franchise_id', $userFranchiseId)
+                    ->first();
+
+                if (!$student) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Invalid student selection.');
+                }
+
+                $payment = $payments->where('id', $reqData['payment_id'])->first();
+
+                if (!$payment) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Invalid payment selection.');
+                }
+
+                // Check for duplicate requests
+                $existingRequest = CertificateRequest::where('payment_id', $reqData['payment_id'])->first();
+                if ($existingRequest) {
+                    DB::rollBack();
+                    return redirect()->back()->with('error', 'Certificate request already exists for payment ID ' . $reqData['payment_id']);
+                }
+
+                CertificateRequest::create([
+                    'franchise_id' => $userFranchiseId,
+                    'student_id' => $reqData['student_id'],
+                    'course_id' => $payment->course_id,
+                    'payment_id' => $reqData['payment_id'],
+                    'certificate_type' => $reqData['certificate_type'] ?? 'General Certificate',
+                    'special_note' => $reqData['special_note'] ?? null,
+                    'status' => 'pending',
+                    'requested_at' => now(),
+                ]);
+            }
+
+            // Deduct total amount from wallet
+            $walletController->deductForCertificateBatch($userFranchiseId, $totalAmount, [
+                'payment_ids' => $paymentIds,
+                'certificate_count' => count($paymentIds),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('franchise.certificate-requests.index')
+                ->with('success', 'Certificate request(s) submitted successfully! Wallet debited ₹' . number_format($totalAmount, 2));
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Failed to process certificate requests: ' . $e->getMessage());
+        }
     }
 
     public function show(CertificateRequest $certificateRequest)
     {
         $userFranchiseId = Auth::user()->franchise_id;
 
-        // Verify this request belongs to the current franchise
         if ($certificateRequest->franchise_id !== $userFranchiseId) {
             abort(403, 'This action is unauthorized.');
         }

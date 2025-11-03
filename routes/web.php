@@ -179,6 +179,8 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
     // Franchise Dashboard
     Route::get('/', [FranchiseDashboardController::class, 'index'])->name('dashboard');
 
+    Route::get('/wallet', [App\Http\Controllers\Franchise\WalletController::class, 'index'])->name('wallet.index');
+
     // =============================================================================
     // 🔧 UPDATED: FRANCHISE COURSE MANAGEMENT - COMPLETE
     // =============================================================================

@@ -266,6 +266,13 @@
                         </a>
                     </li>
 
+                    <li class="nav-item">
+                        <a href="{{ route('franchise.wallet.index') }}" class="nav-link {{ request()->routeIs('franchise.wallet.*') ? 'active' : '' }}">
+                            <i class="nav-icon fas fa-wallet"></i>
+                            <p>Wallet</p>
+                        </a>
+                    </li>
+
                     {{-- REPORTS --}}
                     <li class="nav-item">
                         <a href="{{ route($routePrefix.'.reports.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.reports.*') ? 'active' : '' }}">

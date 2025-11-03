@@ -155,4 +155,10 @@ class CertificateRequest extends Model
     {
         return $this->payment && $this->payment->status === 'completed';
     }
+
+    public function enrollment()
+    {
+        return $this->belongsTo(Enrollment::class, 'enrollment_id');
+    }
+
 }

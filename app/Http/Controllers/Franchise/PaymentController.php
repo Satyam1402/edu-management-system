@@ -399,7 +399,7 @@ public function index(Request $request)
         }
     }
 
-    public function verifyRazorpay(Request $request)
+public function verifyRazorpay(Request $request)
     {
         Log::info('Razorpay verification started', $request->all());
 
@@ -421,6 +421,14 @@ public function index(Request $request)
                     'razorpay_signature' => $request->razorpay_signature,
                     'verification_skipped' => true
                 ]);
+
+                // Credit wallet balance after payment success
+                $walletController = new WalletController();
+                $walletController->creditFromPayment(
+                    Auth::user()->franchise_id,
+                    $payment->amount,
+                    $payment->id
+                );
 
                 Log::info('Payment marked as completed', ['payment_id' => $payment->id]);
 
@@ -509,9 +517,17 @@ public function index(Request $request)
             'completed_at' => now()
         ]);
 
+        // Credit wallet balance after payment success
+        $walletController = new WalletController();
+        $walletController->creditFromPayment(
+            Auth::user()->franchise_id,
+            $payment->amount,
+            $payment->id
+        );
+
         return response()->json([
             'success' => true,
-            'message' => 'Payment marked as completed successfully!'
+            'message' => 'Payment marked as completed and wallet credited!'
         ]);
     }
 
