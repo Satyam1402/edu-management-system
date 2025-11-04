@@ -14,12 +14,13 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode; // ✅ Added for QR generation
 
 class PaymentController extends Controller
 {
-public function index(Request $request)
+    public function index(Request $request)
     {
         try {
             if ($request->ajax()) {
                 $userFranchiseId = Auth::user()->franchise_id;
 
+                // Query payments - only check student's franchise_id
                 $payments = Payment::with(['student', 'course'])
                     ->whereHas('student', function($q) use ($userFranchiseId) {
                         $q->where('franchise_id', $userFranchiseId);
@@ -39,7 +40,9 @@ public function index(Request $request)
                         return '<span class="text-muted">N/A</span>';
                     })
                     ->editColumn('course_name', function($payment) {
-                        return $payment->course ? htmlspecialchars($payment->course->name) : '<em class="text-muted">Certificate Fee</em>';
+                        return $payment->course
+                            ? htmlspecialchars($payment->course->name)
+                            : '<em class="text-muted">Certificate Fee</em>';
                     })
                     ->editColumn('formatted_amount', function($payment) {
                         return '<strong class="text-success">₹' . number_format($payment->amount, 2) . '</strong>';
@@ -66,51 +69,34 @@ public function index(Request $request)
                             'card' => 'fas fa-credit-card',
                             'online' => 'fas fa-globe',
                             'bank' => 'fas fa-university',
-                            'upi' => 'fab fa-google-pay'
+                            'upi' => 'fab fa-google-pay',
+                            'manual' => 'fas fa-edit',
+                            'qr' => 'fas fa-qrcode',
+                            'razorpay' => 'fas fa-bolt'
                         ];
-                        $icon = $icons[$payment->payment_method] ?? 'fas fa-question-circle';
-                        return '<i class="' . $icon . '"></i> ' . ucfirst($payment->payment_method ?? 'N/A');
+                        $icon = $icons[$payment->gateway ?? 'cash'] ?? 'fas fa-question-circle';
+                        return '<i class="' . $icon . '"></i> ' . ucfirst($payment->gateway ?? 'N/A');
                     })
                     ->addColumn('action', function($payment) {
                         $actions = '<div class="btn-group btn-group-sm" role="group">';
-
-                        $actions .= '<a href="' . route('franchise.payments.show', $payment->id) . '"
-                                       class="btn btn-info btn-sm"
-                                       data-toggle="tooltip"
-                                       title="View Details">
-                                       <i class="fas fa-eye"></i>
-                                    </a>';
-
+                        $actions .= '<a href="' . route('franchise.payments.show', $payment->id) . '" class="btn btn-info btn-sm" data-toggle="tooltip" title="View Details"><i class="fas fa-eye"></i></a>';
                         if ($payment->status == 'pending') {
-                            $actions .= '<a href="' . route('franchise.payments.pay', $payment->id) . '"
-                                           class="btn btn-success btn-sm"
-                                           data-toggle="tooltip"
-                                           title="Pay Now">
-                                           <i class="fas fa-credit-card"></i>
-                                        </a>';
+                            $actions .= '<a href="' . route('franchise.payments.pay', $payment->id) . '" class="btn btn-success btn-sm" data-toggle="tooltip" title="Pay Now"><i class="fas fa-credit-card"></i></a>';
                         }
-
                         if ($payment->status == 'completed') {
-                            $actions .= '<a href="' . route('franchise.payments.receipt', $payment->id) . '"
-                                           class="btn btn-primary btn-sm"
-                                           data-toggle="tooltip"
-                                           title="Download Receipt">
-                                           <i class="fas fa-download"></i>
-                                        </a>';
+                            $actions .= '<a href="' . route('franchise.payments.receipt', $payment->id) . '" class="btn btn-primary btn-sm" data-toggle="tooltip" title="Download Receipt"><i class="fas fa-download"></i></a>';
                         }
-
                         $actions .= '</div>';
                         return $actions;
                     })
                     ->rawColumns(['student_name', 'course_name', 'formatted_amount', 'formatted_date', 'status_badge', 'payment_method', 'action'])
                     ->make(true);
             }
-
+            
             return view('franchise.payments.index');
-
+            
         } catch (\Exception $e) {
             Log::error('Payment Index Error: ' . $e->getMessage());
-
             if ($request->ajax()) {
                 return response()->json([
                     'draw' => $request->get('draw'),
@@ -120,100 +106,84 @@ public function index(Request $request)
                     'error' => 'Unable to load payments: ' . $e->getMessage()
                 ], 500);
             }
-
             return view('franchise.payments.index')->with('error', 'Unable to load payments.');
         }
     }
 
 
-    public function create()
+    public function create(Request $request)
     {
+        // Check if this is a wallet top-up flow ("Add Funds")
+        $isWalletTopup = $request->query('type') == 'wallet';
         $userFranchiseId = Auth::user()->franchise_id;
 
-        $students = Student::where('franchise_id', $userFranchiseId)
-            ->where('status', 'active')
-            ->get();
+        // If it's a wallet top-up, do not load students/courses
+        // Otherwise load only active students/courses in current franchise
+        $students = $isWalletTopup ? collect() : Student::where('franchise_id', $userFranchiseId)
+                                                    ->where('status', 'active')->get();
+        $courses  = $isWalletTopup ? collect() : Course::where('status', 'active')->get();
 
-        $courses = Course::where('status', 'active')->get();
-
-        return view('franchise.payments.create', compact('students', 'courses'));
+        // Pass an isWalletTopup flag (true/false) to the Blade view for easy UI logic
+        return view('franchise.payments.create', compact('students', 'courses', 'isWalletTopup'));
     }
 
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'course_id' => 'nullable|exists:courses,id',
-            'amount' => 'required|numeric|min:1',
-            'payment_method' => 'required|in:manual,qr',
-            'qr_data' => 'nullable|string'
+
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'amount' => 'required|numeric|min:1',
+        'payment_method' => 'required|in:manual,qr,razorpay',
+        'student_id' => 'required|exists:students,id',
+        'course_id'  => 'nullable|exists:courses,id',
+        'qr_data'    => 'nullable|string'
+    ]);
+
+    try {
+        $userFranchiseId = Auth::user()->franchise_id;
+
+        // Verify student belongs to this franchise
+        $student = Student::where('id', $request->student_id)
+                        ->where('franchise_id', $userFranchiseId)
+                        ->first();
+
+        if (!$student) {
+            return redirect()->back()->with('error', 'Invalid student selection.');
+        }
+
+        $payment = Payment::create([
+            'student_id'   => $request->student_id,
+            'course_id'    => $request->course_id,
+            'amount'       => $request->amount,
+            'currency'     => 'INR',
+            'status'       => 'pending',
+            'gateway'      => $validated['payment_method'],
+            'qr_data'      => $validated['qr_data'] ?? null,
         ]);
 
-        try {
-            $userFranchiseId = Auth::user()->franchise_id;
+        return redirect()->route('franchise.payments.show', $payment->id);
 
-            // Verify student belongs to franchise
-            $student = Student::where('id', $request->student_id)
-                ->where('franchise_id', $userFranchiseId)
-                ->first();
-
-            if (!$student) {
-                if ($request->expectsJson()) {
-                    return response()->json(['error' => 'Invalid student selection'], 400);
-                }
-                return redirect()->back()->with('error', 'Invalid student selection.');
-            }
-
-            // Create payment record
-            $payment = Payment::create([
-                'student_id' => $validated['student_id'],
-                'course_id' => $validated['course_id'],
-                'amount' => $validated['amount'],
-                'currency' => 'INR',
-                'status' => 'completed',
-                'gateway' => $validated['payment_method'] === 'qr' ? 'qr_code' : 'manual',
-                'qr_data' => $validated['qr_data'] ?? null,
-                'gateway_payment_id' => $validated['payment_method'] === 'qr' ? 'QR_' . time() : 'MANUAL_' . time(),
-                'paid_at' => now()
-            ]);
-
-            // Success message based on payment method
-            $message = $validated['payment_method'] === 'qr'
-                ? '🎉 QR Code payment confirmed! Certificate request ready.'
-                : '🎉 Manual payment recorded! Certificate request ready.';
-
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $message,
-                    'payment_id' => $payment->id
-                ]);
-            }
-
-            return redirect()->route('franchise.certificate-requests.create')
-                ->with('success', $message);
-
-        } catch (\Exception $e) {
-            Log::error('Payment error: ' . $e->getMessage());
-
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Payment processing failed'], 500);
-            }
-
-            return redirect()->back()->with('error', 'Payment processing failed. Please try again.');
-        }
+    } catch (\Exception $e) {
+        Log::error('Payment Store Error: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Payment processing failed. Try again.');
     }
+}
 
- public function show($id)
-    {
-        $payment = Payment::with(['student', 'course'])
-            ->whereHas('student', function($q) {
-                $q->where('franchise_id', Auth::user()->franchise_id);
-            })
-            ->findOrFail($id);
 
-        return view('franchise.payments.show', compact('payment'));
-    }
+
+   public function show($id)
+{
+    $userFranchiseId = Auth::user()->franchise_id;
+
+    $payment = Payment::with(['student', 'course'])
+        ->whereHas('student', function($q) use ($userFranchiseId) {
+            $q->where('franchise_id', $userFranchiseId);
+        })
+        ->findOrFail($id);
+
+    return view('franchise.payments.show', compact('payment'));
+}
+
+
 
     // =============================================================================
     // ✅ QR CODE GENERATION
@@ -372,34 +342,31 @@ public function index(Request $request)
         }
     }
 
-    private function createRazorpayOrder($payment)
-    {
-        try {
-            $api = new \Razorpay\Api\Api(
-                config('services.razorpay.key'),
-                config('services.razorpay.secret')
-            );
+public function createRazorpayOrder(Request $request)
+{
+    $validated = $request->validate([
+        'amount' => 'required|numeric|min:1'
+    ]);
 
-            $orderData = [
-                'receipt' => $payment->order_id,
-                'amount' => $payment->amount * 100, // Amount in paise
-                'currency' => $payment->currency,
-                'notes' => [
-                    'student_id' => $payment->student_id,
-                    'payment_id' => $payment->id,
-                    'franchise_id' => Auth::user()->franchise_id,
-                ]
-            ];
+    $api = new \Razorpay\Api\Api(config('services.razorpay.key'), config('services.razorpay.secret'));
 
-            return $api->order->create($orderData);
+    $razorpayOrder = $api->order->create([
+        'amount' => $validated['amount'] * 100, // Razorpay expects paise
+        'currency' => 'INR',
+        'payment_capture' => 1
+    ]);
 
-        } catch (\Exception $e) {
-            Log::error('Razorpay order creation error: ' . $e->getMessage());
-            throw new \Exception('Failed to create payment order.');
-        }
-    }
+    return response()->json([
+        'order_id' => $razorpayOrder['id'],
+        'amount' => $razorpayOrder['amount'],
+        'currency' => $razorpayOrder['currency'],
+        'key' => config('services.razorpay.key')
+    ]);
+}
 
-public function verifyRazorpay(Request $request)
+
+
+    public function verifyRazorpay(Request $request)
     {
         Log::info('Razorpay verification started', $request->all());
 
@@ -419,21 +386,29 @@ public function verifyRazorpay(Request $request)
                 $payment->markAsCompleted($request->razorpay_payment_id, [
                     'razorpay_order_id' => $request->razorpay_order_id,
                     'razorpay_signature' => $request->razorpay_signature,
-                    'verification_skipped' => true
+                    'verification_skipped' => true // (if you trust the Razorpay callback)
                 ]);
 
-                // Credit wallet balance after payment success
-                $walletController = new WalletController();
-                $walletController->creditFromPayment(
-                    Auth::user()->franchise_id,
-                    $payment->amount,
-                    $payment->id
-                );
+                // Only credit wallet if this is a wallet_topup
+                if ($payment->type === 'wallet_topup') {
+                    $walletController = new WalletController();
+                    $walletController->creditFromPayment(
+                        Auth::user()->franchise_id,
+                        $payment->amount,
+                        $payment->id
+                    );
+                }
 
                 Log::info('Payment marked as completed', ['payment_id' => $payment->id]);
 
-                return redirect()->route('franchise.certificate-requests.create')
-                    ->with('success', '🎉 Payment completed successfully! You can now request a certificate.');
+                // Redirect appropriately for wallet or certificate use-case
+                if ($payment->type === 'wallet_topup') {
+                    return redirect()->route('franchise.wallet.index')
+                        ->with('success', '🎉 Funds added to wallet successfully!');
+                } else {
+                    return redirect()->route('franchise.certificate-requests.create')
+                        ->with('success', '🎉 Payment completed! You can now request a certificate.');
+                }
             }
 
             Log::error('Payment not found', ['payment_id' => $request->payment_id]);
@@ -443,14 +418,12 @@ public function verifyRazorpay(Request $request)
                 'request_data' => $request->all(),
                 'error' => $e->getMessage()
             ]);
-
-            return redirect()->route('franchise.certificate-requests.create')
-                ->with('error', 'Payment verification completed with issues, but you can proceed with certificate request.');
         }
 
-        return redirect()->route('franchise.certificate-requests.create')
-            ->with('error', 'Payment verification failed, but you can still proceed.');
+        return redirect()->route('franchise.wallet.index')
+            ->with('error', 'Payment verification failed.');
     }
+
 
     // =============================================================================
     // SUCCESS & FAILURE HANDLERS
@@ -517,19 +490,22 @@ public function verifyRazorpay(Request $request)
             'completed_at' => now()
         ]);
 
-        // Credit wallet balance after payment success
-        $walletController = new WalletController();
-        $walletController->creditFromPayment(
-            Auth::user()->franchise_id,
-            $payment->amount,
-            $payment->id
-        );
+        // Credit wallet only if this is a wallet_topup
+        if ($payment->type === 'wallet_topup') {
+            $walletController = new WalletController();
+            $walletController->creditFromPayment(
+                Auth::user()->franchise_id,
+                $payment->amount,
+                $payment->id
+            );
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Payment marked as completed and wallet credited!'
         ]);
     }
+
 
     public function markAsFailed(Payment $payment)
     {
@@ -589,18 +565,21 @@ public function verifyRazorpay(Request $request)
     // HELPER METHODS
     // =============================================================================
 
-    private function authorizePayment(Payment $payment)
-    {
-        $userFranchiseId = Auth::user()->franchise_id;
-
-        if (!$userFranchiseId) {
-            abort(403, 'Your account is not associated with any franchise.');
-        }
-
-        if ($payment->student->franchise_id !== $userFranchiseId) {
-            abort(403, 'Unauthorized access to this payment.');
-        }
+   private function authorizePayment(Payment $payment)
+{
+    $userFranchiseId = Auth::user()->franchise_id;
+    
+    if (!$userFranchiseId) {
+        abort(403, 'Your account is not associated with any franchise.');
     }
+
+    // Check if payment's student belongs to the franchise
+    if ($payment->student && $payment->student->franchise_id !== $userFranchiseId) {
+        abort(403, 'Unauthorized access to this payment.');
+    }
+}
+
+
 
     // =============================================================================
     // LEGACY METHODS (For compatibility)

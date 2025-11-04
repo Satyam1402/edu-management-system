@@ -179,7 +179,32 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
     // Franchise Dashboard
     Route::get('/', [FranchiseDashboardController::class, 'index'])->name('dashboard');
 
-    Route::get('/wallet', [App\Http\Controllers\Franchise\WalletController::class, 'index'])->name('wallet.index');
+   // ==================== FRANCHISE WALLET ROUTES ====================
+Route::prefix('wallet')->name('wallet.')->group(function () {
+    // Main wallet page - List all transactions (supports AJAX DataTables)
+    Route::get('/', [\App\Http\Controllers\Franchise\WalletController::class, 'index'])->name('index');
+    
+    // Show add funds form
+    Route::get('/create', [\App\Http\Controllers\Franchise\WalletController::class, 'create'])->name('create');
+    
+    // Process add funds request (initiate payment)
+    Route::post('/', [\App\Http\Controllers\Franchise\WalletController::class, 'store'])->name('store');
+    
+    // Razorpay payment verification (both POST and GET for callback)
+    Route::post('/verify-razorpay', [\App\Http\Controllers\Franchise\WalletController::class, 'verifyRazorpay'])->name('verify-razorpay');
+    Route::get('/verify-razorpay', [\App\Http\Controllers\Franchise\WalletController::class, 'verifyRazorpay'])->name('verify-razorpay-get');
+    
+    // UPI payment verification
+    Route::post('/verify-upi', [\App\Http\Controllers\Franchise\WalletController::class, 'verifyUpi'])->name('verify-upi');
+    
+    // View individual transaction details
+    Route::get('/transaction/{transaction}', [\App\Http\Controllers\Franchise\WalletController::class, 'show'])->name('show');
+    
+    // Download transaction receipt (optional)
+    Route::get('/transaction/{transaction}/receipt', [\App\Http\Controllers\Franchise\WalletController::class, 'downloadReceipt'])->name('receipt');
+});
+
+
 
     // =============================================================================
     // 🔧 UPDATED: FRANCHISE COURSE MANAGEMENT - COMPLETE
