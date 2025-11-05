@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+// use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CertificateRequest extends Model
 {
@@ -13,27 +14,38 @@ class CertificateRequest extends Model
         'franchise_id',
         'student_id',
         'course_id',
-        'payment_id',
+        'amount',
+        'certificate_type',
         'status',
-        'note',
+        'notes',
         'requested_at',
-        // New admin approval fields
+        // Admin approval fields
         'approved_by',
         'approved_at',
         'rejected_by',
         'rejected_at',
         'rejection_reason',
-        'admin_notes'
+        'admin_notes',
+        // Processing fields
+        'processed_by',
+        'processed_at',
+        'certificate_number',
+        'issued_date'
     ];
 
     protected $casts = [
         'requested_at' => 'datetime',
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'processed_at' => 'datetime',
+        'issued_date' => 'datetime',
+        'amount' => 'decimal:2'
     ];
 
+    protected $dates = ['deleted_at'];
+
     // ========================================
-    // EXISTING RELATIONSHIPS (Keep as they are)
+    // RELATIONSHIPS
     // ========================================
 
     public function franchise()
@@ -51,41 +63,34 @@ class CertificateRequest extends Model
         return $this->belongsTo(Course::class);
     }
 
-    public function payment()
-    {
-        return $this->belongsTo(Payment::class);
-    }
-
-    // ========================================
-    // NEW ADMIN APPROVAL RELATIONSHIPS
-    // ========================================
-
-    /**
-     * Get the admin who approved this request
-     */
     public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
 
-    /**
-     * Get the admin who rejected this request
-     */
     public function rejectedBy()
     {
         return $this->belongsTo(User::class, 'rejected_by');
     }
 
-    /**
-     * Get the certificate created from this request (if approved)
-     */
+    public function processedBy()
+    {
+        return $this->belongsTo(User::class, 'processed_by');
+    }
+
     public function certificate()
     {
         return $this->hasOne(Certificate::class);
     }
 
+    public function walletTransaction()
+    {
+        return $this->hasOne(FranchiseWalletTransaction::class, 'reference_id', 'id')
+                    ->where('source', 'certificate_request');
+    }
+
     // ========================================
-    // EXISTING SCOPES (Keep as they are)
+    // SCOPES
     // ========================================
 
     public function scopePending($query)
@@ -103,62 +108,103 @@ class CertificateRequest extends Model
         return $query->where('status', 'rejected');
     }
 
-    // ========================================
-    // NEW HELPER METHODS
-    // ========================================
-
-    /**
-     * Check if request can be approved
-     */
-    public function canBeApproved()
+    public function scopeCompleted($query)
     {
-        return $this->status === 'pending' &&
-               $this->payment &&
-               $this->payment->status === 'completed';
+        return $query->where('status', 'completed');
     }
 
-    /**
-     * Check if request can be rejected
-     */
-    public function canBeRejected()
+    public function scopeForFranchise($query, $franchiseId)
+    {
+        return $query->where('franchise_id', $franchiseId);
+    }
+
+    // ========================================
+    // HELPER METHODS
+    // ========================================
+
+    public function canBeApproved()
     {
         return $this->status === 'pending';
     }
 
-    /**
-     * Get status color for badges
-     */
-    public function getStatusColorAttribute()
+    public function canBeRejected()
     {
-        $colors = [
-            'pending' => 'warning',
-            'approved' => 'success',
-            'rejected' => 'danger',
-            'issued' => 'info'
-        ];
-
-        return $colors[$this->status] ?? 'secondary';
+        return in_array($this->status, ['pending', 'processing']);
     }
 
-    /**
-     * Get formatted status text
-     */
+    public function canBeProcessed()
+    {
+        return $this->status === 'approved';
+    }
+
+    public function getStatusColorAttribute()
+    {
+        return match($this->status) {
+            'pending' => 'warning',
+            'processing' => 'info',
+            'approved' => 'success',
+            'rejected' => 'danger',
+            'completed' => 'primary',
+            default => 'secondary'
+        };
+    }
+
     public function getStatusTextAttribute()
     {
         return ucfirst($this->status);
     }
 
-    /**
-     * Check if payment is completed
-     */
-    public function hasCompletedPayment()
+    public function getFormattedAmountAttribute()
     {
-        return $this->payment && $this->payment->status === 'completed';
+        return '₹' . number_format($this->amount, 2);
     }
 
-    public function enrollment()
+    public function markAsApproved($adminId, $notes = null)
     {
-        return $this->belongsTo(Enrollment::class, 'enrollment_id');
+        $this->update([
+            'status' => 'approved',
+            'approved_by' => $adminId,
+            'approved_at' => now(),
+            'admin_notes' => $notes
+        ]);
     }
 
+    public function markAsRejected($adminId, $reason, $notes = null)
+    {
+        $this->update([
+            'status' => 'rejected',
+            'rejected_by' => $adminId,
+            'rejected_at' => now(),
+            'rejection_reason' => $reason,
+            'admin_notes' => $notes
+        ]);
+    }
+
+    public function markAsCompleted($adminId, $certificateNumber, $issuedDate = null)
+    {
+        $this->update([
+            'status' => 'completed',
+            'processed_by' => $adminId,
+            'processed_at' => now(),
+            'certificate_number' => $certificateNumber,
+            'issued_date' => $issuedDate ?: now()
+        ]);
+    }
+
+    // ========================================
+    // STATIC METHODS
+    // ========================================
+
+    public static function getStatsByFranchise($franchiseId)
+    {
+        return self::where('franchise_id', $franchiseId)
+            ->selectRaw('
+                status,
+                COUNT(*) as count,
+                SUM(amount) as total_amount
+            ')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+    }
 }
