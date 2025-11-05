@@ -269,6 +269,8 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
         Route::get('/create', [FranchiseCertificateRequestController::class, 'create'])->name('create');
         Route::post('/', [FranchiseCertificateRequestController::class, 'store'])->name('store');
         Route::get('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'show'])->name('show');
+        Route::get('/{certificateRequest}/edit', [FranchiseCertificateRequestController::class, 'edit'])->name('edit');
+    Route::put('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'update'])->name('update');
 
         // AJAX routes for dynamic functionality (REQUIRED for our views)
         Route::get('/wallet-balance', [FranchiseCertificateRequestController::class, 'getWalletBalance'])->name('wallet-balance');
