@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Admin\FranchiseController;
 use App\Http\Controllers\Admin\CertificateController;
 use App\Http\Controllers\Admin\CertificateRequestController;
+use App\Http\Controllers\Admin\WalletController;
 
 // Franchise Controllers
 use App\Http\Controllers\Franchise\CourseController as FranchiseCourseController;
@@ -128,13 +129,37 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
 
         // Data exports and stats
         Route::get('/stats/overview', [CertificateRequestController::class, 'getStats'])->name('stats');
-        Route::get('/export/excel', [CertificateRequestController::class, 'exportExcel'])->name('export.excel');
-        Route::get('/export/pdf', [CertificateRequestController::class, 'exportPdf'])->name('export.pdf');
+        Route::get('/export/csv', [CertificateController::class, 'export'])->name('export');
+        Route::get('/export/excel', [CertificateController::class, 'exportExcel'])->name('export.excel');
+        Route::get('/export/pdf', [CertificateController::class, 'exportPdf'])->name('export.pdf');
 
         // Filtering and search
         Route::get('/franchise/{franchise}', [CertificateRequestController::class, 'byFranchise'])->name('by-franchise');
         Route::get('/course/{course}', [CertificateRequestController::class, 'byCourse'])->name('by-course');
         Route::get('/status/{status}', [CertificateRequestController::class, 'byStatus'])->name('by-status');
+    });
+
+    Route::prefix('wallet')->name('wallet.')->group(function () {
+    // Wallet Dashboard
+        Route::get('/', [WalletController::class, 'index'])->name('index');
+        
+        // All Transactions
+        Route::get('/transactions', [WalletController::class, 'transactions'])->name('transactions');
+        
+        // Recharge Requests
+        Route::get('/recharge-requests', [WalletController::class, 'rechargeRequests'])->name('recharge-requests');
+        Route::post('/recharge-requests/{id}/approve', [WalletController::class, 'approveRecharge'])->name('approve-recharge');
+        Route::post('/recharge-requests/{id}/reject', [WalletController::class, 'rejectRecharge'])->name('reject-recharge');
+        
+        // Manual Transaction
+        Route::get('/manual-transaction', [WalletController::class, 'manualTransaction'])->name('manual-transaction');
+        Route::post('/manual-transaction', [WalletController::class, 'processManualTransaction'])->name('process-manual');
+        
+        // Franchise Wallet Details
+        Route::get('/franchise/{id}', [WalletController::class, 'franchiseWallet'])->name('franchise-details');
+        
+        // Audit Logs
+        Route::get('/audit-logs', [WalletController::class, 'auditLogs'])->name('audit-logs');
     });
 
     // Exam Management

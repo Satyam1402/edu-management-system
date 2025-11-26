@@ -22,119 +22,119 @@ class CertificateRequestController extends Controller
      * Display certificate requests index with DataTables
      */
     public function index(Request $request)
-{
-    // If AJAX request (DataTables)
-    if ($request->ajax()) {
-        $franchiseId = Auth::user()->franchise_id;
-        
-        $query = CertificateRequest::with(['student', 'course', 'franchise'])
-            ->where('franchise_id', $franchiseId);
-
-        // Apply filters
-        if ($request->has('status_filter') && $request->status_filter != '') {
-            $query->where('status', $request->status_filter);
-        }
-
-        if ($request->has('course_filter') && $request->course_filter != '') {
-            $query->where('course_id', $request->course_filter);
-        }
-
-        // Date range filter
-        if ($request->has('date_range') && $request->date_range != '') {
-            $dateRange = $request->date_range;
-            $now = now();
+    {
+        // If AJAX request (DataTables)
+        if ($request->ajax()) {
+            $franchiseId = Auth::user()->franchise_id;
             
-            switch ($dateRange) {
-                case 'today':
-                    $query->whereDate('created_at', $now->toDateString());
-                    break;
-                case 'week':
-                    $query->whereBetween('created_at', [$now->startOfWeek(), $now->endOfWeek()]);
-                    break;
-                case 'month':
-                    $query->whereMonth('created_at', $now->month)
-                          ->whereYear('created_at', $now->year);
-                    break;
-                case 'quarter':
-                    $query->whereBetween('created_at', [$now->startOfQuarter(), $now->endOfQuarter()]);
-                    break;
+            $query = CertificateRequest::with(['student', 'course', 'franchise'])
+                ->where('franchise_id', $franchiseId);
+
+            // Apply filters
+            if ($request->has('status_filter') && $request->status_filter != '') {
+                $query->where('status', $request->status_filter);
             }
+
+            if ($request->has('course_filter') && $request->course_filter != '') {
+                $query->where('course_id', $request->course_filter);
+            }
+
+            // Date range filter
+            if ($request->has('date_range') && $request->date_range != '') {
+                $dateRange = $request->date_range;
+                $now = now();
+                
+                switch ($dateRange) {
+                    case 'today':
+                        $query->whereDate('created_at', $now->toDateString());
+                        break;
+                    case 'week':
+                        $query->whereBetween('created_at', [$now->startOfWeek(), $now->endOfWeek()]);
+                        break;
+                    case 'month':
+                        $query->whereMonth('created_at', $now->month)
+                            ->whereYear('created_at', $now->year);
+                        break;
+                    case 'quarter':
+                        $query->whereBetween('created_at', [$now->startOfQuarter(), $now->endOfQuarter()]);
+                        break;
+                }
+            }
+
+            return DataTables::of($query)
+                ->addIndexColumn()
+                ->addColumn('student_name', function ($row) {
+                    return $row->student ? $row->student->name : 'N/A';
+                })
+                ->addColumn('course_name', function ($row) {
+                    return $row->course ? $row->course->name : 'N/A';
+                })
+                ->addColumn('amount_formatted', function ($row) {
+                    return '₹' . number_format($row->amount, 2);
+                })
+                ->addColumn('status_badge', function ($row) {
+                    $badges = [
+                        'pending' => '<span class="status-badge status-pending"><i class="fas fa-clock"></i> Pending</span>',
+                        'processing' => '<span class="status-badge status-processing"><i class="fas fa-spinner"></i> Processing</span>',
+                        'approved' => '<span class="status-badge status-approved"><i class="fas fa-check"></i> Approved</span>',
+                        'rejected' => '<span class="status-badge status-rejected"><i class="fas fa-times"></i> Rejected</span>',
+                        'completed' => '<span class="status-badge status-completed"><i class="fas fa-certificate"></i> Completed</span>',
+                    ];
+                    
+                    return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
+                })
+                ->addColumn('requested_date', function ($row) {
+                    return $row->created_at ? $row->created_at->format('d M Y, h:i A') : 'N/A';
+                })
+                ->addColumn('action', function ($row) {
+                    $buttons = '<div class="action-buttons">';
+                    
+                    // View Button (Always available)
+                    $buttons .= '<a href="' . route('franchise.certificate-requests.show', $row->id) . '" 
+                                class="btn btn-info btn-sm" 
+                                data-bs-toggle="tooltip" 
+                                title="View Details">
+                                <i class="fas fa-eye"></i>
+                            </a> ';
+                    
+                    // Edit Button (Only for pending requests) ← THIS WAS MISSING!
+                    if ($row->status === 'pending') {
+                        $buttons .= '<a href="' . route('franchise.certificate-requests.edit', $row->id) . '" 
+                                    class="btn btn-warning btn-sm" 
+                                    data-bs-toggle="tooltip" 
+                                    title="Edit Request">
+                                    <i class="fas fa-edit"></i>
+                                </a> ';
+                    }
+                    
+                    // Download Button (Only for completed)
+                    if ($row->status === 'completed' && $row->certificate_number) {
+                        $buttons .= '<a href="' . route('franchise.certificate-requests.download', $row->id) . '" 
+                                    class="btn btn-success btn-sm" 
+                                    data-bs-toggle="tooltip" 
+                                    title="Download Certificate">
+                                    <i class="fas fa-download"></i>
+                                </a> ';
+                    }
+                    
+                    $buttons .= '</div>';
+                    
+                    return $buttons;
+                })
+                ->rawColumns(['status_badge', 'action'])
+                ->with([
+                    'stats' => [
+                        'pending' => CertificateRequest::where('franchise_id', $franchiseId)->where('status', 'pending')->count(),
+                        'approved' => CertificateRequest::where('franchise_id', $franchiseId)->where('status', 'approved')->count(),
+                        'completed' => CertificateRequest::where('franchise_id', $franchiseId)->where('status', 'completed')->count(),
+                    ]
+                ])
+                ->make(true);
         }
 
-        return DataTables::of($query)
-            ->addIndexColumn()
-            ->addColumn('student_name', function ($row) {
-                return $row->student ? $row->student->name : 'N/A';
-            })
-            ->addColumn('course_name', function ($row) {
-                return $row->course ? $row->course->name : 'N/A';
-            })
-            ->addColumn('amount_formatted', function ($row) {
-                return '₹' . number_format($row->amount, 2);
-            })
-            ->addColumn('status_badge', function ($row) {
-                $badges = [
-                    'pending' => '<span class="status-badge status-pending"><i class="fas fa-clock"></i> Pending</span>',
-                    'processing' => '<span class="status-badge status-processing"><i class="fas fa-spinner"></i> Processing</span>',
-                    'approved' => '<span class="status-badge status-approved"><i class="fas fa-check"></i> Approved</span>',
-                    'rejected' => '<span class="status-badge status-rejected"><i class="fas fa-times"></i> Rejected</span>',
-                    'completed' => '<span class="status-badge status-completed"><i class="fas fa-certificate"></i> Completed</span>',
-                ];
-                
-                return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
-            })
-            ->addColumn('requested_date', function ($row) {
-                return $row->created_at ? $row->created_at->format('d M Y, h:i A') : 'N/A';
-            })
-            ->addColumn('action', function ($row) {
-                $buttons = '<div class="action-buttons">';
-                
-                // View Button (Always available)
-                $buttons .= '<a href="' . route('franchise.certificate-requests.show', $row->id) . '" 
-                            class="btn btn-info btn-sm" 
-                            data-bs-toggle="tooltip" 
-                            title="View Details">
-                            <i class="fas fa-eye"></i>
-                        </a> ';
-                
-                // Edit Button (Only for pending requests) ← THIS WAS MISSING!
-                if ($row->status === 'pending') {
-                    $buttons .= '<a href="' . route('franchise.certificate-requests.edit', $row->id) . '" 
-                                class="btn btn-warning btn-sm" 
-                                data-bs-toggle="tooltip" 
-                                title="Edit Request">
-                                <i class="fas fa-edit"></i>
-                            </a> ';
-                }
-                
-                // Download Button (Only for completed)
-                if ($row->status === 'completed' && $row->certificate_number) {
-                    $buttons .= '<a href="' . route('franchise.certificate-requests.download', $row->id) . '" 
-                                class="btn btn-success btn-sm" 
-                                data-bs-toggle="tooltip" 
-                                title="Download Certificate">
-                                <i class="fas fa-download"></i>
-                            </a> ';
-                }
-                
-                $buttons .= '</div>';
-                
-                return $buttons;
-            })
-            ->rawColumns(['status_badge', 'action'])
-            ->with([
-                'stats' => [
-                    'pending' => CertificateRequest::where('franchise_id', $franchiseId)->where('status', 'pending')->count(),
-                    'approved' => CertificateRequest::where('franchise_id', $franchiseId)->where('status', 'approved')->count(),
-                    'completed' => CertificateRequest::where('franchise_id', $franchiseId)->where('status', 'completed')->count(),
-                ]
-            ])
-            ->make(true);
+        // Regular page load
+        return view('franchise.certificate-requests.index');
     }
-
-    // Regular page load
-    return view('franchise.certificate-requests.index');
-}
 
 
     /**
@@ -307,6 +307,30 @@ class CertificateRequestController extends Controller
 
         return view('franchise.certificate-requests.show', compact('certificateRequest'));
     }
+
+//     public function show(CertificateRequest $certificateRequest)
+// {
+//     $userFranchiseId = Auth::user()->franchise_id;
+
+//     if ($certificateRequest->franchise_id !== $userFranchiseId) {
+//         abort(403, 'Unauthorized access to this certificate request.');
+//     }
+
+//     $certificateRequest->load(['student', 'course', 'approvedBy', 'rejectedBy']);
+
+//     // Add status->icon logic here
+//     $statusIcons = [
+//         'pending' => 'clock',
+//         'processing' => 'spinner',
+//         'approved' => 'check',
+//         'rejected' => 'times',
+//         'completed' => 'certificate',
+//     ];
+//     $icon = $statusIcons[$certificateRequest->status] ?? 'question-circle';
+
+//     return view('franchise.certificate-requests.show', compact('certificateRequest', 'icon'));
+// }
+
 
     /**
  * Show the form for editing certificate request

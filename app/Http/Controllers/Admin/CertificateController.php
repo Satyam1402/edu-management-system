@@ -4,298 +4,211 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Certificate;
-use App\Models\Student;
-use App\Models\Course;
+use App\Models\Franchise;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Yajra\DataTables\Facades\DataTables;
-use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class CertificateController extends Controller
 {
+    /**
+     * Display a listing of certificates with DataTables support
+     */
     public function index(Request $request)
     {
-        // Handle stats request
-        if ($request->has('get_stats')) {
-            $stats = [
-                'requested' => Certificate::where('status', 'requested')->count(),
-                'approved' => Certificate::where('status', 'approved')->count(),
-                'issued' => Certificate::where('status', 'issued')->count(),
-                'total' => Certificate::count()
-            ];
-            
-            return response()->json(['stats' => $stats]);
-        }
-
+        // If it's a DataTables AJAX request
         if ($request->ajax()) {
-            $query = Certificate::with(['student', 'course']);
-            
-            // Apply status filter if provided
-            if ($request->has('status_filter') && !empty($request->status_filter)) {
-                $query->where('status', $request->status_filter);
+            $query = Certificate::with(['student', 'course', 'franchise', 'issuedBy'])
+                ->where('status', 'issued') // Only show issued certificates
+                ->latest();
+
+            // Apply franchise filter
+            if ($request->filled('franchise_filter')) {
+                $query->where('franchise_id', $request->franchise_filter);
             }
-            
+
+            // Apply date range filters
+            if ($request->filled('date_from')) {
+                $query->whereDate('issued_at', '>=', $request->date_from);
+            }
+
+            if ($request->filled('date_to')) {
+                $query->whereDate('issued_at', '<=', $request->date_to);
+            }
+
             return DataTables::of($query)
-                ->addIndexColumn()
                 ->addColumn('certificate_number', function ($certificate) {
-                    return '<div>
-                                <h6 class="mb-1 font-weight-bold text-primary">CERT-' . $certificate->number . '</h6>
-                                <small class="text-muted">' . $certificate->created_at->format('M d, Y') . '</small>
-                            </div>';
+                    return '<span class="badge badge-primary" style="font-size: 13px;">' 
+                           . $certificate->number . '</span>';
                 })
-                ->addColumn('student_name', function ($certificate) {
-                    return $certificate->student ? 
-                        '<div>
-                            <span class="font-weight-bold">' . e($certificate->student->name) . '</span><br>
-                            <small class="text-muted">' . e($certificate->student->email ?? 'No email') . '</small>
-                        </div>' : 'N/A';
+                ->addColumn('student_info', function ($certificate) {
+                    $html = '<div>';
+                    $html .= '<strong>' . ($certificate->student->name ?? 'N/A') . '</strong><br>';
+                    $html .= '<small class="text-muted">' . ($certificate->student->email ?? '') . '</small>';
+                    $html .= '</div>';
+                    return $html;
                 })
-                ->addColumn('course_name', function ($certificate) {
-                    return $certificate->course ? 
-                        '<span class="badge badge-info">' . e($certificate->course->name) . '</span>' : 'N/A';
+                ->addColumn('course_info', function ($certificate) {
+                    return '<span class="badge badge-success" style="font-size: 12px; padding: 6px 12px;">' 
+                           . ($certificate->course->name ?? 'N/A') . '</span>';
+                })
+                ->addColumn('franchise_info', function ($certificate) {
+                    if ($certificate->franchise) {
+                        return '<div>' 
+                               . '<strong>' . $certificate->franchise->name . '</strong><br>'
+                               . '<small class="text-muted">' . ($certificate->franchise->city ?? '') . '</small>'
+                               . '</div>';
+                    }
+                    return '<span class="text-muted">N/A</span>';
                 })
                 ->addColumn('status', function ($certificate) {
-                    $colors = [
-                        'requested' => 'warning',
-                        'approved' => 'success',
-                        'issued' => 'primary'
+                    $badges = [
+                        'issued' => '<span class="badge badge-success">Issued</span>',
+                        'pending' => '<span class="badge badge-warning">Pending</span>',
+                        'approved' => '<span class="badge badge-info">Approved</span>',
                     ];
-                    $color = $colors[$certificate->status] ?? 'secondary';
-                    return '<span class="badge badge-' . $color . '">' . ucfirst($certificate->status) . '</span>';
+                    return $badges[$certificate->status] ?? '<span class="badge badge-secondary">' . ucfirst($certificate->status) . '</span>';
                 })
-                ->addColumn('issued_date', function ($certificate) {
-                    return $certificate->issued_at ? 
-                        $certificate->issued_at->format('M d, Y') : 
-                        '<span class="text-muted">Not issued</span>';
+                ->addColumn('issued_by', function ($certificate) {
+                    if ($certificate->issued_at) {
+                        $html = '<div>';
+                        $html .= '<strong>' . ($certificate->issuedBy->name ?? 'System') . '</strong><br>';
+                        $html .= '<small class="text-muted">' . $certificate->issued_at->format('M d, Y') . '</small>';
+                        $html .= '</div>';
+                        return $html;
+                    }
+                    return '<span class="text-muted">Not issued yet</span>';
                 })
                 ->addColumn('actions', function ($certificate) {
-                    $actions = '<div class="btn-group" role="group">';
+                    $actions = '<div class="btn-group btn-group-sm" role="group">';
                     
                     // View button
-                    $actions .= '<a href="' . route('admin.certificates.show', $certificate) . '" class="btn btn-outline-info btn-sm" title="View">
-                                    <i class="fas fa-eye"></i>
-                                </a>';
+                    $actions .= '<a href="' . route('admin.certificates.show', $certificate->id) . '" '
+                              . 'class="btn btn-info" title="View Details">'
+                              . '<i class="fas fa-eye"></i></a>';
                     
-                    // Status action buttons
-                    if ($certificate->status === 'requested') {
-                        $actions .= '<button class="btn btn-outline-success btn-sm" onclick="approveRequest(' . $certificate->id . ')" title="Approve">
-                                        <i class="fas fa-check"></i>
-                                    </button>';
-                    }
-                    
-                    if ($certificate->status === 'approved') {
-                        $actions .= '<button class="btn btn-outline-primary btn-sm" onclick="issueCertificate(' . $certificate->id . ')" title="Issue">
-                                        <i class="fas fa-certificate"></i>
-                                    </button>';
-                    }
-                    
+                    // Download button
                     if ($certificate->status === 'issued') {
-                        $actions .= '<button class="btn btn-outline-secondary btn-sm" title="Download">
-                                        <i class="fas fa-download"></i>
-                                    </button>';
+                        $actions .= '<a href="' . route('admin.certificates.download', $certificate->id) . '" '
+                                  . 'class="btn btn-success" title="Download PDF">'
+                                  . '<i class="fas fa-download"></i></a>';
                     }
                     
-                    // Delete button (only for non-issued certificates)
-                    if ($certificate->status !== 'issued') {
-                        $actions .= '<button class="btn btn-outline-danger btn-sm" onclick="deleteCertificate(' . $certificate->id . ')" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>';
+                    // View Request button (if linked to a request)
+                    if ($certificate->certificateRequest) {
+                        $actions .= '<a href="' . route('admin.certificate-requests.show', $certificate->certificateRequest->id) . '" '
+                                  . 'class="btn btn-primary" title="View Request">'
+                                  . '<i class="fas fa-clipboard-list"></i></a>';
                     }
                     
                     $actions .= '</div>';
                     return $actions;
                 })
-                ->rawColumns(['certificate_number', 'student_name', 'course_name', 'status', 'issued_date', 'actions'])
+                ->rawColumns(['certificate_number', 'student_info', 'course_info', 'franchise_info', 'status', 'issued_by', 'actions'])
                 ->make(true);
         }
 
-        return view('admin.certificates.index');
+        // Regular page load - pass statistics and franchises
+        $stats = [
+            'total' => Certificate::where('status', 'issued')->count(),
+            'issued' => Certificate::where('status', 'issued')->count(),
+            'this_month' => Certificate::where('status', 'issued')
+                ->whereMonth('issued_at', now()->month)
+                ->whereYear('issued_at', now()->year)
+                ->count(),
+            'this_week' => Certificate::where('status', 'issued')
+                ->whereBetween('issued_at', [now()->startOfWeek(), now()->endOfWeek()])
+                ->count(),
+        ];
+
+        $franchises = Franchise::orderBy('name')->get();
+
+        return view('admin.certificates.index', compact('stats', 'franchises'));
     }
 
-    public function create()
+    /**
+     * Display the specified certificate
+     */
+    public function show($id)
     {
-        // Include all relevant student statuses
-        $students = Student::whereIn('status', ['active', 'enrolled', 'graduated'])
-                        ->orWhereNull('status')
-                        ->orderBy('name')
-                        ->get();
-        
-        $courses = Course::where('status', 'active')->get();
-        
-        return view('admin.certificates.create', compact('students', 'courses'));
-    }
+        $certificate = Certificate::with(['student', 'course', 'franchise', 'issuedBy', 'certificateRequest'])
+            ->findOrFail($id);
 
-
-    public function store(Request $request)
-    {
-        $request->validate([
-            'student_id' => 'required|exists:students,id',
-            'course_id' => 'required|exists:courses,id',
-            'status' => 'required|in:requested,approved,issued'
-        ]);
-
-        // Generate unique certificate number
-        $number = $this->generateCertificateNumber();
-
-        $certificateData = $request->all();
-        $certificateData['number'] = $number;
-        
-        // If issued, set issued_at
-        if ($request->status === 'issued') {
-            $certificateData['issued_at'] = now();
-        }
-
-        Certificate::create($certificateData);
-
-        return redirect()->route('admin.certificates.index')
-                         ->with('success', 'Certificate created successfully!');
-    }
-
-    public function show(Certificate $certificate)
-    {
-        $certificate->load(['student', 'course']);
         return view('admin.certificates.show', compact('certificate'));
     }
 
-    public function destroy(Certificate $certificate)
+    /**
+     * Download certificate as PDF
+     */
+    public function download($id)
     {
-        if ($certificate->status === 'issued') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot delete issued certificates!'
-            ], 400);
-        }
+        $certificate = Certificate::with(['student', 'course', 'franchise', 'issuedBy'])
+            ->findOrFail($id);
 
-        $certificate->delete();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Certificate deleted successfully!'
-        ]);
-    }
-
-    // Status change methods
-    public function approve(Certificate $certificate)
-    {
-    if ($certificate->status !== 'requested') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Only requested certificates can be approved.'
-        ], 400);
-    }
-
-    $certificate->update(['status' => 'approved']);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Certificate approved successfully!'
-    ]);
-    }
-
-    public function issue(Certificate $certificate)
-    {
-    if ($certificate->status !== 'approved') {
-        return response()->json([
-            'success' => false,
-            'message' => 'Only approved certificates can be issued.'
-        ], 400);
-    }
-
-    $certificate->update([
-        'status' => 'issued',
-        'issued_at' => now()
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Certificate issued successfully!'
-    ]);
-    }
-
-    public function download(Certificate $certificate)
-    {
+        // Only allow download for issued certificates
         if ($certificate->status !== 'issued') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only issued certificates can be downloaded.'
-            ], 400);
+            return redirect()
+                ->back()
+                ->with('error', 'Only issued certificates can be downloaded.');
         }
 
-        try {
-            // Load the certificate with relationships
-            $certificate->load(['student', 'course']);
-            
-            // Generate PDF
-            $pdf = Pdf::loadView('admin.certificates.pdf-template', compact('certificate'));
-            
-            // Set paper size and orientation
-            $pdf->setPaper('A4', 'landscape');
-            
-            // Set options for better rendering
-            $pdf->setOptions([
-                'dpi' => 150,
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
-            ]);
-            
-            // Generate filename
-            $filename = 'certificate-' . $certificate->number . '-' . now()->format('Y-m-d') . '.pdf';
-            
-            // Return PDF download
-            return $pdf->download($filename);
-            
-        } catch (\Exception $e) {
-            \Log::error('Certificate PDF generation failed: ' . $e->getMessage());
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Error generating PDF: ' . $e->getMessage()
-            ], 500);
-        }
+        // Generate PDF
+        $pdf = Pdf::loadView('admin.certificates.pdf-template', compact('certificate'))
+            ->setPaper('a4', 'landscape');
+
+        // Download with certificate number in filename
+        return $pdf->download('certificate-' . $certificate->number . '.pdf');
     }
 
-    // Add export method for certificates list
-    public function export()
+    /**
+     * Export certificates to CSV
+     */
+    public function export(Request $request)
     {
-    // Simple CSV export for now
-    $certificates = Certificate::with(['student', 'course'])->get();
+        $certificates = Certificate::with(['student', 'course', 'franchise', 'issuedBy'])
+            ->where('status', 'issued')
+            ->latest()
+            ->get();
 
-    $csvData = [];
-    $csvData[] = ['Certificate Number', 'Student Name', 'Course Name', 'Status', 'Created Date', 'Issued Date'];
+        $filename = 'certificates-export-' . now()->format('Y-m-d') . '.csv';
 
-    foreach ($certificates as $certificate) {
-        $csvData[] = [
-            $certificate->number,
-            $certificate->student->name ?? 'N/A',
-            $certificate->course->name ?? 'N/A',
-            ucfirst($certificate->status),
-            $certificate->created_at->format('Y-m-d'),
-            $certificate->issued_at ? $certificate->issued_at->format('Y-m-d') : 'Not issued'
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
-    }
 
-    $filename = 'certificates-' . date('Y-m-d') . '.csv';
+        $callback = function() use ($certificates) {
+            $file = fopen('php://output', 'w');
+            
+            // CSV Headers
+            fputcsv($file, [
+                'Certificate Number',
+                'Student Name',
+                'Student Email',
+                'Course Name',
+                'Franchise',
+                'Status',
+                'Issued Date',
+                'Issued By'
+            ]);
 
-    return response()->streamDownload(function() use ($csvData) {
-        $file = fopen('php://output', 'w');
-        foreach ($csvData as $row) {
-            fputcsv($file, $row);
-        }
-        fclose($file);
-    }, $filename, [
-        'Content-Type' => 'text/csv',
-    ]);
-    }
+            // CSV Data
+            foreach ($certificates as $cert) {
+                fputcsv($file, [
+                    $cert->number,
+                    $cert->student->name ?? 'N/A',
+                    $cert->student->email ?? 'N/A',
+                    $cert->course->name ?? 'N/A',
+                    $cert->franchise->name ?? 'N/A',
+                    ucfirst($cert->status),
+                    $cert->issued_at ? $cert->issued_at->format('Y-m-d') : 'N/A',
+                    $cert->issuedBy->name ?? 'System'
+                ]);
+            }
 
+            fclose($file);
+        };
 
-    private function generateCertificateNumber()
-    {
-        do {
-            $number = strtoupper(Str::random(8));
-        } while (Certificate::where('number', $number)->exists());
-
-        return $number;
+        return response()->stream($callback, 200, $headers);
     }
 }

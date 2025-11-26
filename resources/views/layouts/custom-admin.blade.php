@@ -112,7 +112,6 @@
                 </a>
             </li>
         </ul>
-
         {{-- Right --}}
         <ul class="navbar-nav ml-auto align-items-center">
             {{-- Notifications --}}
@@ -234,7 +233,6 @@
 
                     {{-- CERTIFICATE REQUESTS (Role-based) --}}
                     @if($isAdmin)
-                        {{-- ADMIN: View All Certificate Requests (with pending count) --}}
                         <li class="nav-item">
                             <a href="{{ route('admin.certificate-requests.index') }}" class="nav-link {{ request()->routeIs('admin.certificate-requests.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-file-signature"></i>
@@ -249,7 +247,6 @@
                             </a>
                         </li>
                     @elseif($isFranchise)
-                        {{-- FRANCHISE: Manage Their Certificate Requests --}}
                         <li class="nav-item">
                             <a href="{{ route('franchise.certificate-requests.index') }}" class="nav-link {{ request()->routeIs('franchise.certificate-requests.*') ? 'active' : '' }}">
                                 <i class="nav-icon fas fa-file-signature"></i>
@@ -259,38 +256,82 @@
                     @endif
 
                     {{-- PAYMENTS --}}
-                    <li class="nav-item">
+                    <!-- <li class="nav-item">
                         <a href="{{ route($routePrefix.'.payments.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.payments.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-credit-card"></i>
                             <p>Payments</p>
                         </a>
-                    </li>
+                    </li> -->
 
-                    <li class="nav-item">
-                        <a href="{{ route('franchise.wallet.index') }}" class="nav-link {{ request()->routeIs('franchise.wallet.*') ? 'active' : '' }}">
-                            <i class="nav-icon fas fa-wallet"></i>
-                            <p>Wallet</p>
-                        </a>
-                    </li>
+                    {{-- WALLET (Role-specific) --}}
+                    @if($isAdmin)
+                        <li class="nav-item {{ request()->routeIs('admin.wallet.*') ? 'menu-open' : '' }}">
+                            <a href="#" class="nav-link {{ request()->routeIs('admin.wallet.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-wallet"></i>
+                                <p>
+                                    Wallet Management
+                                    <i class="right fas fa-angle-left"></i>
+                                </p>
+                            </a>
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.wallet.index') }}" class="nav-link {{ request()->routeIs('admin.wallet.index') ? 'active' : '' }}">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Dashboard</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.wallet.transactions') }}" class="nav-link {{ request()->routeIs('admin.wallet.transactions') ? 'active' : '' }}">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>All Transactions</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.wallet.recharge-requests') }}" class="nav-link {{ request()->routeIs('admin.wallet.recharge-requests') ? 'active' : '' }}">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Recharge Requests</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.wallet.manual-transaction') }}" class="nav-link {{ request()->routeIs('admin.wallet.manual-transaction') ? 'active' : '' }}">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Manual Transaction</p>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a href="{{ route('admin.wallet.audit-logs') }}" class="nav-link {{ request()->routeIs('admin.wallet.audit-logs') ? 'active' : '' }}">
+                                        <i class="far fa-circle nav-icon"></i>
+                                        <p>Audit Logs</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    @elseif($isFranchise)
+                        <li class="nav-item">
+                            <a href="{{ route('franchise.wallet.index') }}" class="nav-link {{ request()->routeIs('franchise.wallet.*') ? 'active' : '' }}">
+                                <i class="nav-icon fas fa-wallet"></i>
+                                <p>Wallet</p>
+                            </a>
+                        </li>
+                    @endif
 
                     {{-- REPORTS --}}
-                    <li class="nav-item">
+                    <!-- <li class="nav-item">
                         <a href="{{ route($routePrefix.'.reports.index') }}" class="nav-link {{ request()->routeIs($routePrefix.'.reports.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-chart-bar"></i>
                             <p>Reports</p>
                         </a>
-                    </li>
+                    </li> -->
 
-                    <li class="nav-header text-light">SETTINGS</li>
+                    <!-- <li class="nav-header text-light">SETTINGS</li> -->
 
                     {{-- PROFILE --}}
-                    <li class="nav-item">
+                    <!-- <li class="nav-item">
                         <a href="{{ route('profile.edit') }}" class="nav-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
                             <i class="nav-icon fas fa-user-cog"></i>
                             <p>Profile</p>
                         </a>
-                    </li>
-
+                    </li> -->
                 </ul>
             </nav>
         </div>

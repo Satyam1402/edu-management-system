@@ -394,7 +394,7 @@
         <div class="col-12">
             <div class="card main-card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
+                    <div class="flex-grow-1">
                         <h4 class="mb-1">
                             <i class="fas fa-certificate me-2"></i> Certificate Requests Management
                         </h4>

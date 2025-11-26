@@ -15,7 +15,7 @@
     .student-info {
         line-height: 1.4;
     }
-    .payment-info {
+    .amount-info {
         text-align: center;
     }
     .btn-group-actions .btn {
@@ -180,7 +180,7 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    <table class="table table-striped mb-0" id="certificateRequestsTable">
+                    <table class="table table-striped table-hover mb-0" id="certificateRequestsTable">
                         <thead>
                             <tr>
                                 <th width="50">
@@ -188,7 +188,7 @@
                                 </th>
                                 <th width="250">Student & Franchise</th>
                                 <th width="150">Course</th>
-                                <th width="120">Payment Status</th>
+                                <th width="120">Amount</th>
                                 <th width="100">Status</th>
                                 <th width="120">Request Date</th>
                                 <th width="150" class="text-center">Actions</th>
@@ -201,13 +201,69 @@
     </div>
 </div>
 
+<!-- Approve Modal -->
+<div class="modal fade" id="approveModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Approve Certificate Request</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to approve this certificate request?</p>
+                <div class="form-group">
+                    <label for="approve-notes">Admin Notes (Optional)</label>
+                    <textarea class="form-control" id="approve-notes" rows="2" 
+                              placeholder="Add any notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="confirmApprove()">
+                    <i class="fas fa-check"></i> Approve
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Reject Certificate Request</h5>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="rejection-reason">Rejection Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="rejection-reason" rows="3" 
+                              placeholder="Provide reason for rejection..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="reject-notes">Admin Notes (Optional)</label>
+                    <textarea class="form-control" id="reject-notes" rows="2" 
+                              placeholder="Add any additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmReject()">
+                    <i class="fas fa-times"></i> Reject
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Bulk Reject Modal -->
 <div class="modal fade" id="bulkRejectModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title">Bulk Reject Requests</h5>
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
@@ -234,6 +290,8 @@
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap4.min.js"></script>
 
 <script>
+let currentRequestId = null;
+
 $(document).ready(function() {
     window.certificateRequestsTable = $('#certificateRequestsTable').DataTable({
         processing: true,
@@ -249,10 +307,10 @@ $(document).ready(function() {
                     return `<input type="checkbox" class="select-row" value="${data}">`;
                 }
             },
-            { data: 'student_info', name: 'student.name' },
+            { data: 'student_info', name: 'student.name', orderable: false },
             { data: 'course_info', name: 'course.name', orderable: false },
-            { data: 'payment_info', name: 'payment.status', orderable: false, className: 'payment-info' },
-            { data: 'status_badge', name: 'status' },
+            { data: 'amount_info', name: 'amount', orderable: false }, // ✅ FIXED!
+            { data: 'status_badge', name: 'status', orderable: false },
             { data: 'request_date', name: 'created_at' },
             { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-center' }
         ],
@@ -260,11 +318,13 @@ $(document).ready(function() {
         responsive: true,
         pageLength: 25,
         language: {
-            processing: "Loading certificate requests...",
-            emptyTable: "No certificate requests found"
+            processing: '<i class="fas fa-spinner fa-spin fa-2x"></i><br>Loading...',
+            emptyTable: "No certificate requests found",
+            zeroRecords: "No matching requests found"
         },
         drawCallback: function() {
             updateBulkActions();
+            $('[data-toggle="tooltip"]').tooltip();
         }
     });
 
@@ -290,7 +350,6 @@ function updateBulkActions() {
         $('#bulk-actions').removeClass('show');
     }
 
-    // Update select all checkbox
     const total = $('.select-row').length;
     $('#select-all').prop('checked', selected === total && total > 0);
 }
@@ -302,6 +361,7 @@ function clearSelection() {
 
 function refreshTable() {
     certificateRequestsTable.ajax.reload();
+    showToast('success', 'Table refreshed');
 }
 
 function filterByStatus(status) {
@@ -312,10 +372,70 @@ function filterByStatus(status) {
     }
 }
 
+// ✅ FIXED: Individual approve
+function showApproveModal(requestId) {
+    currentRequestId = requestId;
+    $('#approveModal').modal('show');
+}
+
+function confirmApprove() {
+    const notes = $('#approve-notes').val();
+    
+    $.post(`/admin/certificate-requests/${currentRequestId}/approve`, {
+        _token: '{{ csrf_token() }}',
+        notes: notes
+    }).done(function(response) {
+        if (response.success) {
+            $('#approveModal').modal('hide');
+            showToast('success', response.message);
+            certificateRequestsTable.ajax.reload();
+        } else {
+            showToast('error', response.message);
+        }
+    }).fail(function(xhr) {
+        showToast('error', xhr.responseJSON?.message || 'Error approving request');
+    });
+}
+
+// ✅ FIXED: Individual reject
+function showRejectModal(requestId) {
+    currentRequestId = requestId;
+    $('#rejectModal').modal('show');
+}
+
+function confirmReject() {
+    const reason = $('#rejection-reason').val();
+    const notes = $('#reject-notes').val();
+
+    if (!reason.trim()) {
+        showToast('error', 'Please provide a rejection reason');
+        return;
+    }
+
+    $.post(`/admin/certificate-requests/${currentRequestId}/reject`, {
+        _token: '{{ csrf_token() }}',
+        reason: reason,
+        notes: notes
+    }).done(function(response) {
+        if (response.success) {
+            $('#rejectModal').modal('hide');
+            $('#rejection-reason').val('');
+            $('#reject-notes').val('');
+            showToast('success', response.message);
+            certificateRequestsTable.ajax.reload();
+        } else {
+            showToast('error', response.message);
+        }
+    }).fail(function(xhr) {
+        showToast('error', xhr.responseJSON?.message || 'Error rejecting request');
+    });
+}
+
+// Bulk approve
 function bulkApprove() {
     const selected = getSelectedIds();
     if (selected.length === 0) {
-        alert('Please select requests to approve.');
+        showToast('error', 'Please select requests to approve');
         return;
     }
 
@@ -326,22 +446,23 @@ function bulkApprove() {
             request_ids: selected
         }).done(function(response) {
             if (response.success) {
-                showAlert('success', response.message);
+                showToast('success', response.message);
                 certificateRequestsTable.ajax.reload();
                 clearSelection();
             } else {
-                showAlert('error', response.message);
+                showToast('error', response.message);
             }
         }).fail(function() {
-            showAlert('error', 'Error processing bulk approval.');
+            showToast('error', 'Error processing bulk approval');
         });
     }
 }
 
+// Bulk reject
 function showBulkRejectModal() {
     const selected = getSelectedIds();
     if (selected.length === 0) {
-        alert('Please select requests to reject.');
+        showToast('error', 'Please select requests to reject');
         return;
     }
     $('#bulkRejectModal').modal('show');
@@ -352,7 +473,7 @@ function confirmBulkReject() {
     const reason = $('#bulk-rejection-reason').val();
 
     if (!reason.trim()) {
-        alert('Please provide a rejection reason.');
+        showToast('error', 'Please provide a rejection reason');
         return;
     }
 
@@ -363,16 +484,16 @@ function confirmBulkReject() {
         reason: reason
     }).done(function(response) {
         if (response.success) {
-            showAlert('success', response.message);
+            showToast('success', response.message);
             certificateRequestsTable.ajax.reload();
             clearSelection();
             $('#bulkRejectModal').modal('hide');
             $('#bulk-rejection-reason').val('');
         } else {
-            showAlert('error', response.message);
+            showToast('error', response.message);
         }
     }).fail(function() {
-        showAlert('error', 'Error processing bulk rejection.');
+        showToast('error', 'Error processing bulk rejection');
     });
 }
 
@@ -386,15 +507,15 @@ function exportRequests() {
     window.location.href = "{{ route('admin.certificate-requests.export') }}";
 }
 
-function showAlert(type, message) {
-    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+function showToast(type, message) {
+    const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
     const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
 
     const toast = $(`
         <div class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
-            <div class="alert ${alertClass} alert-dismissible fade show">
-                <i class="fas ${icon}"></i> ${message}
-                <button type="button" class="close" data-dismiss="alert">
+            <div class="alert ${bgClass} text-white alert-dismissible fade show shadow-lg">
+                <i class="fas ${icon} mr-2"></i> ${message}
+                <button type="button" class="close text-white" data-dismiss="alert">
                     <span>&times;</span>
                 </button>
             </div>
@@ -405,27 +526,8 @@ function showAlert(type, message) {
     setTimeout(() => toast.find('.alert').alert('close'), 5000);
 }
 
-// Individual action functions (called from DataTable buttons)
-function approveRequest(requestId) {
-    if (confirm('Are you sure you want to approve this certificate request?')) {
-        $.post(`/admin/certificate-requests/${requestId}/approve`, {
-            _token: '{{ csrf_token() }}'
-        }).done(function(response) {
-            if (response.success) {
-                showAlert('success', response.message);
-                certificateRequestsTable.ajax.reload();
-            } else {
-                showAlert('error', response.message);
-            }
-        }).fail(function() {
-            showAlert('error', 'Error approving request.');
-        });
-    }
-}
-
-function showRejectModal(requestId) {
-    // You can implement individual reject modal here if needed
-    // Or redirect to the detailed view for individual actions
+// Timeline modal (optional)
+function showTimeline(requestId) {
     window.location.href = `/admin/certificate-requests/${requestId}`;
 }
 </script>

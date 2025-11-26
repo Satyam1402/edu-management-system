@@ -68,7 +68,7 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
+                    <h5 class="mb-0 flex-grow-1">
                         <i class="fas fa-wallet"></i> Wallet Transactions
                     </h5>
                     <div class="card-tools">

@@ -366,4 +366,10 @@ class Franchise extends Model
 
         return $stats;
     }
+
+    public function wallet()
+    {
+      return $this->hasOne(\App\Models\FranchiseWallet::class);
+    }
+
 }
