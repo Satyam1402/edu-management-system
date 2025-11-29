@@ -46,34 +46,34 @@
             <div class="col-lg-6">
                 <div class="info-section">
                     <h5><i class="fas fa-user text-primary mr-2"></i>Personal Information</h5>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-user mr-2 text-muted"></i>Full Name</span>
                         <span class="info-value">{{ $student->name }}</span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-envelope mr-2 text-muted"></i>Email</span>
                         <span class="info-value">{{ $student->email }}</span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-phone mr-2 text-muted"></i>Phone</span>
                         <span class="info-value">{{ $student->phone }}</span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-calendar mr-2 text-muted"></i>Date of Birth</span>
                         <span class="info-value">
                             @if($student->date_of_birth)
-                                {{ $student->date_of_birth->format('M d, Y') }} 
+                                {{ $student->date_of_birth->format('M d, Y') }}
                                 <small class="text-muted">({{ $student->age }} years)</small>
                             @else
                                 <span class="text-muted">Not provided</span>
                             @endif
                         </span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-venus-mars mr-2 text-muted"></i>Gender</span>
                         <span class="info-value">
@@ -86,14 +86,14 @@
                             @endif
                         </span>
                     </div>
-                    
+
                     @if($student->guardian_name)
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-user-shield mr-2 text-muted"></i>Guardian</span>
                         <span class="info-value">{{ $student->guardian_name }}</span>
                     </div>
                     @endif
-                    
+
                     @if($student->guardian_phone)
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-phone-alt mr-2 text-muted"></i>Guardian Phone</span>
@@ -107,27 +107,27 @@
             <div class="col-lg-6">
                 <div class="info-section">
                     <h5><i class="fas fa-map-marker-alt text-danger mr-2"></i>Address Information</h5>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-home mr-2 text-muted"></i>Address</span>
                         <span class="info-value">{{ $student->address ?: 'Not provided' }}</span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-city mr-2 text-muted"></i>City</span>
                         <span class="info-value">{{ $student->city ?: 'Not provided' }}</span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-map mr-2 text-muted"></i>State</span>
                         <span class="info-value">{{ $student->state ?: 'Not provided' }}</span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-mail-bulk mr-2 text-muted"></i>Pincode</span>
                         <span class="info-value">{{ $student->pincode ?: 'Not provided' }}</span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-globe mr-2 text-muted"></i>Full Address</span>
                         <span class="info-value">
@@ -138,11 +138,11 @@
                         </span>
                     </div>
                 </div>
-                
+
                 <!-- Academic Information -->
                 <div class="info-section">
                     <h5><i class="fas fa-graduation-cap text-success mr-2"></i>Academic Information</h5>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-building mr-2 text-muted"></i>Franchise</span>
                         <span class="info-value">
@@ -154,7 +154,7 @@
                             @endif
                         </span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-book mr-2 text-muted"></i>Course</span>
                         <span class="info-value">
@@ -168,12 +168,12 @@
                             @endif
                         </span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-layer-group mr-2 text-muted"></i>Batch</span>
                         <span class="info-value">{{ $student->batch ?: 'Not assigned' }}</span>
                     </div>
-                    
+
                     <div class="info-row">
                         <span class="info-label"><i class="fas fa-calendar-check mr-2 text-muted"></i>Enrollment Date</span>
                         <span class="info-value">
@@ -185,7 +185,7 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="row mt-4">
+        {{-- <div class="row mt-4">
             <div class="col-md-3">
                 <div class="stats-card">
                     <div class="stats-number">₹{{ number_format($student->getTotalPaidAmount(), 2) }}</div>
@@ -210,16 +210,16 @@
                     <div class="stats-label">Exam Average</div>
                 </div>
             </div>
-        </div>
+        </div> --}}
 
-        @if($student->notes)
+        {{-- @if($student->notes)
         <div class="info-section mt-4">
             <h5><i class="fas fa-sticky-note text-warning mr-2"></i>Additional Notes</h5>
             <div class="bg-light p-3 rounded">
                 {{ $student->notes }}
             </div>
         </div>
-        @endif
+        @endif --}}
     </div>
 
     <!-- Enhanced Action Footer -->
@@ -233,7 +233,7 @@
                     <i class="fas fa-edit mr-2"></i>Edit Student
                 </a>
             </div>
-            <div>
+            {{-- <div>
                 <a href="{{ route('admin.payments.create') }}?student={{ $student->id }}" class="btn btn-success btn-custom">
                     <i class="fas fa-credit-card mr-2"></i>Create Payment
                 </a>
@@ -264,13 +264,13 @@
                         @endif
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
     </div>
 </div>
 
 <!-- Student Timeline (Optional Enhancement) -->
-@if($student->payments()->count() > 0 || $student->certificates()->count() > 0)
+{{-- @if($student->payments()->count() > 0 || $student->certificates()->count() > 0)
 <div class="profile-card">
     <div class="card-body">
         <h5 class="mb-4"><i class="fas fa-history mr-2 text-primary"></i>Recent Activity</h5>
@@ -285,7 +285,7 @@
                 </div>
             </div>
             @endforeach
-            
+
             @foreach($student->certificates()->latest()->take(2)->get() as $certificate)
             <div class="timeline-item">
                 <div class="timeline-marker bg-primary"></div>
@@ -299,14 +299,14 @@
         </div>
     </div>
 </div>
-@endif
+@endif --}}
 @endsection
 
 @section('js')
 <script>
 // Set JavaScript variables for the external JS file
 window.studentUpdateRoute = '{{ route("admin.students.update", $student) }}';
-window.studentExportRoute = '{{ route("admin.students.export", $student) }}'; 
+window.studentExportRoute = '{{ route("admin.students.export", $student) }}';
 window.studentData = {
     'name': '{{ $student->name }}',
     'email': '{{ $student->email }}',

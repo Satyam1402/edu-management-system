@@ -49,7 +49,7 @@
                         <div class="input-icon-group">
                             <i class="fas fa-user input-icon"></i>
                             <input type="text" class="form-control form-control-enhanced input-with-icon @error('name') is-invalid @enderror"
-                                   id="name" name="name" value="{{ old('name') }}" 
+                                   id="name" name="name" value="{{ old('name') }}"
                                    placeholder="Enter student's full name" required>
                         </div>
                         @error('name')
@@ -62,8 +62,8 @@
                         <div class="input-icon-group">
                             <i class="fas fa-envelope input-icon"></i>
                             <input type="email" class="form-control form-control-enhanced input-with-icon @error('email') is-invalid @enderror"
-                                   id="email" name="email" value="{{ old('email') }}" 
-                                   placeholder="student@example.com" required>
+                                   id="email" name="email" value="{{ old('email') }}"
+                                   placeholder="Enter email here" required>
                         </div>
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -75,8 +75,8 @@
                         <div class="input-icon-group">
                             <i class="fas fa-phone input-icon"></i>
                             <input type="tel" class="form-control form-control-enhanced input-with-icon @error('phone') is-invalid @enderror"
-                                   id="phone" name="phone" value="{{ old('phone') }}" 
-                                   placeholder="+91 9876543210" required>
+                                   id="phone" name="phone" value="{{ old('phone') }}"
+                                required maxlength="10">
                         </div>
                         @error('phone')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -105,7 +105,7 @@
                                         <i class="fas fa-venus-mars text-info"></i>
                                     </span>
                                 </div>
-                                <select class="form-control @error('gender') is-invalid @enderror" 
+                                <select class="form-control @error('gender') is-invalid @enderror"
                                         id="gender" name="gender" required>
                                     <option value="" disabled selected style="color: #6c757d;">-- Select Gender --</option>
                                     <option value="male" {{ old('gender') == 'male' ? 'selected' : '' }}>👨 Male</option>
@@ -124,7 +124,7 @@
                         <div class="input-icon-group">
                             <i class="fas fa-user-shield input-icon"></i>
                             <input type="text" class="form-control form-control-enhanced input-with-icon @error('guardian_name') is-invalid @enderror"
-                                   id="guardian_name" name="guardian_name" value="{{ old('guardian_name') }}" 
+                                   id="guardian_name" name="guardian_name" value="{{ old('guardian_name') }}"
                                    placeholder="Parent or guardian name">
                         </div>
                         @error('guardian_name')
@@ -137,8 +137,8 @@
                         <div class="input-icon-group">
                             <i class="fas fa-phone-alt input-icon"></i>
                             <input type="tel" class="form-control form-control-enhanced input-with-icon @error('guardian_phone') is-invalid @enderror"
-                                   id="guardian_phone" name="guardian_phone" value="{{ old('guardian_phone') }}" 
-                                   placeholder="Guardian contact number">
+                                   id="guardian_phone" name="guardian_phone" value="{{ old('guardian_phone') }}"
+                                   placeholder="Guardian contact number" maxlength="10">
                         </div>
                         @error('guardian_phone')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -157,7 +157,7 @@
                     <div class="form-group">
                         <label for="address" class="form-label-enhanced required-marker">Street Address</label>
                         <textarea class="form-control form-control-enhanced @error('address') is-invalid @enderror"
-                                  id="address" name="address" rows="3" 
+                                  id="address" name="address" rows="3"
                                   placeholder="Enter complete street address" required>{{ old('address') }}</textarea>
                         @error('address')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -171,8 +171,8 @@
                                 <div class="input-icon-group">
                                     <i class="fas fa-city input-icon"></i>
                                     <input type="text" class="form-control form-control-enhanced input-with-icon @error('city') is-invalid @enderror"
-                                           id="city" name="city" value="{{ old('city') }}" 
-                                           placeholder="Mumbai, Delhi" required>
+                                           id="city" name="city" value="{{ old('city') }}"
+                                           placeholder="Enter city name" required>
                                 </div>
                                 @error('city')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -186,8 +186,8 @@
                                 <div class="input-icon-group">
                                     <i class="fas fa-map input-icon"></i>
                                     <input type="text" class="form-control form-control-enhanced input-with-icon @error('state') is-invalid @enderror"
-                                           id="state" name="state" value="{{ old('state') }}" 
-                                           placeholder="Maharashtra, Delhi" required>
+                                           id="state" name="state" value="{{ old('state') }}"
+                                           placeholder="Enter state name" required>
                                 </div>
                                 @error('state')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -201,8 +201,8 @@
                         <div class="input-icon-group">
                             <i class="fas fa-mail-bulk input-icon"></i>
                             <input type="text" class="form-control form-control-enhanced input-with-icon @error('pincode') is-invalid @enderror"
-                                   id="pincode" name="pincode" value="{{ old('pincode') }}" 
-                                   placeholder="400001" required>
+                                   id="pincode" name="pincode" value="{{ old('pincode') }}"
+                                   placeholder="Enter pincode here" required>
                         </div>
                         @error('pincode')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -224,7 +224,7 @@
                                     <i class="fas fa-building text-primary"></i>
                                 </span>
                             </div>
-                            <select class="form-control @error('franchise_id') is-invalid @enderror" 
+                            <select class="form-control @error('franchise_id') is-invalid @enderror"
                                     id="franchise_id" name="franchise_id" required>
                                 <option value="" disabled selected style="color: #6c757d;">-- Select Franchise --</option>
                                 @foreach($franchises as $franchise)
@@ -247,7 +247,7 @@
                                     <i class="fas fa-book text-info"></i>
                                 </span>
                             </div>
-                            <select class="form-control @error('course_id') is-invalid @enderror" 
+                            <select class="form-control @error('course_id') is-invalid @enderror"
                                     id="course_id" name="course_id">
                                 <option value="" disabled selected style="color: #6c757d;">-- Select Course (Optional) --</option>
                                 @foreach($courses as $course)
@@ -267,8 +267,8 @@
                         <div class="input-icon-group">
                             <i class="fas fa-layer-group input-icon"></i>
                             <input type="text" class="form-control form-control-enhanced input-with-icon @error('batch') is-invalid @enderror"
-                                   id="batch" name="batch" value="{{ old('batch') }}" 
-                                   placeholder="e.g., Batch 2025-A">
+                                   id="batch" name="batch" value="{{ old('batch') }}"
+                                   placeholder="Enter batch here">
                         </div>
                         <small class="form-text text-muted">
                             <i class="fas fa-info-circle mr-1"></i>Batch or class group identifier
@@ -286,7 +286,7 @@
                                     <i class="fas fa-toggle-on text-success"></i>
                                 </span>
                             </div>
-                            <select class="form-control @error('status') is-invalid @enderror" 
+                            <select class="form-control @error('status') is-invalid @enderror"
                                     id="status" name="status" required>
                                 <option value="" disabled selected style="color: #6c757d;">-- Select Initial Status --</option>
                                 <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>

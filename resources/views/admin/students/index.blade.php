@@ -249,11 +249,11 @@
     .stats-card {
         margin-bottom: 15px;
     }
-    
+
     .table {
         font-size: 12px;
     }
-    
+
     .student-avatar {
         width: 35px;
         height: 35px;
@@ -275,7 +275,7 @@
                         </h2>
                         <p class="mb-0 opacity-75">Manage and track all students across franchises</p>
                     </div>
-                    <div>
+                    <div class="ml-auto">
                         <a href="{{ route('admin.students.create') }}" class="btn btn-light btn-lg">
                             <i class="fas fa-user-plus mr-2"></i>Add New Student
                         </a>
@@ -339,9 +339,9 @@
                             <option value="">All Status</option>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
-                            <option value="graduated">Graduated</option>
+                            {{-- <option value="graduated">Graduated</option>
                             <option value="dropped">Dropped</option>
-                            <option value="suspended">Suspended</option>
+                            <option value="suspended">Suspended</option> --}}
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -405,7 +405,7 @@
                                 <th width="120">Student ID</th>
                                 <th width="200">Contact Info</th>
                                 <th width="150">Location</th>
-                                <th width="200">Academic Info</th>
+                                {{-- <th width="200">Academic Info</th> --}}
                                 <th width="100" class="text-center">Status</th>
                                 <th width="120" class="text-center">Enrollment</th>
                                 <th width="150" class="text-center">Actions</th>
@@ -473,20 +473,20 @@ $(document).ready(function() {
             }
         },
         columns: [
-            { 
-                data: 'checkbox', 
-                name: 'checkbox', 
-                orderable: false, 
+            {
+                data: 'checkbox',
+                name: 'checkbox',
+                orderable: false,
                 searchable: false,
                 className: 'text-center'
             },
-            { 
-                data: 'student_details', 
+            {
+                data: 'student_details',
                 name: 'name',
                 render: function(data, type, row) {
                     const firstLetter = row.name.charAt(0).toUpperCase();
                     const genderIcon = row.gender === 'male' ? '👨' : row.gender === 'female' ? '👩' : '🧑';
-                    
+
                     return `
                         <div class="d-flex align-items-center">
                             <div class="student-avatar">
@@ -500,15 +500,15 @@ $(document).ready(function() {
                     `;
                 }
             },
-            { 
-                data: 'student_id', 
+            {
+                data: 'student_id',
                 name: 'student_id',
                 render: function(data) {
                     return `<span class="badge badge-primary" style="font-size: 12px; padding: 8px 12px;">${data}</span>`;
                 }
             },
-            { 
-                data: 'contact_info', 
+            {
+                data: 'contact_info',
                 name: 'email',
                 render: function(data, type, row) {
                     return `
@@ -525,8 +525,8 @@ $(document).ready(function() {
                     `;
                 }
             },
-            { 
-                data: 'location_info', 
+            {
+                data: 'location_info',
                 name: 'city',
                 render: function(data, type, row) {
                     return `
@@ -537,27 +537,27 @@ $(document).ready(function() {
                     `;
                 }
             },
-            { 
-                data: 'academic_info', 
-                name: 'franchise.name',
-                render: function(data, type, row) {
-                    return `
-                        <div>
-                            <div class="mb-1">
-                                <i class="fas fa-building contact-icon"></i>
-                                <small class="font-weight-bold">${row.franchise_name || 'Not assigned'}</small>
-                            </div>
-                            <div>
-                                <i class="fas fa-book contact-icon"></i>
-                                <small>${row.course_name || 'No course'}</small>
-                            </div>
-                        </div>
-                    `;
-                }
-            },
-            { 
-                data: 'status_badge', 
-                name: 'status', 
+            // {
+            //     data: 'academic_info',
+            //     name: 'franchise.name',
+            //     render: function(data, type, row) {
+            //         return `
+            //             <div>
+            //                 <div class="mb-1">
+            //                     <i class="fas fa-building contact-icon"></i>
+            //                     <small class="font-weight-bold">${row.franchise_name || 'Not assigned'}</small>
+            //                 </div>
+            //                 <div>
+            //                     <i class="fas fa-book contact-icon"></i>
+            //                     <small>${row.course_name || 'No course'}</small>
+            //                 </div>
+            //             </div>
+            //         `;
+            //     }
+            // },
+            {
+                data: 'status_badge',
+                name: 'status',
                 className: 'text-center',
                 render: function(data, type, row) {
                     const statusColors = {
@@ -571,24 +571,24 @@ $(document).ready(function() {
                     return `<span class="badge badge-${color}">${row.status.charAt(0).toUpperCase() + row.status.slice(1)}</span>`;
                 }
             },
-            { 
-                data: 'enrollment_info', 
-                name: 'enrollment_date', 
+            {
+                data: 'enrollment_info',
+                name: 'enrollment_date',
                 className: 'text-center',
-                render: function(data, type, row) {
-                    return `
-                        <div>
-                            <div class="font-weight-bold">${row.enrollment_date || 'N/A'}</div>
-                            <small class="text-muted">${row.days_since_enrollment || ''}</small>
-                        </div>
-                    `;
-                }
+                // render: function(data, type, row) {
+                //     return `
+                //         <div>
+                //             <div class="font-weight-bold">${row.enrollment_date || 'N/A'}</div>
+                //             <small class="text-muted">${row.days_since_enrollment || ''}</small>
+                //         </div>
+                //     `;
+                // }
             },
-            { 
-                data: 'actions', 
-                name: 'actions', 
-                orderable: false, 
-                searchable: false, 
+            {
+                data: 'actions',
+                name: 'actions',
+                orderable: false,
+                searchable: false,
                 className: 'text-center',
                 render: function(data, type, row) {
                     return `
@@ -671,7 +671,7 @@ function resetFilters() {
 // Quick view function
 function quickView(studentId) {
     $('#quickViewModal').modal('show');
-    
+
     $.ajax({
         url: `/admin/students/${studentId}`,
         type: 'GET',
@@ -695,7 +695,7 @@ function deleteStudent(id) {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-        
+
         $.ajax({
             url: `/admin/students/${id}`,
             type: 'DELETE',
@@ -712,9 +712,9 @@ function deleteStudent(id) {
 
 // Toast notification function
 function showToast(type, message) {
-    const alertClass = type === 'success' ? 'alert-success' : 
+    const alertClass = type === 'success' ? 'alert-success' :
                       type === 'error' ? 'alert-danger' : 'alert-info';
-    
+
     const toast = $(`
         <div class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
             <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2);">
@@ -725,9 +725,9 @@ function showToast(type, message) {
             </div>
         </div>
     `);
-    
+
     $('body').append(toast);
-    
+
     setTimeout(() => {
         toast.find('.alert').alert('close');
     }, 5000);

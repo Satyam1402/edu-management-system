@@ -23,7 +23,7 @@
                         </h2>
                         <p class="mb-0 opacity-75">Manage and organize all educational courses</p>
                     </div>
-                    <div>
+                    <div class="ml-auto">
                         <a href="{{ route('admin.courses.create') }}" class="btn btn-light btn-lg">
                             <i class="fas fa-plus mr-2"></i>Create New Course
                         </a>
@@ -87,8 +87,8 @@
                             <option value="">All Status</option>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
-                            <option value="draft">Draft</option>
-                            <option value="archived">Archived</option>
+                            {{-- <option value="draft">Draft</option>
+                            <option value="archived">Archived</option> --}}
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -150,13 +150,13 @@
                     <h6 class="mb-0 font-weight-bold text-white">
                         <i class="fas fa-table mr-2"></i>All Courses <span class="bulk-selection-count"></span>
                     </h6>
-                    <div class="btn-group btn-group-sm">
+                    <div class="btn-group btn-group-sm ml-auto">
                         <button type="button" class="btn btn-light" onclick="refreshTable()">
                             <i class="fas fa-sync-alt"></i>
                         </button>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body" style="padding: 20px;">
                     <!-- DataTable will be inserted here -->
                     <table class="table mb-0" id="coursesTable">
                         <thead>
@@ -229,7 +229,7 @@ let coursesTable;
 
 $(document).ready(function() {
     console.log('Courses Index - Initializing...');
-    
+
     // Initialize DataTable
     coursesTable = $('#coursesTable').DataTable({
         processing: true,
@@ -309,7 +309,7 @@ $(document).ready(function() {
 
     // Bind event listeners
     bindEventListeners();
-    
+
     console.log('Courses Index - Initialization complete');
 });
 
@@ -319,12 +319,12 @@ function bindEventListeners() {
         $('.course-checkbox').prop('checked', this.checked);
         updateBulkActionButtons();
     });
-    
+
     // Individual checkbox change
     $(document).on('change', '.course-checkbox', function() {
         const totalCheckboxes = $('.course-checkbox').length;
         const checkedCheckboxes = $('.course-checkbox:checked').length;
-        
+
         $('#selectAll').prop('checked', totalCheckboxes === checkedCheckboxes);
         updateBulkActionButtons();
     });
@@ -333,7 +333,7 @@ function bindEventListeners() {
 function updateBulkActionButtons() {
     const checkedCount = $('.course-checkbox:checked').length;
     const bulkActionButtons = $('.bulk-action-btn');
-    
+
     if (checkedCount > 0) {
         bulkActionButtons.removeClass('disabled').prop('disabled', false);
         $('.bulk-selection-count').text(`(${checkedCount} selected)`);
@@ -367,7 +367,7 @@ function refreshTable() {
 
 function quickView(courseId) {
     $('#quickViewModal').modal('show');
-    
+
     $('#quickViewContent').html(`
         <div class="text-center py-5">
             <div class="spinner-border text-primary" role="status">
@@ -376,7 +376,7 @@ function quickView(courseId) {
             <p class="mt-3 text-muted">Loading course details...</p>
         </div>
     `);
-    
+
     $.ajax({
         url: `/admin/courses/${courseId}`,
         type: 'GET',
@@ -403,13 +403,13 @@ function deleteCourse(courseId) {
     if (!confirm('⚠️ Are you sure you want to delete this course?\n\nThis action cannot be undone.')) {
         return;
     }
-    
+
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
-    
+
     $.ajax({
         url: `/admin/courses/${courseId}`,
         type: 'DELETE',
@@ -433,7 +433,7 @@ function toggleFeatured(courseId) {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
-    
+
     $.ajax({
         url: `/admin/courses/${courseId}/toggle-featured`,
         type: 'POST',
@@ -501,14 +501,14 @@ function handleBulkAction(action) {
 }
 
 function showToast(type, message) {
-    const alertClass = type === 'success' ? 'alert-success' : 
-                      type === 'error' ? 'alert-danger' : 
+    const alertClass = type === 'success' ? 'alert-success' :
+                      type === 'error' ? 'alert-danger' :
                       type === 'warning' ? 'alert-warning' : 'alert-info';
-    
+
     const icon = type === 'success' ? 'fas fa-check-circle' :
                  type === 'error' ? 'fas fa-exclamation-triangle' :
                  type === 'warning' ? 'fas fa-exclamation-circle' : 'fas fa-info-circle';
-    
+
     const toast = $(`
         <div class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
             <div class="alert ${alertClass} alert-dismissible fade show" role="alert" style="border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); min-width: 300px;">
@@ -519,9 +519,9 @@ function showToast(type, message) {
             </div>
         </div>
     `);
-    
+
     $('body').append(toast);
-    
+
     setTimeout(() => {
         toast.find('.alert').alert('close');
     }, 5000);
@@ -533,7 +533,7 @@ function toggleFeatured(courseId) {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
-    
+
     $.ajax({
         url: `/admin/courses/${courseId}/toggle-featured`,
         type: 'POST',
@@ -551,13 +551,13 @@ function deleteCourse(courseId) {
     if (!confirm('Are you sure you want to delete this course?')) {
         return;
     }
-    
+
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     });
-    
+
     $.ajax({
         url: `/admin/courses/${courseId}`,
         type: 'DELETE',
@@ -573,7 +573,7 @@ function deleteCourse(courseId) {
 
 function showToast(type, message) {
     const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
-    
+
     const toast = $(`
         <div class="position-fixed" style="top: 20px; right: 20px; z-index: 9999;">
             <div class="alert ${alertClass} alert-dismissible fade show">
@@ -584,7 +584,7 @@ function showToast(type, message) {
             </div>
         </div>
     `);
-    
+
     $('body').append(toast);
     setTimeout(() => toast.find('.alert').alert('close'), 3000);
 }

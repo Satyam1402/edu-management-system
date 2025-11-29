@@ -13,9 +13,6 @@ use Illuminate\Support\Str;
 
 class CourseController extends Controller
 {
-    /**
-     * Display a listing of courses
-     */
     public function index(Request $request)
     {
         if ($request->ajax()) {

@@ -1,6 +1,7 @@
 @extends('layouts.custom-admin')
 
 @section('title', 'Create Course')
+@section('page-title', 'Create New course')
 
 @section('css')
 <link rel="stylesheet" href="{{ asset('css/admin/courses/create.css') }}">
@@ -12,7 +13,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
-                <h3>Create New Course</h3>
+                {{-- <h3>Create New Course</h3> --}}
                 <a href="{{ route('admin.courses.index') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left mr-2"></i>Back to Courses
                 </a>

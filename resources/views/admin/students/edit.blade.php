@@ -1,4 +1,3 @@
-{{-- resources/views/admin/students/edit.blade.php --}}
 @extends('layouts.custom-admin')
 
 @section('title', 'Edit Student')
@@ -94,7 +93,7 @@
                                         </span>
                                     </div>
                                     <input type="date" class="form-control @error('date_of_birth') is-invalid @enderror"
-                                           id="date_of_birth" name="date_of_birth" 
+                                           id="date_of_birth" name="date_of_birth"
                                            value="{{ old('date_of_birth', $student->date_of_birth?->format('Y-m-d')) }}" required>
                                 </div>
                                 @error('date_of_birth')
@@ -111,7 +110,7 @@
                                             <i class="fas fa-venus-mars text-info"></i>
                                         </span>
                                     </div>
-                                    <select class="form-control @error('gender') is-invalid @enderror" 
+                                    <select class="form-control @error('gender') is-invalid @enderror"
                                             id="gender" name="gender" required>
                                         <option value="">-- Select Gender --</option>
                                         <option value="male" {{ old('gender', $student->gender) == 'male' ? 'selected' : '' }}>👨 Male</option>
@@ -135,7 +134,7 @@
                                 </span>
                             </div>
                             <input type="text" class="form-control @error('guardian_name') is-invalid @enderror"
-                                   id="guardian_name" name="guardian_name" 
+                                   id="guardian_name" name="guardian_name"
                                    value="{{ old('guardian_name', $student->guardian_name) }}">
                         </div>
                         @error('guardian_name')
@@ -152,7 +151,7 @@
                                 </span>
                             </div>
                             <input type="tel" class="form-control @error('guardian_phone') is-invalid @enderror"
-                                   id="guardian_phone" name="guardian_phone" 
+                                   id="guardian_phone" name="guardian_phone"
                                    value="{{ old('guardian_phone', $student->guardian_phone) }}">
                         </div>
                         @error('guardian_phone')
@@ -165,30 +164,30 @@
                         <label>Status *</label>
                         <div class="mt-2">
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status" id="status_active" value="active" 
+                                <input class="form-check-input" type="radio" name="status" id="status_active" value="active"
                                     {{ old('status', $student->status) == 'active' ? 'checked' : '' }} required>
                                 <label class="form-check-label" for="status_active">Active</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status" id="status_inactive" value="inactive" 
+                                <input class="form-check-input" type="radio" name="status" id="status_inactive" value="inactive"
                                     {{ old('status', $student->status) == 'inactive' ? 'checked' : '' }}>
                                 <label class="form-check-label" for="status_inactive">Inactive</label>
                             </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status" id="status_graduated" value="graduated" 
+                            {{-- <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="status" id="status_graduated" value="graduated"
                                     {{ old('status', $student->status) == 'graduated' ? 'checked' : '' }}>
                                 <label class="form-check-label" for="status_graduated">Graduated</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status" id="status_dropped" value="dropped" 
+                                <input class="form-check-input" type="radio" name="status" id="status_dropped" value="dropped"
                                     {{ old('status', $student->status) == 'dropped' ? 'checked' : '' }}>
                                 <label class="form-check-label" for="status_dropped">Dropped</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="status" id="status_suspended" value="suspended" 
+                                <input class="form-check-input" type="radio" name="status" id="status_suspended" value="suspended"
                                     {{ old('status', $student->status) == 'suspended' ? 'checked' : '' }}>
                                 <label class="form-check-label" for="status_suspended">Suspended</label>
-                            </div>
+                            </div> --}}
                         </div>
                         @error('status')
                             <div class="text-danger">{{ $message }}</div>
@@ -207,7 +206,7 @@
                     <div class="form-group">
                         <label for="address" class="form-label-enhanced required-marker">Street Address</label>
                         <textarea class="form-control form-control-enhanced @error('address') is-invalid @enderror"
-                                  id="address" name="address" rows="3" 
+                                  id="address" name="address" rows="3"
                                   placeholder="Enter complete street address" required>{{ old('address', $student->address) }}</textarea>
                         @error('address')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -283,7 +282,7 @@
                                     <i class="fas fa-building text-primary"></i>
                                 </span>
                             </div>
-                            <select class="form-control @error('franchise_id') is-invalid @enderror" 
+                            <select class="form-control @error('franchise_id') is-invalid @enderror"
                                     id="franchise_id" name="franchise_id" required>
                                 <option value="">-- Select Franchise --</option>
                                 @foreach($franchises as $franchise)
@@ -306,7 +305,7 @@
                                     <i class="fas fa-book text-info"></i>
                                 </span>
                             </div>
-                            <select class="form-control @error('course_id') is-invalid @enderror" 
+                            <select class="form-control @error('course_id') is-invalid @enderror"
                                     id="course_id" name="course_id">
                                 <option value="">-- Select Course (Optional) --</option>
                                 @foreach($courses as $course)

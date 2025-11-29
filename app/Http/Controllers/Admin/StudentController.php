@@ -55,7 +55,7 @@ class StudentController extends Controller
                         'female' => '👩',
                         default => '🧑'
                     };
-                    
+
                     return '<div class="d-flex align-items-center">
                                 <div class="student-avatar mr-3">
                                     <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
@@ -86,18 +86,18 @@ class StudentController extends Controller
                                 <small class="text-muted">' . ($student->state ?: '') . ($student->pincode ? ', ' . $student->pincode : '') . '</small>
                             </div>';
                 })
-                ->addColumn('academic_info', function ($student) {
-                    return '<div>
-                                <div class="mb-1">
-                                    <i class="fas fa-building fa-xs text-primary mr-1"></i>
-                                    <small class="font-weight-bold">' . ($student->franchise->name ?? 'Not assigned') . '</small>
-                                </div>
-                                <div>
-                                    <i class="fas fa-book fa-xs text-success mr-1"></i>
-                                    <small>' . ($student->course->name ?? 'No course') . '</small>
-                                </div>
-                            </div>';
-                })
+                // ->addColumn('academic_info', function ($student) {
+                //     return '<div>
+                //                 <div class="mb-1">
+                //                     <i class="fas fa-building fa-xs text-primary mr-1"></i>
+                //                     <small class="font-weight-bold">' . ($student->franchise->name ?? 'Not assigned') . '</small>
+                //                 </div>
+                //                 <div>
+                //                     <i class="fas fa-book fa-xs text-success mr-1"></i>
+                //                     <small>' . ($student->course->name ?? 'No course') . '</small>
+                //                 </div>
+                //             </div>';
+                // })
                 ->addColumn('status_badge', function ($student) {
                     $statusColors = [
                         'active' => 'success',
@@ -110,12 +110,12 @@ class StudentController extends Controller
                     return '<span class="badge badge-' . $color . ' px-3 py-2">' . ucfirst($student->status) . '</span>';
                 })
                 ->addColumn('enrollment_info', function ($student) {
-                    $enrollmentDate = $student->enrollment_date ? $student->enrollment_date->format('M d, Y') : 'N/A';
-                    $daysSince = $student->enrollment_date ? $student->enrollment_date->diffForHumans() : '';
-                    
+                    $enrollmentDate = $student->enrollment_date
+                    ? $student->enrollment_date->format('M d, Y')
+                    : 'N/A';
+
                     return '<div>
                                 <div class="font-weight-bold">' . $enrollmentDate . '</div>
-                                <small class="text-muted">' . $daysSince . '</small>
                             </div>';
                 })
                 ->addColumn('actions', function ($student) {
@@ -188,7 +188,7 @@ class StudentController extends Controller
     {
         $franchises = Franchise::active()->get();
         $courses = Course::active()->get();
-        
+
         return view('admin.students.create', compact('franchises', 'courses'));
     }
 
@@ -230,7 +230,7 @@ class StudentController extends Controller
         if (request()->ajax()) {
             return view('admin.students.partials.quick-view', compact('student'))->render();
         }
-        
+
         $student->load(['franchise', 'course', 'payments', 'certificates']);
         return view('admin.students.show', compact('student'));
     }
@@ -242,7 +242,7 @@ class StudentController extends Controller
     {
         $franchises = Franchise::active()->get();
         $courses = Course::active()->get();
-        
+
         return view('admin.students.edit', compact('student', 'franchises', 'courses'));
     }
 
@@ -283,7 +283,7 @@ class StudentController extends Controller
     {
         try {
             $student->delete();
-            
+
             return response()->json([
                 'success' => true,
                 'message' => 'Student deleted successfully!'
@@ -310,7 +310,7 @@ class StudentController extends Controller
         try {
             $students = Student::whereIn('id', $request->ids);
             $count = $students->count();
-            
+
             switch ($request->action) {
                 case 'activate':
                     $students->update(['status' => 'active']);
@@ -346,10 +346,10 @@ class StudentController extends Controller
     {
         $format = $request->get('format', 'excel');
         $students = Student::with(['franchise', 'course'])->get();
-        
+
         // For now, return a simple response
         // You can implement actual export logic using Laravel Excel package
-        
+
         return response()->json([
             'success' => true,
             'message' => "Export in {$format} format initiated",
@@ -385,7 +385,7 @@ class StudentController extends Controller
     public function byFranchise(Franchise $franchise)
     {
         $students = $franchise->students()->with(['course'])->get();
-        
+
         if (request()->ajax()) {
             return response()->json([
                 'success' => true,
@@ -402,7 +402,7 @@ class StudentController extends Controller
     public function search(Request $request): JsonResponse
     {
         $query = $request->get('q', '');
-        
+
         $students = Student::where('name', 'like', "%{$query}%")
                           ->orWhere('email', 'like', "%{$query}%")
                           ->orWhere('student_id', 'like', "%{$query}%")

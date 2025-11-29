@@ -37,7 +37,7 @@
                                 <i class="fas fa-users text-white"></i>
                             </div>
                         </div>
-                        <div class="flex-grow-1 ms-3">
+                        <div class="flex-grow-1 ms-5 ml-2">
                             <div class="text-muted small">Total Students</div>
                             <div class="h4 mb-0">{{ App\Models\Student::count() }}</div>
                         </div>
@@ -55,7 +55,7 @@
                                 <i class="fas fa-book text-white"></i>
                             </div>
                         </div>
-                        <div class="flex-grow-1 ms-3">
+                        <div class="flex-grow-1 ms-5 ml-2">
                             <div class="text-muted small">Total Courses</div>
                             <div class="h4 mb-0">{{ App\Models\Course::count() }}</div>
                         </div>
@@ -73,7 +73,7 @@
                                 <i class="fas fa-building text-white"></i>
                             </div>
                         </div>
-                        <div class="flex-grow-1 ms-3">
+                        <div class="flex-grow-1 ms-5 ml-2">
                             <div class="text-muted small">Franchises</div>
                             <div class="h4 mb-0">{{ App\Models\Franchise::count() }}</div>
                         </div>
@@ -91,7 +91,7 @@
                                 <i class="fas fa-certificate text-white"></i>
                             </div>
                         </div>
-                        <div class="flex-grow-1 ms-3">
+                        <div class="flex-grow-1 ms-5 ml-2">
                             <div class="text-muted small">Certificates</div>
                             <div class="h4 mb-0">{{ App\Models\Certificate::count() }}</div>
                         </div>
@@ -131,7 +131,7 @@
                             </a>
                         </div>
                         <div class="col-md-3 mb-3">
-                            <a href="{{ route('admin.reports.index') }}" class="btn btn-outline-info w-100 h-100 d-flex flex-column justify-content-center align-items-center py-3">
+                            <a href="#" class="btn btn-outline-info w-100 h-100 d-flex flex-column justify-content-center align-items-center py-3">
                                 <i class="fas fa-chart-bar fa-2x mb-2"></i>
                                 <span>View Reports</span>
                             </a>
@@ -148,7 +148,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-transparent">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-user-graduate text-primary me-2"></i>Recent Students
+                        <i class="fas fa-user-graduate text-primary mr-2"></i>Recent Students
                     </h5>
                 </div>
                 <div class="card-body">
@@ -157,11 +157,11 @@
                     @endphp
                     @forelse($recentStudents as $student)
                         <div class="d-flex align-items-center mb-3">
-                            <div class="avatar-sm me-3" style="width: 40px; height: 40px; background: linear-gradient(45deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
+                            <div class="avatar-sm mr-3" style="width: 40px; height: 40px; background: linear-gradient(45deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">
                                 {{ substr($student->name, 0, 1) }}
                             </div>
                             <div class="flex-grow-1">
-                                <div class="fw-medium">{{ $student->name }}</div>
+                                <div class="fw-medium mr-2">{{ $student->name }}</div>
                                 <div class="text-muted small">{{ $student->student_id }} • {{ $student->created_at->diffForHumans() }}</div>
                             </div>
                         </div>
@@ -176,7 +176,7 @@
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header bg-transparent">
                     <h5 class="card-title mb-0">
-                        <i class="fas fa-book text-success me-2"></i>Active Courses
+                        <i class="fas fa-book text-success mr-2"></i>Active Courses
                     </h5>
                 </div>
                 <div class="card-body">
@@ -185,7 +185,7 @@
                     @endphp
                     @forelse($activeCourses as $course)
                         <div class="d-flex align-items-center mb-3">
-                            <div class="me-3">
+                            <div class="mr-3">
                                 <div class="badge badge-{{ $course->status_badge }} px-2 py-1">{{ $course->code }}</div>
                             </div>
                             <div class="flex-grow-1">

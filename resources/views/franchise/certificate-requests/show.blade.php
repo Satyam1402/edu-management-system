@@ -468,7 +468,8 @@
                         <small class="opacity-75">Submitted {{ $certificateRequest->created_at->format('M d, Y \a\t H:i A') }}</small>
                     </div>
                     <span class="status-badge status-{{ $certificateRequest->status }}">
-                        <i class="fas fa-{{ $this->getStatusIcon($certificateRequest->status) }}"></i>
+                        <i class="fas fa-{{ $statusIcon }}"></i>
+
                         {{ ucfirst($certificateRequest->status) }}
                     </span>
                 </div>
@@ -580,7 +581,7 @@
                             </span>
                             <span class="info-value">
                                 <span class="status-badge status-{{ $certificateRequest->status }}">
-                                    <i class="fas fa-{{ $this->getStatusIcon($certificateRequest->status) }}"></i>
+                                    <i class="fas fa-{{ $statusIcon }}"></i>
                                     {{ ucfirst($certificateRequest->status) }}
                                 </span>
                             </span>

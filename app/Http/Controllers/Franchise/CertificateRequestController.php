@@ -26,7 +26,7 @@ class CertificateRequestController extends Controller
         // If AJAX request (DataTables)
         if ($request->ajax()) {
             $franchiseId = Auth::user()->franchise_id;
-            
+
             $query = CertificateRequest::with(['student', 'course', 'franchise'])
                 ->where('franchise_id', $franchiseId);
 
@@ -43,7 +43,7 @@ class CertificateRequestController extends Controller
             if ($request->has('date_range') && $request->date_range != '') {
                 $dateRange = $request->date_range;
                 $now = now();
-                
+
                 switch ($dateRange) {
                     case 'today':
                         $query->whereDate('created_at', $now->toDateString());
@@ -80,7 +80,7 @@ class CertificateRequestController extends Controller
                         'rejected' => '<span class="status-badge status-rejected"><i class="fas fa-times"></i> Rejected</span>',
                         'completed' => '<span class="status-badge status-completed"><i class="fas fa-certificate"></i> Completed</span>',
                     ];
-                    
+
                     return $badges[$row->status] ?? '<span class="badge badge-secondary">Unknown</span>';
                 })
                 ->addColumn('requested_date', function ($row) {
@@ -88,37 +88,37 @@ class CertificateRequestController extends Controller
                 })
                 ->addColumn('action', function ($row) {
                     $buttons = '<div class="action-buttons">';
-                    
+
                     // View Button (Always available)
-                    $buttons .= '<a href="' . route('franchise.certificate-requests.show', $row->id) . '" 
-                                class="btn btn-info btn-sm" 
-                                data-bs-toggle="tooltip" 
+                    $buttons .= '<a href="' . route('franchise.certificate-requests.show', $row->id) . '"
+                                class="btn btn-info btn-sm"
+                                data-bs-toggle="tooltip"
                                 title="View Details">
                                 <i class="fas fa-eye"></i>
                             </a> ';
-                    
+
                     // Edit Button (Only for pending requests) ← THIS WAS MISSING!
                     if ($row->status === 'pending') {
-                        $buttons .= '<a href="' . route('franchise.certificate-requests.edit', $row->id) . '" 
-                                    class="btn btn-warning btn-sm" 
-                                    data-bs-toggle="tooltip" 
+                        $buttons .= '<a href="' . route('franchise.certificate-requests.edit', $row->id) . '"
+                                    class="btn btn-warning btn-sm"
+                                    data-bs-toggle="tooltip"
                                     title="Edit Request">
                                     <i class="fas fa-edit"></i>
                                 </a> ';
                     }
-                    
+
                     // Download Button (Only for completed)
                     if ($row->status === 'completed' && $row->certificate_number) {
-                        $buttons .= '<a href="' . route('franchise.certificate-requests.download', $row->id) . '" 
-                                    class="btn btn-success btn-sm" 
-                                    data-bs-toggle="tooltip" 
+                        $buttons .= '<a href="' . route('franchise.certificate-requests.download', $row->id) . '"
+                                    class="btn btn-success btn-sm"
+                                    data-bs-toggle="tooltip"
                                     title="Download Certificate">
                                     <i class="fas fa-download"></i>
                                 </a> ';
                     }
-                    
+
                     $buttons .= '</div>';
-                    
+
                     return $buttons;
                 })
                 ->rawColumns(['status_badge', 'action'])
@@ -180,23 +180,23 @@ class CertificateRequestController extends Controller
 
             // Get authenticated user's franchise
             $franchiseId = Auth::user()->franchise_id;
-            
+
             if (!$franchiseId) {
                 return redirect()->back()->with('error', 'Your account is not associated with any franchise.')->withInput();
             }
 
             // Get the course with certificate fee
             $course = Course::findOrFail($request->course_id);
-            
+
             // Get certificate fee (default to 100 if not set)
             $certificateFee = $course->certificate_fee ?? 100.00;
-            
+
             // Calculate total amount
             $totalAmount = $certificateFee * count($request->student_ids);
 
             // Get the franchise
             $franchise = Franchise::findOrFail($franchiseId);
-            
+
             // 🔧 UPDATED: Get or create wallet (prevents duplicate error)
             $wallet = FranchiseWallet::firstOrCreate(
                 ['franchise_id' => $franchiseId],
@@ -215,13 +215,13 @@ class CertificateRequestController extends Controller
             try {
                 // Process each student
                 $createdRequests = [];
-                
+
                 foreach ($request->student_ids as $studentId) {
                     // Verify student belongs to this franchise
                     $student = Student::where('id', $studentId)
                         ->where('franchise_id', $franchiseId)
                         ->first();
-                        
+
                     if (!$student) {
                         throw new \Exception("Student #{$studentId} not found or doesn't belong to your franchise");
                     }
@@ -259,8 +259,8 @@ class CertificateRequestController extends Controller
 
                 // Success message
                 $count = count($createdRequests);
-                $message = $count === 1 
-                    ? 'Certificate request submitted successfully!' 
+                $message = $count === 1
+                    ? 'Certificate request submitted successfully!'
                     : "{$count} certificate requests submitted successfully!";
 
                 return redirect()->route('franchise.certificate-requests.index')
@@ -268,9 +268,9 @@ class CertificateRequestController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollBack();
-                
+
                 \Log::error('Certificate Request Store Error: ' . $e->getMessage());
-                
+
                 return redirect()->back()
                     ->with('error', 'Failed to create certificate request: ' . $e->getMessage())
                     ->withInput();
@@ -281,10 +281,10 @@ class CertificateRequestController extends Controller
                 ->withErrors($e->errors())
                 ->with('error', 'Please correct the form errors.')
                 ->withInput();
-                
+
         } catch (\Exception $e) {
             \Log::error('Certificate Request Validation Error: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'An error occurred: ' . $e->getMessage())
                 ->withInput();
@@ -305,85 +305,73 @@ class CertificateRequestController extends Controller
 
         $certificateRequest->load(['student', 'course', 'approvedBy', 'rejectedBy']);
 
-        return view('franchise.certificate-requests.show', compact('certificateRequest'));
+        // Add status->icon logic here
+        $statusIcons = [
+            'pending' => 'clock',
+            'processing' => 'spinner',
+            'approved' => 'check',
+            'rejected' => 'times',
+            'completed' => 'certificate',
+        ];
+       // Get the status icon using the private method at the bottom of this controller
+       $statusIcon = $this->getStatusIcon($certificateRequest->status);
+
+        return view('franchise.certificate-requests.show', compact('certificateRequest', 'statusIcon'));
     }
-
-//     public function show(CertificateRequest $certificateRequest)
-// {
-//     $userFranchiseId = Auth::user()->franchise_id;
-
-//     if ($certificateRequest->franchise_id !== $userFranchiseId) {
-//         abort(403, 'Unauthorized access to this certificate request.');
-//     }
-
-//     $certificateRequest->load(['student', 'course', 'approvedBy', 'rejectedBy']);
-
-//     // Add status->icon logic here
-//     $statusIcons = [
-//         'pending' => 'clock',
-//         'processing' => 'spinner',
-//         'approved' => 'check',
-//         'rejected' => 'times',
-//         'completed' => 'certificate',
-//     ];
-//     $icon = $statusIcons[$certificateRequest->status] ?? 'question-circle';
-
-//     return view('franchise.certificate-requests.show', compact('certificateRequest', 'icon'));
-// }
 
 
     /**
- * Show the form for editing certificate request
- */
-public function edit(CertificateRequest $certificateRequest)
-{
-    try {
-        $franchiseId = Auth::user()->franchise_id;
-        
-        // Verify this request belongs to the franchise
-        if ($certificateRequest->franchise_id !== $franchiseId) {
+     * Show the form for editing certificate request
+     */
+    public function edit(CertificateRequest $certificateRequest)
+    {
+        try {
+            $franchiseId = Auth::user()->franchise_id;
+
+            // Verify this request belongs to the franchise
+            if ($certificateRequest->franchise_id !== $franchiseId) {
+                return redirect()->route('franchise.certificate-requests.index')
+                    ->with('error', 'Unauthorized access.');
+            }
+
+            // Only allow editing if status is pending
+            if ($certificateRequest->status !== 'pending') {
+                return redirect()->back()->with('error', 'Only pending requests can be edited.');
+            }
+
+            // Load relationships
+            $certificateRequest->load(['student', 'course']);
+
+            // Get students for this franchise
+            $students = Student::where('franchise_id', $franchiseId)
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
+
+            // Get courses
+            $courses = Course::select('id', 'name', 'description', 'certificate_fee')
+                ->where('status', 'active')
+                ->orderBy('name')
+                ->get();
+
+            // Get wallet balance
+            $walletBalance = 0;
+            if (Auth::user()->franchise && Auth::user()->franchise->wallet) {
+                $walletBalance = Auth::user()->franchise->wallet->balance ?? 0;
+            }
+
+            return view('franchise.certificate-requests.edit', [
+                'request' => $certificateRequest, // Rename to avoid conflict with Request
+                'students' => $students,
+                'courses' => $courses,
+                'walletBalance' => $walletBalance
+            ]);
+
+        } catch (\Exception $e) {
             return redirect()->route('franchise.certificate-requests.index')
-                ->with('error', 'Unauthorized access.');
+                ->with('error', 'Certificate request not found.');
         }
-        
-        // Only allow editing if status is pending
-        if ($certificateRequest->status !== 'pending') {
-            return redirect()->back()->with('error', 'Only pending requests can be edited.');
-        }
-        
-        // Load relationships
-        $certificateRequest->load(['student', 'course']);
-        
-        // Get students for this franchise
-        $students = Student::where('franchise_id', $franchiseId)
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-        
-        // Get courses
-        $courses = Course::select('id', 'name', 'description', 'certificate_fee')
-            ->where('status', 'active')
-            ->orderBy('name')
-            ->get();
-        
-        // Get wallet balance
-        $walletBalance = 0;
-        if (Auth::user()->franchise && Auth::user()->franchise->wallet) {
-            $walletBalance = Auth::user()->franchise->wallet->balance ?? 0;
-        }
-        
-        return view('franchise.certificate-requests.edit', [
-            'request' => $certificateRequest, // Rename to avoid conflict with Request
-            'students' => $students,
-            'courses' => $courses,
-            'walletBalance' => $walletBalance
-        ]);
-        
-    } catch (\Exception $e) {
-        return redirect()->route('franchise.certificate-requests.index')
-            ->with('error', 'Certificate request not found.');
     }
-}
 
     /**
      * Update the certificate request
@@ -400,45 +388,45 @@ public function edit(CertificateRequest $certificateRequest)
             ]);
 
             $franchiseId = Auth::user()->franchise_id;
-            
+
             // Verify this request belongs to the franchise
             if ($certificateRequest->franchise_id !== $franchiseId) {
                 return redirect()->route('franchise.certificate-requests.index')
                     ->with('error', 'Unauthorized access.');
             }
-            
+
             // Only allow editing if status is pending
             if ($certificateRequest->status !== 'pending') {
                 return redirect()->back()->with('error', 'Only pending requests can be edited.');
             }
-            
+
             // Get the new course details
             $newCourse = Course::findOrFail($request->course_id);
             $newCertificateFee = $newCourse->certificate_fee ?? 100.00;
-            
+
             // Get old amount
             $oldAmount = $certificateRequest->amount;
-            
+
             // Calculate difference
             $amountDifference = $newCertificateFee - $oldAmount;
-            
+
             DB::beginTransaction();
-            
+
             try {
                 // If amount changed, handle wallet adjustment
                 if ($amountDifference != 0) {
                     $wallet = FranchiseWallet::where('franchise_id', $franchiseId)->firstOrFail();
-                    
+
                     if ($amountDifference > 0) {
                         // New course is more expensive - need more money
                         if ($wallet->balance < $amountDifference) {
                             throw new \Exception('Insufficient wallet balance for this change. Additional required: ₹' . number_format($amountDifference, 2));
                         }
-                        
+
                         // Deduct additional amount
                         $wallet->balance -= $amountDifference;
                         $wallet->save();
-                        
+
                         // Create debit transaction
                         WalletTransaction::create([
                             'franchise_wallet_id' => $wallet->id,
@@ -448,13 +436,13 @@ public function edit(CertificateRequest $certificateRequest)
                             'status' => 'completed',
                             'balance_after' => $wallet->balance
                         ]);
-                        
+
                     } else {
                         // New course is cheaper - refund difference
                         $refundAmount = abs($amountDifference);
                         $wallet->balance += $refundAmount;
                         $wallet->save();
-                        
+
                         // Create credit transaction
                         WalletTransaction::create([
                             'franchise_wallet_id' => $wallet->id,
@@ -466,7 +454,7 @@ public function edit(CertificateRequest $certificateRequest)
                         ]);
                     }
                 }
-                
+
                 // Update the certificate request
                 $certificateRequest->update([
                     'student_id' => $request->student_id,
@@ -475,20 +463,20 @@ public function edit(CertificateRequest $certificateRequest)
                     'amount' => $newCertificateFee,
                     'notes' => $request->notes
                 ]);
-                
+
                 DB::commit();
-                
+
                 return redirect()->route('franchise.certificate-requests.index')
                     ->with('success', 'Certificate request updated successfully!');
-                    
+
             } catch (\Exception $e) {
                 DB::rollBack();
                 throw $e;
             }
-            
+
         } catch (\Exception $e) {
             \Log::error('Certificate Request Update Error: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Failed to update certificate request: ' . $e->getMessage())
                 ->withInput();

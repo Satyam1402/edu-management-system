@@ -90,7 +90,7 @@
                 <span>&times;</span>
             </button>
         </div>
-        
+
         @php
             // Clear the session after displaying to prevent duplicates
             session()->forget('user_created');
@@ -110,7 +110,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6">
             <div class="card stats-card text-center">
                 <div class="card-body p-4">
@@ -122,7 +122,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6">
             <div class="card stats-card text-center">
                 <div class="card-body p-4">
@@ -134,7 +134,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="col-xl-3 col-md-6">
             <div class="card stats-card text-center">
                 <div class="card-body p-4">
@@ -167,7 +167,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="table-responsive p-3">
             <table class="table table-hover" id="franchisesTable">
                 <thead>
@@ -211,8 +211,8 @@ $(document).ready(function() {
             { data: 'franchise_details', name: 'name' },
             { data: 'contact_info', name: 'email' },
             { data: 'location_info', name: 'city' }, // FIXED: Changed from 'location' to 'location_info'
-            { 
-                data: 'users_count', 
+            {
+                data: 'users_count',
                 name: 'users_count',
                 className: 'text-center',
                 searchable: false,
@@ -241,7 +241,7 @@ $(document).ready(function() {
 // Refresh table function
 function refreshTable() {
     $('#franchisesTable').DataTable().ajax.reload();
-    
+
     // Update stats
     location.reload();
 }
@@ -257,13 +257,13 @@ function deleteFranchise(id) {
     if (confirm('⚠️ Are you sure you want to delete this franchise?\n\nThis action cannot be undone and will also remove all associated users.')) {
         // Show loading state
         $(`button[data-id="${id}"]`).prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
-        
+
         $.ajaxSetup({
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         });
-        
+
         $.ajax({
             url: `/admin/franchises/${id}`,
             type: 'DELETE',
@@ -279,7 +279,7 @@ function deleteFranchise(id) {
             },
             error: function(xhr) {
                 let message = 'Error deleting franchise.';
-                
+
                 try {
                     const response = JSON.parse(xhr.responseText);
                     if (response.message) {
@@ -288,7 +288,7 @@ function deleteFranchise(id) {
                 } catch(e) {
                     console.error('Error parsing response:', e);
                 }
-                
+
                 showAlert('error', message);
             },
             complete: function() {
@@ -302,7 +302,7 @@ function deleteFranchise(id) {
 // Also add event delegation for dynamically created buttons
 $(document).ready(function() {
     // Existing DataTable initialization...
-    
+
     // Handle delete button clicks with event delegation
     $(document).on('click', '.delete-franchise', function(e) {
         e.preventDefault();
@@ -316,7 +316,7 @@ $(document).ready(function() {
 function showAlert(type, message) {
     const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
     const icon = type === 'success' ? 'fas fa-check-circle' : 'fas fa-exclamation-triangle';
-    
+
     const alertHtml = `
         <div class="alert ${alertClass} alert-dismissible fade show mt-3" role="alert">
             <i class="${icon} mr-2"></i>${message}
@@ -325,9 +325,9 @@ function showAlert(type, message) {
             </button>
         </div>
     `;
-    
+
     $('body').prepend(alertHtml);
-    
+
     // Auto dismiss after 5 seconds
     setTimeout(() => {
         $('.alert').alert('close');

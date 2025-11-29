@@ -1,4 +1,3 @@
-/* Enhanced DataTable Styling for Courses */
 .course-card {
     background: white;
     border-radius: 15px;
@@ -43,42 +42,162 @@
     letter-spacing: 0.5px;
 }
 
-/* DataTable Container Fixes */
+/* ============================================
+   DATATABLE CONTROLS - COMPLETE FIX
+   ============================================ */
+
+/* Wrapper spacing */
 .dataTables_wrapper {
-    margin-top: 20px !important;
-    padding-top: 15px;
+    margin-top: 0 !important;
+    padding: 20px 0 !important;
 }
 
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter {
-    margin-top: 10px !important;
-    margin-bottom: 15px !important;
+/* Top controls container */
+.dataTables_wrapper .row:first-child {
+    margin-bottom: 20px !important;
+    padding: 0 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Clear floats */
+.dataTables_wrapper .row:first-child::after {
+    content: "";
+    display: table;
+    clear: both;
+}
+
+/* === LENGTH (Show Entries) DROPDOWN === */
+.dataTables_wrapper .dataTables_length {
+    float: left;
+    width: 50%;
+    margin: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_length label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 14px;
+    margin-bottom: 0;
 }
 
 .dataTables_wrapper .dataTables_length select {
-    padding: 8px 12px !important;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    background-color: white;
-    color: #4a5568;
-    font-weight: 500;
+    /* Force visible styling */
+    width: auto !important;
+    min-width: 80px;
+    height: 40px !important;
+    padding: 8px 35px 8px 12px !important;
+
+    /* Border and background */
+    border: 2px solid #cbd5e0 !important;
+    border-radius: 8px !important;
+    background-color: #ffffff !important;
+
+    /* Text styling */
+    color: #2d3748 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    line-height: 1.5 !important;
+
+    /* Dropdown arrow */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232d3748' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px;
+
+    /* Cursor and transition */
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    /* Box model */
+    box-sizing: border-box !important;
+    display: inline-block !important;
+    vertical-align: middle;
 }
 
-.dataTables_wrapper .dataTables_filter input {
-    padding: 8px 12px !important;
-    border: 2px solid #e2e8f0;
-    border-radius: 8px;
-    background-color: white;
-    margin-left: 8px;
+.dataTables_wrapper .dataTables_length select:hover {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.dataTables_wrapper .dataTables_filter input:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+.dataTables_wrapper .dataTables_length select:focus {
+    border-color: #007bff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.25) !important;
 }
 
-/* Table Styling */
+/* === SEARCH INPUT === */
+.dataTables_wrapper .dataTables_filter {
+    float: right;
+    width: auto !important;
+    width: 50%;
+    text-align: right;
+    margin: 0 !important;
+}
+
+.dataTables_wrapper .dataTables_filter label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 14px;
+    margin-bottom: 0;
+}
+
+.dataTables_wrapper .dataTables_filter input[type="search"] {
+    /* Force visible styling */
+    width: auto !important;
+    min-width: 250px;
+    height: 40px !important;
+    padding: 8px 15px !important;
+
+    /* Border and background */
+    border: 2px solid #cbd5e0 !important;
+    border-radius: 8px !important;
+    background-color: #ffffff !important;
+
+    /* Text styling */
+    color: #2d3748 !important;
+    font-size: 14px !important;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+
+    /* Cursor and transition */
+    transition: all 0.3s ease;
+
+    /* Box model */
+    box-sizing: border-box !important;
+    display: inline-block !important;
+    vertical-align: middle;
+    margin-left: 10px !important;
+}
+
+.dataTables_wrapper .dataTables_filter input[type="search"]:hover {
+    border-color: #007bff !important;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.dataTables_wrapper .dataTables_filter input[type="search"]:focus {
+    border-color: #007bff !important;
+    outline: none !important;
+    box-shadow: 0 0 0 4px rgba(0, 123, 255, 0.25) !important;
+}
+
+/* Placeholder styling */
+.dataTables_wrapper .dataTables_filter input[type="search"]::placeholder {
+    color: #a0aec0 !important;
+    font-style: italic;
+}
+
+/* === TABLE STYLING === */
 .table {
     font-size: 14px;
     background: white;
@@ -86,6 +205,8 @@
     overflow: hidden;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
     margin-top: 0 !important;
+    margin-bottom: 20px !important;
+    clear: both;
 }
 
 .table thead th {
@@ -133,7 +254,7 @@
     transition: all 0.3s ease;
 }
 
-/* Filter Section Styling */
+/* === FILTER SECTION === */
 .filter-section {
     background: white;
     border-radius: 15px;
@@ -142,12 +263,12 @@
     margin-bottom: 30px;
 }
 
-/* FIXED: Form Control and Select Dropdown Issues */
+/* Filter form controls */
 .filter-section .form-control,
 .filter-section select.form-control {
     border: 2px solid #e2e8f0;
     border-radius: 10px;
-    padding: 12px 15px !important; /* Force padding with !important */
+    padding: 12px 15px !important;
     font-size: 14px;
     font-weight: 500;
     transition: all 0.3s ease;
@@ -160,8 +281,8 @@
     display: block !important;
 }
 
-/* Specific fix for select dropdowns */
-select.form-control {
+/* Specific fix for select dropdowns in filters */
+.filter-section select.form-control {
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -173,12 +294,12 @@ select.form-control {
 }
 
 /* Placeholder styling for select options */
-select.form-control option:first-child {
+.filter-section select.form-control option:first-child {
     color: #a0aec0;
     font-style: italic;
 }
 
-select.form-control:invalid {
+.filter-section select.form-control:invalid {
     color: #a0aec0;
 }
 
@@ -201,13 +322,13 @@ select.form-control:invalid {
     display: block;
 }
 
-/* Card styling */
+/* === CARD STYLING === */
 .card {
     border: none;
     border-radius: 15px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.08);
     margin-bottom: 30px;
-    overflow: visible; /* Allow dropdowns to show */
+    overflow: visible;
 }
 
 .card-header {
@@ -219,21 +340,23 @@ select.form-control:invalid {
 }
 
 .card-body {
-    padding: 0; /* Remove padding to let DataTable handle spacing */
+    padding: 20px !important;
 }
 
 /* DataTable info and pagination spacing */
 .dataTables_wrapper .dataTables_info {
-    padding-top: 15px !important;
+    padding-top: 20px !important;
     margin-bottom: 10px;
+    color: #4a5568;
+    font-weight: 500;
 }
 
 .dataTables_wrapper .dataTables_paginate {
-    padding-top: 15px !important;
+    padding-top: 20px !important;
     margin-bottom: 10px;
 }
 
-/* Bulk action button improvements */
+/* === BULK ACTION BUTTONS === */
 .bulk-action-btn {
     border-radius: 8px;
     font-weight: 600;
@@ -252,33 +375,7 @@ select.form-control:invalid {
     cursor: not-allowed;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .course-card {
-        margin-bottom: 15px;
-    }
-    
-    .table {
-        font-size: 12px;
-    }
-    
-    .filter-section {
-        padding: 20px;
-    }
-    
-    .filter-section .form-control,
-    .filter-section select.form-control {
-        font-size: 16px; /* Prevent zoom on iOS */
-        min-height: 50px;
-    }
-    
-    .dataTables_wrapper .dataTables_length,
-    .dataTables_wrapper .dataTables_filter {
-        margin-bottom: 20px !important;
-    }
-}
-
-/* Fix for dropdown z-index issues */
+/* === DROPDOWN MENU === */
 .dropdown-menu {
     z-index: 1050 !important;
     border-radius: 8px;
@@ -286,7 +383,7 @@ select.form-control:invalid {
     box-shadow: 0 5px 20px rgba(0,0,0,0.15);
 }
 
-/* Ensure proper spacing for all elements */
+/* === CONTAINER SPACING === */
 .container-fluid > .row {
     margin-bottom: 20px;
 }
@@ -295,7 +392,10 @@ select.form-control:invalid {
     margin-bottom: 0;
 }
 
-/* Enhanced Modal Styling */
+/* ============================================
+   MODAL STYLING
+   ============================================ */
+
 .modal {
     z-index: 9999 !important;
 }
@@ -326,7 +426,7 @@ select.form-control:invalid {
     max-height: calc(100vh - 200px);
 }
 
-/* Quick View Content Styling */
+/* === QUICK VIEW CONTENT === */
 .course-quick-view {
     font-size: 14px;
     line-height: 1.6;
@@ -458,40 +558,7 @@ select.form-control:invalid {
     font-weight: bold;
 }
 
-/* Responsive fixes for modal */
-@media (max-width: 768px) {
-    .modal-xl {
-        width: 98%;
-        margin: 0.5rem auto;
-    }
-    
-    .course-quick-view .course-stats {
-        flex-direction: column;
-        gap: 15px;
-    }
-    
-    .course-quick-view .stat-item {
-        border-bottom: 1px solid #dee2e6;
-        padding-bottom: 10px;
-    }
-    
-    .course-quick-view .stat-item:last-child {
-        border-bottom: none;
-        padding-bottom: 0;
-    }
-    
-    .course-quick-view .course-icon-large {
-        font-size: 2rem;
-        width: 50px;
-        height: 50px;
-    }
-    
-    .modal-body {
-        padding: 20px !important;
-    }
-}
-
-/* Ensure modal is always on top */
+/* Modal fixes */
 body.modal-open {
     overflow: hidden;
 }
@@ -501,18 +568,16 @@ body.modal-open .modal {
     overflow-y: auto;
 }
 
-/* Fix any conflicts with DataTables */
 .dataTables_wrapper .modal {
     position: fixed !important;
 }
 
-/* Loading spinner styling */
 .modal-body .spinner-border {
     width: 3rem;
     height: 3rem;
 }
 
-/* Simple Action Buttons - No Dropdowns */
+/* === ACTION BUTTONS === */
 .btn-sm {
     padding: 4px 8px;
     font-size: 11px;
@@ -575,12 +640,102 @@ body.modal-open .modal {
     border-color: #dc3545;
 }
 
-/* Mobile responsive */
+/* ============================================
+   RESPONSIVE DESIGN - MOBILE
+   ============================================ */
+
 @media (max-width: 768px) {
+    /* Course cards */
+    .course-card {
+        margin-bottom: 15px;
+    }
+
+    /* Table */
+    .table {
+        font-size: 12px;
+    }
+
+    /* Filter section */
+    .filter-section {
+        padding: 20px;
+    }
+
+    .filter-section .form-control,
+    .filter-section select.form-control {
+        font-size: 16px; /* Prevent zoom on iOS */
+        min-height: 50px;
+    }
+
+    /* DataTables mobile responsive */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter {
+        float: none !important;
+        width: 100% !important;
+        text-align: left !important;
+        margin-bottom: 15px !important;
+    }
+
+    .dataTables_wrapper .dataTables_filter {
+        text-align: left !important;
+    }
+
+    .dataTables_wrapper .dataTables_filter input[type="search"] {
+        width: 100% !important;
+        min-width: 100%;
+        margin-left: 0 !important;
+        margin-top: 8px;
+        display: block;
+    }
+
+    .dataTables_wrapper .dataTables_length label,
+    .dataTables_wrapper .dataTables_filter label {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .dataTables_wrapper .dataTables_length select {
+        width: 100% !important;
+    }
+
+    /* Modal responsive */
+    .modal-xl {
+        width: 98%;
+        margin: 0.5rem auto;
+    }
+
+    .course-quick-view .course-stats {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .course-quick-view .stat-item {
+        border-bottom: 1px solid #dee2e6;
+        padding-bottom: 10px;
+    }
+
+    .course-quick-view .stat-item:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .course-quick-view .course-icon-large {
+        font-size: 2rem;
+        width: 50px;
+        height: 50px;
+    }
+
+    .modal-body {
+        padding: 20px !important;
+    }
+
+    /* Buttons */
     .d-flex {
         flex-wrap: wrap;
     }
-    
+
     .btn-sm {
         margin: 2px 1px;
         padding: 6px 10px;
