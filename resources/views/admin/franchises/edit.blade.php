@@ -59,8 +59,8 @@
                                     <i class="fas fa-hashtag text-primary"></i>
                                 </span>
                             </div>
-                            <input type="text" class="form-control" id="code" name="code" 
-                                   value="{{ old('code', $franchise->code) }}" readonly 
+                            <input type="text" class="form-control" id="code" name="code"
+                                   value="{{ old('code', $franchise->code) }}" readonly
                                    style="background-color: #f8f9fa;">
                         </div>
                         <small class="form-text text-muted">
@@ -96,7 +96,7 @@
                                 </span>
                             </div>
                             <input type="tel" class="form-control @error('phone') is-invalid @enderror"
-                                   id="phone" name="phone" value="{{ old('phone', $franchise->phone) }}" required>
+                                   id="phone" name="phone" value="{{ old('phone', $franchise->phone) }}" required maxlength="10">
                         </div>
                         @error('phone')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -112,7 +112,7 @@
                                 </span>
                             </div>
                             <input type="text" class="form-control @error('contact_person') is-invalid @enderror"
-                                   id="contact_person" name="contact_person" 
+                                   id="contact_person" name="contact_person"
                                    value="{{ old('contact_person', $franchise->contact_person) }}">
                         </div>
                         @error('contact_person')
@@ -125,20 +125,20 @@
                     <label>Status *</label>
                     <div class="mt-2">
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="status" id="status_active" value="active" 
+                            <input class="form-check-input" type="radio" name="status" id="status_active" value="active"
                                 {{ $franchise->status == 'active' ? 'checked' : '' }} required>
                             <label class="form-check-label" for="status_active">Active</label>
                         </div>
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="status" id="status_inactive" value="inactive" 
+                            <input class="form-check-input" type="radio" name="status" id="status_inactive" value="inactive"
                                 {{ $franchise->status == 'inactive' ? 'checked' : '' }}>
                             <label class="form-check-label" for="status_inactive">Inactive</label>
                         </div>
-                        <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="status" id="status_suspended" value="suspended" 
+                        {{-- <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="status" id="status_suspended" value="suspended"
                                 {{ $franchise->status == 'suspended' ? 'checked' : '' }}>
                             <label class="form-check-label" for="status_suspended">Suspended</label>
-                        </div>
+                        </div> --}}
                     </div>
                     @error('status')
                         <div class="text-danger">{{ $message }}</div>
@@ -158,7 +158,7 @@
                     <div class="form-group">
                         <label for="address" class="form-label-enhanced">Street Address</label>
                         <textarea class="form-control form-control-enhanced @error('address') is-invalid @enderror"
-                                  id="address" name="address" rows="3" 
+                                  id="address" name="address" rows="3"
                                   placeholder="Enter full street address">{{ old('address', $franchise->address) }}</textarea>
                         @error('address')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -228,7 +228,7 @@
                                 </span>
                             </div>
                             <input type="date" class="form-control @error('established_date') is-invalid @enderror"
-                                   id="established_date" name="established_date" 
+                                   id="established_date" name="established_date"
                                    value="{{ old('established_date', $franchise->established_date?->format('Y-m-d')) }}">
                         </div>
                         @error('established_date')
@@ -239,7 +239,7 @@
                     <div class="form-group">
                         <label for="notes" class="form-label-enhanced">Additional Notes</label>
                         <textarea class="form-control form-control-enhanced @error('notes') is-invalid @enderror"
-                                  id="notes" name="notes" rows="3" 
+                                  id="notes" name="notes" rows="3"
                                   placeholder="Any additional notes about this franchise">{{ old('notes', $franchise->notes) }}</textarea>
                         @error('notes')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -254,7 +254,7 @@
             <div class="mb-4">
                 <div class="section-header">
                     <h6 class="mb-0 font-weight-bold text-dark">
-                        <i class="fas fa-users mr-2 text-success"></i>Franchise Users 
+                        <i class="fas fa-users mr-2 text-success"></i>Franchise Users
                         <span class="badge badge-success ml-2">{{ $franchise->users->count() }}</span>
                     </h6>
                 </div>

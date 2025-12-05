@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -29,9 +30,22 @@ class PasswordResetLinkController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
+        // --- SECURITY CHECK: BLOCK FRANCHISE USERS ---
+
+        // Find the user trying to reset password
+        $user = User::where('email', $request->email)->first();
+
+        // If user exists AND their role is 'franchise', BLOCK THEM.
+        // This assumes the value in your database 'role' column is strictly 'franchise'
+        if ($user && ($user->role === 'franchise' || $user->hasRole('franchise'))) {
+            return back()->withErrors([
+                'email' => 'Franchise accounts cannot reset passwords. Please contact Admin.'
+            ]);
+        }
+
+        // --- END SECURITY CHECK ---
+
+        // If NOT a franchise, proceed as normal for Admin/other users
         $status = Password::sendResetLink(
             $request->only('email')
         );
@@ -41,4 +55,5 @@ class PasswordResetLinkController extends Controller
                     : back()->withInput($request->only('email'))
                             ->withErrors(['email' => __($status)]);
     }
+
 }

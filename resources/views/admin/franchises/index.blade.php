@@ -188,6 +188,50 @@
             </table>
         </div>
     </div>
+    <!-- START: Password Reset Modal -->
+    <!-- ========================================== -->
+    <div class="modal fade" id="passwordResetModal" tabindex="-1" role="dialog" aria-labelledby="passwordResetModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title" id="passwordResetModalLabel">
+                        <i class="fas fa-key mr-2"></i>Reset Password
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                <form id="passwordResetForm" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="modal-body">
+                        <div class="alert alert-secondary">
+                            <strong>User:</strong> <span id="modalUserName"></span><br>
+                            <small class="text-muted">Please type the new password manually and share it with the user.</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>New Password <span class="text-danger">*</span></label>
+                            <input type="text" name="password" class="form-control" required minlength="8" placeholder="Enter new password">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Confirm Password <span class="text-danger">*</span></label>
+                            <input type="text" name="password_confirmation" class="form-control" required minlength="8" placeholder="Confirm new password">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">Update Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- END: Password Reset Modal -->
 @endsection
 
 @section('js')
@@ -235,6 +279,41 @@ $(document).ready(function() {
             zeroRecords: '<div class="text-center py-4"><i class="fas fa-search fa-3x text-muted mb-3"></i><br><h5 class="text-muted">No matching records found</h5><p class="text-muted">Try adjusting your search criteria.</p></div>'
         }
     });
+
+    //  Password Reset Handler
+    $('body').on('click', '.reset-password-btn', function(e) {
+        e.preventDefault(); // Prevent any default button behavior
+
+        // 1. Get data from button
+        var userId = $(this).attr('data-userid'); // Use .attr() to be safe
+        var userName = $(this).attr('data-username');
+
+        console.log("Button Clicked! User ID:", userId); // DEBUG LOG
+
+        // 2. Update Modal User Name
+        $('#modalUserName').text(userName);
+
+        // 3. Construct URL manually
+        // We use a base string and append the ID
+        var baseUrl = "{{ url('admin/franchises/user') }}";
+        var finalUrl = baseUrl + '/' + userId + '/password';
+
+        console.log("New Action URL:", finalUrl); // DEBUG LOG
+
+        // 4. Force update the form action
+        $('#passwordResetForm').attr('action', finalUrl);
+
+        // 5. Show the Modal
+        $('#passwordResetModal').modal('show');
+    });
+
+
+    // Handle delete button clicks with event delegation
+     $(document).on('click', '.delete-franchise', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        deleteFranchise(id);
+    });
 });
 
 
@@ -252,7 +331,6 @@ function exportData() {
 }
 
 // Delete franchise function
-// Delete franchise function - UPDATED
 function deleteFranchise(id) {
     if (confirm('⚠️ Are you sure you want to delete this franchise?\n\nThis action cannot be undone and will also remove all associated users.')) {
         // Show loading state
@@ -299,19 +377,6 @@ function deleteFranchise(id) {
     }
 }
 
-// Also add event delegation for dynamically created buttons
-$(document).ready(function() {
-    // Existing DataTable initialization...
-
-    // Handle delete button clicks with event delegation
-    $(document).on('click', '.delete-franchise', function(e) {
-        e.preventDefault();
-        const id = $(this).data('id');
-        deleteFranchise(id);
-    });
-});
-
-
 // Show alert function
 function showAlert(type, message) {
     const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
@@ -333,5 +398,17 @@ function showAlert(type, message) {
         $('.alert').alert('close');
     }, 5000);
 }
+
+// Also add event delegation for dynamically created buttons
+// $(document).ready(function() {
+
+//     // Handle delete button clicks with event delegation
+//     $(document).on('click', '.delete-franchise', function(e) {
+//         e.preventDefault();
+//         const id = $(this).data('id');
+//         deleteFranchise(id);
+//     });
+// });
+
 </script>
 @endsection

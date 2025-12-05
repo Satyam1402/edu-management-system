@@ -49,7 +49,7 @@
                         <div class="input-icon-group">
                             <i class="fas fa-building input-icon"></i>
                             <input type="text" class="form-control form-control-enhanced input-with-icon @error('name') is-invalid @enderror"
-                                   id="name" name="name" value="{{ old('name') }}" 
+                                   id="name" name="name" value="{{ old('name') }}"
                                    placeholder="Enter franchise name" required>
                         </div>
                         @error('name')
@@ -62,7 +62,7 @@
                         <div class="input-icon-group">
                             <i class="fas fa-hashtag input-icon"></i>
                             <input type="text" class="form-control form-control-enhanced input-with-icon @error('code') is-invalid @enderror"
-                                   id="code" name="code" value="{{ old('code') }}" 
+                                   id="code" name="code" value="{{ old('code') }}"
                                    placeholder="e.g., FR001, MUM01" required>
                         </div>
                         <small class="form-text text-muted">
@@ -78,8 +78,8 @@
                         <div class="input-icon-group">
                             <i class="fas fa-envelope input-icon"></i>
                             <input type="email" class="form-control form-control-enhanced input-with-icon @error('email') is-invalid @enderror"
-                                   id="email" name="email" value="{{ old('email') }}" 
-                                   placeholder="franchise@example.com" required>
+                                   id="email" name="email" value="{{ old('email') }}"
+                                   placeholder="Enter email" required>
                         </div>
                         @error('email')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -91,8 +91,8 @@
                         <div class="input-icon-group">
                             <i class="fas fa-phone input-icon"></i>
                             <input type="tel" class="form-control form-control-enhanced input-with-icon @error('phone') is-invalid @enderror"
-                                   id="phone" name="phone" value="{{ old('phone') }}" 
-                                   placeholder="+91 9876543210" required>
+                                   id="phone" name="phone" value="{{ old('phone') }}"
+                                   placeholder="Enter phone number" required maxlength="10">
                         </div>
                         @error('phone')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -107,8 +107,8 @@
                                     <i class="fas fa-toggle-on text-success"></i>
                                 </span>
                             </div>
-                            <select class="form-control @error('status') is-invalid @enderror" 
-                                    id="status" name="status" required 
+                            <select class="form-control @error('status') is-invalid @enderror"
+                                    id="status" name="status" required
                                     style="border-radius: 0 10px 10px 0; padding: -0.25rem 1rem; border: 2px solid #e9ecef; font-size: 14px;">
                                 <option value="">-- Select Initial Status --</option>
                                 <option value="active" {{ old('status', 'active') == 'active' ? 'selected' : '' }}>
@@ -140,7 +140,7 @@
                     <div class="form-group">
                         <label for="address" class="form-label-enhanced">Street Address</label>
                         <textarea class="form-control form-control-enhanced @error('address') is-invalid @enderror"
-                                  id="address" name="address" rows="3" 
+                                  id="address" name="address" rows="3"
                                   placeholder="Enter complete street address">{{ old('address') }}</textarea>
                         @error('address')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -154,8 +154,8 @@
                                 <div class="input-icon-group">
                                     <i class="fas fa-city input-icon"></i>
                                     <input type="text" class="form-control form-control-enhanced input-with-icon @error('city') is-invalid @enderror"
-                                           id="city" name="city" value="{{ old('city') }}" 
-                                           placeholder="Mumbai, Delhi">
+                                           id="city" name="city" value="{{ old('city') }}"
+                                           placeholder="Enter city name">
                                 </div>
                                 @error('city')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -169,8 +169,8 @@
                                 <div class="input-icon-group">
                                     <i class="fas fa-map input-icon"></i>
                                     <input type="text" class="form-control form-control-enhanced input-with-icon @error('state') is-invalid @enderror"
-                                           id="state" name="state" value="{{ old('state') }}" 
-                                           placeholder="Maharashtra, Delhi">
+                                           id="state" name="state" value="{{ old('state') }}"
+                                           placeholder="Enter state name">
                                 </div>
                                 @error('state')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -184,8 +184,8 @@
                         <div class="input-icon-group">
                             <i class="fas fa-mail-bulk input-icon"></i>
                             <input type="text" class="form-control form-control-enhanced input-with-icon @error('pincode') is-invalid @enderror"
-                                   id="pincode" name="pincode" value="{{ old('pincode') }}" 
-                                   placeholder="400001">
+                                   id="pincode" name="pincode" value="{{ old('pincode') }}"
+                                   placeholder="Enter pincode">
                         </div>
                         @error('pincode')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -210,7 +210,7 @@
                         <div class="input-icon-group">
                             <i class="fas fa-user input-icon"></i>
                             <input type="text" class="form-control form-control-enhanced input-with-icon @error('contact_person') is-invalid @enderror"
-                                id="contact_person" name="contact_person" value="{{ old('contact_person') }}" 
+                                id="contact_person" name="contact_person" value="{{ old('contact_person') }}"
                                 placeholder="Primary contact person name">
                         </div>
                         <small class="form-text text-muted">
@@ -225,7 +225,7 @@
                     <div class="form-group">
                         <label for="notes" class="form-label-enhanced">Additional Notes</label>
                         <textarea class="form-control form-control-enhanced @error('notes') is-invalid @enderror"
-                                  id="notes" name="notes" rows="3" 
+                                  id="notes" name="notes" rows="3"
                                   placeholder="Any special notes about this franchise">{{ old('notes') }}</textarea>
                         @error('notes')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -269,8 +269,8 @@
                                 <div class="input-icon-group">
                                     <i class="fas fa-user input-icon"></i>
                                     <input type="text" class="form-control form-control-enhanced input-with-icon @error('user_name') is-invalid @enderror"
-                                           id="user_name" name="user_name" value="{{ old('user_name') }}" 
-                                           placeholder="John Doe">
+                                           id="user_name" name="user_name" value="{{ old('user_name') }}"
+                                           placeholder="Enter full name">
                                 </div>
                                 @error('user_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -284,8 +284,8 @@
                                 <div class="input-icon-group">
                                     <i class="fas fa-envelope input-icon"></i>
                                     <input type="email" class="form-control form-control-enhanced input-with-icon @error('user_email') is-invalid @enderror"
-                                           id="user_email" name="user_email" value="{{ old('user_email') }}" 
-                                           placeholder="owner@franchise.com">
+                                           id="user_email" name="user_email" value="{{ old('user_email') }}"
+                                           placeholder="Enter login email">
                                 </div>
                                 <small class="form-text text-muted">
                                     <i class="fas fa-key mr-1"></i>This email will be used for franchise panel login
@@ -305,7 +305,7 @@
                             <div>
                                 <strong>🔐 Security Information</strong>
                                 <div class="mt-1" style="opacity: 0.95;">
-                                    A secure password will be auto-generated and displayed after creating the franchise. 
+                                    A secure password will be auto-generated and displayed after creating the franchise.
                                     Make sure to share these credentials securely with the franchise owner.
                                 </div>
                             </div>

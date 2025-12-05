@@ -62,6 +62,8 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::resource('franchises', FranchiseController::class);
     Route::post('franchises/{franchise}/create-user', [FranchiseController::class, 'createUser'])->name('franchises.create-user');
     Route::post('/franchises/{franchise}/toggle-status', [FranchiseController::class, 'toggleStatus'])->name('franchises.toggle-status');
+    Route::put('/franchises/user/{userId}/password', [FranchiseController::class, 'updatePassword'])->name('franchises.updatePassword');
+
 
     // =============================================================================
     // ADMIN COURSE MANAGEMENT (Global Courses)
@@ -142,22 +144,22 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
     Route::prefix('wallet')->name('wallet.')->group(function () {
     // Wallet Dashboard
         Route::get('/', [WalletController::class, 'index'])->name('index');
-        
+
         // All Transactions
         Route::get('/transactions', [WalletController::class, 'transactions'])->name('transactions');
-        
+
         // Recharge Requests
         Route::get('/recharge-requests', [WalletController::class, 'rechargeRequests'])->name('recharge-requests');
         Route::post('/recharge-requests/{id}/approve', [WalletController::class, 'approveRecharge'])->name('approve-recharge');
         Route::post('/recharge-requests/{id}/reject', [WalletController::class, 'rejectRecharge'])->name('reject-recharge');
-        
+
         // Manual Transaction
         Route::get('/manual-transaction', [WalletController::class, 'manualTransaction'])->name('manual-transaction');
         Route::post('/manual-transaction', [WalletController::class, 'processManualTransaction'])->name('process-manual');
-        
+
         // Franchise Wallet Details
         Route::get('/franchise/{id}', [WalletController::class, 'franchiseWallet'])->name('franchise-details');
-        
+
         // Audit Logs
         Route::get('/audit-logs', [WalletController::class, 'auditLogs'])->name('audit-logs');
     });

@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
-use Yajra\DataTables\Facades\DataTables; 
+use Yajra\DataTables\Facades\DataTables;
 
 class FranchiseController extends Controller
 {
@@ -17,7 +17,7 @@ class FranchiseController extends Controller
         if ($request->ajax()) {
             return $this->getDatatablesData();
         }
-        
+
         return view('admin.franchises.index');
     }
 
@@ -26,7 +26,7 @@ class FranchiseController extends Controller
         $franchises = Franchise::with(['users'])->select([
             'id',
             'name',
-            'code', 
+            'code',
             'email',
             'phone',
             'address',
@@ -63,7 +63,7 @@ class FranchiseController extends Controller
                 if ($franchise->city) $location[] = $franchise->city;
                 if ($franchise->state) $location[] = $franchise->state;
                 if ($franchise->pincode) $location[] = $franchise->pincode;
-                
+
                 if (!empty($location)) {
                     return '<i class="fas fa-map-marker-alt text-danger mr-1"></i>' . implode(', ', $location);
                 }
@@ -75,7 +75,7 @@ class FranchiseController extends Controller
             ->addColumn('status_badge', function ($franchise) {
                 $badges = [
                     'active' => 'success',
-                    'inactive' => 'secondary', 
+                    'inactive' => 'secondary',
                     'suspended' => 'danger'
                 ];
                 $badgeClass = $badges[$franchise->status] ?? 'secondary';
@@ -83,35 +83,46 @@ class FranchiseController extends Controller
             })
             ->addColumn('date_info', function ($franchise) {
                 $html = '<div class="text-center">';
-                
+
                 if ($franchise->established_date) {
                     $html .= '<div class="small text-muted">Est: ' . $franchise->established_date->format('M Y') . '</div>';
                 }
-                
+
                 $html .= '<div class="font-weight-bold">' . $franchise->created_at->format('M d, Y') . '</div>';
                 $html .= '<small class="text-muted">Added: ' . $franchise->created_at->format('H:i A') . '</small>';
                 $html .= '</div>';
-                
+
                 return $html;
             })
           ->addColumn('actions', function ($franchise) {
-    $buttons = '<div class="btn-group" role="group">';
-    
-    // View button
-    $buttons .= '<a href="' . route('admin.franchises.show', $franchise) . '" class="btn btn-sm btn-info mr-1" title="View Details" data-toggle="tooltip">';
-    $buttons .= '<i class="fas fa-eye"></i></a>';
-    
-    // Edit button  
-    $buttons .= '<a href="' . route('admin.franchises.edit', $franchise) . '" class="btn btn-sm btn-primary mr-1" title="Edit" data-toggle="tooltip">';
-    $buttons .= '<i class="fas fa-edit"></i></a>';
-    
-    // Delete button with data attributes for AJAX
-    $buttons .= '<button class="btn btn-sm btn-danger delete-franchise" data-id="' . $franchise->id . '" title="Delete" data-toggle="tooltip">';
-    $buttons .= '<i class="fas fa-trash"></i></button>';
-    
-    $buttons .= '</div>';
-    return $buttons;
-})
+        $buttons = '<div class="btn-group" role="group">';
+
+        // View button
+        $buttons .= '<a href="' . route('admin.franchises.show', $franchise) . '" class="btn btn-sm btn-info mr-1" title="View Details" data-toggle="tooltip">';
+        $buttons .= '<i class="fas fa-eye"></i></a>';
+
+        // Edit button
+        $buttons .= '<a href="' . route('admin.franchises.edit', $franchise) . '" class="btn btn-sm btn-primary mr-1" title="Edit" data-toggle="tooltip">';
+        $buttons .= '<i class="fas fa-edit"></i></a>';
+
+        // -- Reset Password Button --
+        $firstUser = $franchise->users->first();
+        if ($firstUser) {
+            $buttons .= '<button type="button" class="btn btn-sm btn-warning mr-1 reset-password-btn"
+                            data-userid="' . $firstUser->id . '"
+                            data-username="' . $firstUser->name . '"
+                            title="Reset Password">
+                            <i class="fas fa-key"></i>
+                        </button>';
+        }
+
+        // Delete button with data attributes for AJAX
+        $buttons .= '<button class="btn btn-sm btn-danger delete-franchise" data-id="' . $franchise->id . '" title="Delete" data-toggle="tooltip">';
+        $buttons .= '<i class="fas fa-trash"></i></button>';
+
+        $buttons .= '</div>';
+        return $buttons;
+        })
 
             ->rawColumns(['franchise_details', 'contact_info', 'location_info', 'status_badge', 'date_info', 'actions'])
             ->make(true);
@@ -132,7 +143,7 @@ class FranchiseController extends Controller
             'phone' => 'required|string|max:15',
             'address' => 'nullable|string',
             'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100', 
+            'state' => 'nullable|string|max:100',
             'pincode' => 'nullable|string|max:10',
             'contact_person' => 'nullable|string|max:100',
             'established_date' => 'nullable|date',
@@ -189,7 +200,7 @@ class FranchiseController extends Controller
             // Redirect with success message
             $message = $userData ? 'Franchise and user created successfully!' : 'Franchise created successfully!';
             $redirect = redirect()->route('admin.franchises.index')->with('success', $message);
-            
+
             if ($userData) {
                 $redirect->with('user_created', $userData);
             }
@@ -244,55 +255,53 @@ class FranchiseController extends Controller
             ->with('success', 'Franchise updated successfully!');
     }
 
-  public function destroy(Franchise $franchise)
-{
-    try {
-        // Check if franchise has students
-        if ($franchise->students()->count() > 0) {
+    public function destroy(Franchise $franchise)
+    {
+        try {
+            // Check if franchise has students
+            if ($franchise->students()->count() > 0) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Cannot delete franchise with existing students.'
+                    ], 400);
+                }
+                return redirect()->back()
+                    ->with('error', 'Cannot delete franchise with existing students.');
+            }
+
+            // Delete associated users first
+            $franchise->users()->delete();
+
+            // Delete franchise
+            $franchise->delete();
+
+            // Return appropriate response based on request type
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Franchise deleted successfully!'
+                ]);
+            }
+
+            return redirect()->route('admin.franchises.index')
+                ->with('success', 'Franchise deleted successfully!');
+
+        } catch (\Exception $e) {
+            \Log::error('Error deleting franchise: ' . $e->getMessage());
+
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete franchise with existing students.'
-                ], 400);
+                    'message' => 'Error deleting franchise: ' . $e->getMessage()
+                ], 500);
             }
+
             return redirect()->back()
-                ->with('error', 'Cannot delete franchise with existing students.');
+                ->with('error', 'Error deleting franchise.');
         }
-
-        // Delete associated users first
-        $franchise->users()->delete();
-
-        // Delete franchise
-        $franchise->delete();
-
-        // Return appropriate response based on request type
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Franchise deleted successfully!'
-            ]);
-        }
-
-        return redirect()->route('admin.franchises.index')
-            ->with('success', 'Franchise deleted successfully!');
-            
-    } catch (\Exception $e) {
-        \Log::error('Error deleting franchise: ' . $e->getMessage());
-        
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error deleting franchise: ' . $e->getMessage()
-            ], 500);
-        }
-        
-        return redirect()->back()
-            ->with('error', 'Error deleting franchise.');
     }
-}
 
-
-    // ADD THIS MISSING METHOD ← THIS IS WHAT YOU NEED!
     public function createUser(Request $request, Franchise $franchise)
     {
         $validated = $request->validate([
@@ -321,4 +330,28 @@ class FranchiseController extends Controller
             ]
         ]);
     }
+
+    public function updatePassword(Request $request, $userId)
+    {
+        $request->validate([
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        try {
+            $user = User::findOrFail($userId);
+
+            if (!$user->franchise_id) {
+                return back()->with('error', 'This user is not a franchise user.');
+            }
+
+            $user->password = Hash::make($request->password);
+            $user->save();
+
+            return back()->with('success', 'Password updated successfully for ' . $user->name);
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error updating password: ' . $e->getMessage());
+        }
+    }
+
 }
