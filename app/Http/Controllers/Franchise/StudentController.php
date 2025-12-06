@@ -14,9 +14,6 @@ use Illuminate\Support\Str;
 
 class StudentController extends Controller
 {
-    /**
-     * Display students listing with DataTables
-     */
     public function index(Request $request)
     {
         try {
@@ -130,13 +127,9 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Show form for creating new student
-     */
     public function create()
     {
         try {
-            // 🔧 FIXED: Get all active courses (no franchise filtering)
             $courses = Course::where('status', 'active')->get();
 
             return view('franchise.students.create', compact('courses'));
@@ -148,13 +141,12 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Store new student
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'father_name' => 'nullable|string|max:255',
+            'mother_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:students,email',
             'phone' => 'required|string|max:20',
             'course_id' => 'nullable|exists:courses,id',
@@ -169,7 +161,6 @@ class StudentController extends Controller
         ]);
 
         try {
-            // 🔧 FIXED: Remove franchise validation for courses (courses are global)
             if ($validated['course_id']) {
                 $course = Course::where('id', $validated['course_id'])
                               ->where('status', 'active')
@@ -182,7 +173,6 @@ class StudentController extends Controller
                 }
             }
 
-            // Add franchise ID and generate student ID
             $validated['franchise_id'] = Auth::user()->franchise_id;
             $validated['student_id'] = $this->generateStudentId();
             $validated['password'] = Hash::make('password123'); // Default password
@@ -200,9 +190,6 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Display student details
-     */
     public function show($id)
     {
         try {
@@ -233,9 +220,6 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Show form for editing student - 🔧 COMPLETELY FIXED
-     */
     public function edit($id)
     {
         try {
@@ -280,9 +264,6 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Update student
-     */
     public function update(Request $request, $id)
     {
         Log::info('=== STUDENT UPDATE STARTED ===', [
@@ -317,6 +298,8 @@ class StudentController extends Controller
             // Validate the request
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'father_name' => 'nullable|string|max:255',
+                'mother_name' => 'nullable|string|max:255',
                 'email' => 'required|email|unique:students,email,' . $student->id,
                 'phone' => 'required|string|max:20',
                 'course_id' => 'nullable|exists:courses,id',
@@ -330,7 +313,6 @@ class StudentController extends Controller
                 'status' => 'required|in:active,inactive,graduated,dropped'
             ]);
 
-            // 🔧 FIX: Handle empty date_of_birth
             if (empty($validated['date_of_birth']) || $validated['date_of_birth'] === '') {
                 $validated['date_of_birth'] = null;
             }
@@ -389,13 +371,6 @@ class StudentController extends Controller
         }
     }
 
-
-
-
-
-    /**
-     * Delete student
-     */
     public function destroy($id)
     {
         try {
@@ -445,9 +420,6 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Toggle student status
-     */
     public function toggleStatus(Request $request, $id)
     {
         try {
@@ -486,9 +458,6 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Get student statistics
-     */
     public function getStats()
     {
         try {
@@ -542,9 +511,6 @@ class StudentController extends Controller
         }
     }
 
-    /**
-     * Generate unique student ID
-     */
     private function generateStudentId()
     {
         $prefix = 'STU';

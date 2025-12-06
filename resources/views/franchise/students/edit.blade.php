@@ -55,6 +55,22 @@
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
+                            <label>Father Name</label>
+                            <input type="text" name="father_name" class="form-control @error('father_name') is-invalid @enderror"
+                                   value="{{ old('father_name', $student->father_name) }}">
+                            @error('father_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Mother Name</label>
+                            <input type="text" name="mother_name" class="form-control @error('mother_name') is-invalid @enderror"
+                                   value="{{ old('mother_name', $student->mother_name) }}">
+                            @error('mother_name') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
                             <label class="required">Email Address</label>
                             <input type="email" name="email" class="form-control @error('email') is-invalid @enderror"
                                    value="{{ old('email', $student->email) }}" required>
@@ -65,7 +81,7 @@
                         <div class="form-group">
                             <label class="required">Phone Number</label>
                             <input type="text" name="phone" class="form-control @error('phone') is-invalid @enderror"
-                                   value="{{ old('phone', $student->phone) }}" required>
+                                   value="{{ old('phone', $student->phone) }}" maxlength="10" required>
                             @error('phone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                         </div>
                     </div>

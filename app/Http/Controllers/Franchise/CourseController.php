@@ -6,22 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Models\Course;
 use App\Models\User;
 use App\Models\Enrollment;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class CourseController extends Controller
 {
-    /**
-     * Display course catalog for franchise
-     */
+
     public function index(Request $request)
     {
         $franchiseId = Auth::user()->franchise_id;
 
+        // 1. FETCH STUDENTS FOR ENROLLMENT DROPDOWN (NEW PART)
+        $myStudents = \App\Models\Student::where('franchise_id', $franchiseId)
+                        ->where('status', 'active')
+                        ->select('id', 'name', 'email')
+                        ->orderBy('name')
+                        ->get();
+
         $query = Course::where('status', 'active')
-                      ->withCount(['enrollments as my_students_count' => function($q) use ($franchiseId) {
-                          $q->where('franchise_id', $franchiseId);
-                      }]);
+                       ->withCount(['enrollments as my_students_count' => function($q) use ($franchiseId) {
+                           $q->where('franchise_id', $franchiseId);
+                       }]);
 
         // 🔍 Search functionality
         if ($request->filled('search')) {
@@ -64,7 +70,7 @@ class CourseController extends Controller
 
         $courses = $query->paginate(12);
 
-        // 📊 Statistics for dashboard cards
+        // Statistics for dashboard cards
         $stats = [
             'total_courses' => Course::where('status', 'active')->count(),
             'my_enrolled_students' => $this->getMyEnrolledStudentsCount(),
@@ -72,12 +78,11 @@ class CourseController extends Controller
             'active_enrollments' => $this->getActiveEnrollmentsCount(),
         ];
 
-        return view('franchise.courses.index', compact('courses', 'stats'));
+        // ➤ Pass 'myStudents' to the view
+        return view('franchise.courses.index', compact('courses', 'stats', 'myStudents'));
     }
 
-    /**
-     * Display course details for franchise
-     */
+
     public function show(Course $course)
     {
         // Only show active courses
@@ -98,9 +103,6 @@ class CourseController extends Controller
         return view('franchise.courses.show', compact('course', 'enrollmentStats'));
     }
 
-    /**
-     * Show enrolled students for a specific course
-     */
     public function students(Course $course)
     {
         $franchiseId = Auth::user()->franchise_id;
@@ -118,9 +120,6 @@ class CourseController extends Controller
         return view('franchise.courses.students', compact('course', 'students'));
     }
 
-    /**
-     * Revenue tracking for courses
-     */
     public function revenue()
     {
         $franchiseId = Auth::user()->franchise_id;
@@ -173,4 +172,40 @@ class CourseController extends Controller
                          ->where('payment_status', 'paid')
                          ->sum('amount_paid');
     }
+
+    public function enroll(Request $request, \App\Models\Course $course)
+    {
+        $request->validate([
+            'student_id' => 'required|exists:students,id',
+        ]);
+
+        $franchiseId = Auth::user()->franchise_id;
+        $studentProfile = \App\Models\Student::findOrFail($request->student_id);
+        $realUserId = $studentProfile->user_id;
+
+        if (empty($realUserId)) {
+            return back()->with('error', "Enrollment Failed: Student '{$studentProfile->name}' is broken (missing User ID). Please delete and recreate this student.");
+        }
+
+        $exists = \App\Models\Enrollment::where('course_id', $course->id)
+                            ->where('student_id', $realUserId)
+                            ->exists();
+
+        if ($exists) {
+            return back()->with('error', 'This student is already enrolled.');
+        }
+
+        \App\Models\Enrollment::create([
+            'course_id'    => $course->id,
+            'student_id'   => $realUserId,
+            'franchise_id' => $franchiseId,
+            'enrollment_date' => now(),
+            'status'       => 'active',
+            'payment_status' => 'pending',
+            'amount_paid'  => $course->franchise_fee ?? $course->fee ?? 0,
+        ]);
+
+        return back()->with('success', 'Student enrolled successfully!');
+    }
+
 }

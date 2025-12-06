@@ -243,6 +243,7 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
     Route::prefix('courses')->name('courses.')->group(function () {
         // Main course routes
         Route::get('/', [FranchiseCourseController::class, 'index'])->name('index');
+        Route::post('/{course}/enroll', [FranchiseCourseController::class, 'enroll'])->name('enroll');
         Route::get('/{course}', [FranchiseCourseController::class, 'show'])->name('show');
         Route::get('/{course}/students', [FranchiseCourseController::class, 'students'])->name('students');
 

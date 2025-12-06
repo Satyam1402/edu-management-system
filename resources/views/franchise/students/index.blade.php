@@ -116,14 +116,6 @@
         </div>
         <div class="col-md-3">
             <div class="stat-box">
-                <div class="number" id="graduatedStudents">
-                    <i class="fas fa-spinner fa-spin"></i>
-                </div>
-                <div class="label">Graduated</div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="stat-box">
                 <div class="number" id="thisMonth">
                     <i class="fas fa-spinner fa-spin"></i>
                 </div>
@@ -241,7 +233,7 @@ $(document).ready(function() {
             }
         ],
         responsive: true,
-        order: [[7, 'desc']], // Order by enrollment date
+        order: [[7, 'desc']],
         pageLength: 25,
         language: {
             processing: '<div class="spinner-border text-primary"><span class="sr-only">Loading...</span></div>',
