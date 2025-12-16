@@ -145,6 +145,8 @@ class StudentController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'middle_name' => 'nullable|string|max:255',
+            'last_name' => 'required|string|max:255',
             'father_name' => 'nullable|string|max:255',
             'mother_name' => 'nullable|string|max:255',
             'email' => 'required|email|unique:students,email',
@@ -210,7 +212,7 @@ class StudentController extends Controller
                 return redirect()->route('franchise.students.index')
                     ->with('error', 'Student not found or access denied.');
             }
-
+            // dd($student);
             return view('franchise.students.show', compact('student'));
 
         } catch (\Exception $e) {
@@ -298,6 +300,8 @@ class StudentController extends Controller
             // Validate the request
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
+                'middle_name' => 'nullable|string|max:255',
+                'last_name' => 'required|string|max:255',
                 'father_name' => 'nullable|string|max:255',
                 'mother_name' => 'nullable|string|max:255',
                 'email' => 'required|email|unique:students,email,' . $student->id,

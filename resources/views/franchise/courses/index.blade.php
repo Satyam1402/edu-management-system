@@ -67,12 +67,12 @@
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h3><i class="fas fa-graduation-cap mr-2 text-primary"></i>Available Courses</h3>
                 <div class="d-flex gap-3">
-                    <a href="{{ route('franchise.courses.revenue') }}" class="btn btn-outline-success">
+                    {{-- <a href="{{ route('franchise.courses.revenue') }}" class="btn btn-outline-success">
                         <i class="fas fa-chart-line mr-2"></i>Revenue Tracking
                     </a>
                     <a href="#" class="btn btn-primary disabled" style="opacity:0.6; cursor:default;">
                         <i class="fas fa-users mr-2"></i>My Students
-                    </a>
+                    </a> --}}
                 </div>
             </div>
 

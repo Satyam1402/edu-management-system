@@ -72,7 +72,7 @@
                 <h6 class="text-primary mb-3" style="font-weight:600;">Personal Information</h6>
                 <div class="detail-row d-flex justify-content-between">
                     <span class="detail-label">Full Name:</span>
-                    <span class="detail-value">{{ $student->name }}</span>
+                    <span class="detail-value">{{ $student->full_name  }}</span>
                 </div>
                 <div class="detail-row d-flex justify-content-between">
                     <span class="detail-label">Email:</span>

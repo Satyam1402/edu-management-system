@@ -173,39 +173,48 @@ class CourseController extends Controller
                          ->sum('amount_paid');
     }
 
-    public function enroll(Request $request, \App\Models\Course $course)
+    public function enroll(Request $request, Course $course)
     {
         $request->validate([
             'student_id' => 'required|exists:students,id',
         ]);
 
         $franchiseId = Auth::user()->franchise_id;
-        $studentProfile = \App\Models\Student::findOrFail($request->student_id);
-        $realUserId = $studentProfile->user_id;
+        $studentId = $request->student_id;
 
-        if (empty($realUserId)) {
-            return back()->with('error', "Enrollment Failed: Student '{$studentProfile->name}' is broken (missing User ID). Please delete and recreate this student.");
+        // Check if student belongs to this franchise
+        $student = Student::where('id', $studentId)
+                                    ->where('franchise_id', $franchiseId)
+                                    ->where('status', 'active')
+                                    ->first();
+
+        if (!$student) {
+            return back()->with('error', 'Student not found or does not belong to your franchise.');
         }
 
-        $exists = \App\Models\Enrollment::where('course_id', $course->id)
-                            ->where('student_id', $realUserId)
+        // Check if already enrolled
+        $exists = Enrollment::where('course_id', $course->id)
+                            ->where('student_id', $studentId)
+                            ->where('franchise_id', $franchiseId)
                             ->exists();
 
         if ($exists) {
-            return back()->with('error', 'This student is already enrolled.');
+            return back()->with('error', 'This student is already enrolled in this course.');
         }
 
-        \App\Models\Enrollment::create([
-            'course_id'    => $course->id,
-            'student_id'   => $realUserId,
-            'franchise_id' => $franchiseId,
-            'enrollment_date' => now(),
-            'status'       => 'active',
+        // Create enrollment
+        Enrollment::create([
+            'course_id'      => $course->id,
+            'student_id'     => $studentId,
+            'franchise_id'   => $franchiseId,
+            'enrollment_date'=> now(),
+            'status'         => 'active',
             'payment_status' => 'pending',
-            'amount_paid'  => $course->franchise_fee ?? $course->fee ?? 0,
+            'amount_paid'    => $course->franchise_fee ?? $course->fee ?? 0,
         ]);
 
-        return back()->with('success', 'Student enrolled successfully!');
+        return back()->with('success', "Student '{$student->name}' enrolled successfully!");
     }
+
 
 }

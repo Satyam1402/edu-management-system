@@ -82,10 +82,32 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label class="required">Full Name</label>
+                            <label class="required">First Name</label>
                             <input type="text" name="name" class="form-control @error('name') is-invalid @enderror"
                                    value="{{ old('name') }}" placeholder="Enter student name" required>
                             @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label>Middle Name</label>
+                            <input type="text" name="middle_name" class="form-control @error('middle_name') is-invalid @enderror"
+                                   value="{{ old('middle_name') }}" placeholder="Enter middle name">
+                            @error('middle_name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="required">Last Name</label>
+                            <input type="text" name="last_name" class="form-control @error('last_name') is-invalid @enderror"
+                                   value="{{ old('last_name') }}" placeholder="Enter last name" required>
+                            @error('last_name')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

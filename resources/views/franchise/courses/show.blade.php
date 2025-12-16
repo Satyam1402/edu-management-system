@@ -35,9 +35,9 @@
                             <i class="fas fa-star mr-1"></i>Featured Course
                         </span><br>
                     @endif
-                    <button class="btn btn-primary btn-lg" onclick="enrollStudent({{ $course->id }})">
+                    {{-- <button class="btn btn-primary btn-lg" onclick="enrollStudent({{ $course->id }})">
                         <i class="fas fa-user-plus mr-2"></i>Enroll Student
-                    </button>
+                    </button> --}}
                 </div>
             </div>
         </div>
@@ -263,34 +263,26 @@
                         <div class="display-4 text-success font-weight-bold mb-2">FREE</div>
                         <p class="text-muted mb-3">This course is completely free!</p>
                     @else
-                        @if($course->franchise_fee)
-                            <div class="mb-2">
-                                <small class="text-muted d-block">Your Franchise Price:</small>
-                                <div class="display-4 text-primary font-weight-bold">₹{{ number_format($course->franchise_fee) }}</div>
+                        <div class="mb-2">
+                            <small class="text-muted d-block">Your Franchise Price:</small>
+                            <div class="display-4 text-primary font-weight-bold">
+                                ₹{{ number_format($course->franchise_fee ?? $course->fee) }}
                             </div>
-                            @if($course->fee > $course->franchise_fee)
-                                <div class="text-success mb-2">
-                                    <small>You save: ₹{{ number_format($course->fee - $course->franchise_fee) }}</small>
-                                </div>
-                            @endif
-                        @elseif($course->discount_fee)
-                            <div class="mb-2">
-                                <small class="text-muted d-block">Discounted Price:</small>
-                                <div class="display-4 text-success font-weight-bold">₹{{ number_format($course->discount_fee) }}</div>
-                                <del class="text-muted">₹{{ number_format($course->fee) }}</del>
-                                <div class="text-success">
-                                    <small>{{ round((($course->fee - $course->discount_fee) / $course->fee) * 100) }}% OFF</small>
-                                </div>
-                            </div>
-                        @else
-                            <div class="display-4 text-primary font-weight-bold mb-2">₹{{ number_format($course->fee) }}</div>
-                        @endif
+                        </div>
                         <p class="text-muted mb-3">Per student enrollment</p>
                     @endif
 
-                    <button class="btn btn-primary btn-lg btn-block" onclick="enrollStudent({{ $course->id }})">
-                        <i class="fas fa-user-plus mr-2"></i>Enroll New Student
-                    </button>
+                    <!--  TWO CLEAR OPTIONS -->
+                    {{-- <button class="btn btn-success btn-lg btn-block mb-2"
+                            data-toggle="modal"
+                            data-target="#quickEnrollModal">
+                        <i class="fas fa-user-check mr-2"></i>Enroll Existing Student
+                    </button> --}}
+
+                    <a href="{{ route('franchise.students.create', ['course_id' => $course->id, 'redirect' => 'enroll']) }}"
+                    class="btn btn-outline-primary btn-lg btn-block">
+                        <i class="fas fa-user-plus mr-2"></i>Add New Student & Enroll
+                    </a>
                 </div>
             </div>
 
@@ -300,60 +292,21 @@
                     <h5 class="mb-0"><i class="fas fa-bolt mr-2"></i>Quick Actions</h5>
                 </div>
                 <div class="card-body">
-                    @if($course->students->count() > 0)
-                        <a href="{{ route('franchise.courses.students', $course) }}" class="btn btn-outline-primary btn-block mb-2">
-                            <i class="fas fa-users mr-2"></i>View All My Students
+                    @if($enrollmentStats['my_students'] > 0)
+                        <a href="{{ route('franchise.courses.students', $course) }}"
+                        class="btn btn-outline-primary btn-block mb-2">
+                            <i class="fas fa-users mr-2"></i>Manage Enrolled Students ({{ $enrollmentStats['my_students'] }})
                         </a>
                     @endif
-                    <button class="btn btn-outline-success btn-block mb-2" onclick="downloadCourseInfo({{ $course->id }})">
-                        <i class="fas fa-download mr-2"></i>Download Course Info
-                    </button>
+                    <a href="{{ route('franchise.students.index') }}"
+                    class="btn btn-outline-secondary btn-block mb-2">
+                        <i class="fas fa-list mr-2"></i>View All My Students
+                    </a>
                     <button class="btn btn-outline-info btn-block" onclick="shareCourse({{ $course->id }})">
                         <i class="fas fa-share-alt mr-2"></i>Share Course
                     </button>
                 </div>
             </div>
-
-            <!-- Course Progress (if students enrolled) -->
-            @if($course->students->count() > 0)
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0"><i class="fas fa-chart-pie mr-2"></i>Enrollment Overview</h5>
-                </div>
-                <div class="card-body">
-                    <div class="progress mb-3" style="height: 20px;">
-                        @php
-                            $enrollmentPercentage = $course->max_students
-                                ? ($course->students()->count() / $course->max_students) * 100
-                                : 50; // Default visualization for unlimited
-                        @endphp
-                        <div class="progress-bar bg-success" role="progressbar"
-                             style="width: {{ min($enrollmentPercentage, 100) }}%">
-                            {{ $course->students()->count() }} Students
-                        </div>
-                    </div>
-
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <div class="border-right">
-                                <div class="h6 mb-0 text-primary">{{ $enrollmentStats['my_students'] }}</div>
-                                <small class="text-muted">Your Students</small>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="border-right">
-                                <div class="h6 mb-0 text-success">{{ $course->students()->count() }}</div>
-                                <small class="text-muted">Total Enrolled</small>
-                            </div>
-                        </div>
-                        <div class="col-4">
-                            <div class="h6 mb-0 text-info">{{ $enrollmentStats['available_slots'] }}</div>
-                            <small class="text-muted">Available</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
         </div>
     </div>
 </div>

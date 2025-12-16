@@ -1,5 +1,4 @@
 <?php
-// app/Models/Student.php - COMPLETE UPDATED VERSION
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +13,8 @@ class Student extends Model
         'user_id',
         'student_id',
         'name',
+        'middle_name',
+        'last_name',
         'father_name',
         'mother_name',
         'email',
@@ -104,7 +105,11 @@ class Student extends Model
     // Accessors & Mutators
     public function getFullNameAttribute()
     {
-        return $this->name;
+        return trim(implode(' ', array_filter([
+            $this->name,
+            $this->middle_name,
+            $this->last_name
+        ])));
     }
 
     public function getAgeAttribute()
