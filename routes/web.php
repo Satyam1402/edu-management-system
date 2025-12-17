@@ -292,32 +292,56 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
     // 🚀 UPDATED: FRANCHISE CERTIFICATE REQUEST MANAGEMENT (Wallet-Integrated)
     // =============================================================================
     Route::prefix('certificate-requests')->name('certificate-requests.')->group(function () {
-        // Main CRUD operations
+        // ========================================
+        // MAIN CRUD OPERATIONS
+        // ========================================
         Route::get('/', [FranchiseCertificateRequestController::class, 'index'])->name('index');
         Route::get('/create', [FranchiseCertificateRequestController::class, 'create'])->name('create');
         Route::post('/', [FranchiseCertificateRequestController::class, 'store'])->name('store');
         Route::get('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'show'])->name('show');
-        Route::get('/{certificateRequest}/edit', [FranchiseCertificateRequestController::class, 'edit'])->name('edit');
-    Route::put('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'update'])->name('update');
+        
+        // ❌ REMOVED: Edit & Update routes (no longer needed)
+        // Route::get('/{certificateRequest}/edit', [FranchiseCertificateRequestController::class, 'edit'])->name('edit');
+        // Route::put('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'update'])->name('update');
+        
+        // ✅ NEW: Delete route (cancel pending requests)
+        Route::delete('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'destroy'])->name('destroy');
 
-        // AJAX routes for dynamic functionality (REQUIRED for our views)
+        // ========================================
+        // PAYMENT & ACTIONS
+        // ========================================
+        // Pay for approved certificate request
+        Route::post('/{certificateRequest}/pay', [FranchiseCertificateRequestController::class, 'pay'])->name('pay');
+        
+        // Download completed certificate
+        Route::get('/{certificateRequest}/download', [FranchiseCertificateRequestController::class, 'download'])->name('download');
+        
+        // ❌ REMOVED: Duplicate cancel route (already handled by destroy)
+        // Route::post('/{certificateRequest}/cancel', [FranchiseCertificateRequestController::class, 'cancel'])->name('cancel');
+
+        // ========================================
+        // AJAX ROUTES (Dynamic Functionality)
+        // ========================================
         Route::get('/wallet-balance', [FranchiseCertificateRequestController::class, 'getWalletBalance'])->name('wallet-balance');
         Route::post('/calculate-cost', [FranchiseCertificateRequestController::class, 'calculateCost'])->name('calculate-cost');
         Route::get('/course/{course}/fee', [FranchiseCertificateRequestController::class, 'getCourseFee'])->name('course-fee');
 
-        // Student-specific routes
+        // ========================================
+        // STUDENT-SPECIFIC ROUTES
+        // ========================================
+        // Create certificate request for specific student (from student profile)
         Route::get('/student/{student}/create', [FranchiseCertificateRequestController::class, 'createForStudent'])->name('create-for-student');
 
-        // Status management (for pending requests)
-        Route::post('/{certificateRequest}/cancel', [FranchiseCertificateRequestController::class, 'cancel'])->name('cancel');
-        Route::get('/{certificateRequest}/download', [FranchiseCertificateRequestController::class, 'download'])->name('download');
-
-        // Export and reporting
+        // ========================================
+        // EXPORT & REPORTING
+        // ========================================
         Route::get('/export', [FranchiseCertificateRequestController::class, 'export'])->name('export');
         Route::get('/export/excel', [FranchiseCertificateRequestController::class, 'exportExcel'])->name('export.excel');
         Route::get('/export/pdf', [FranchiseCertificateRequestController::class, 'exportPdf'])->name('export.pdf');
 
-        // Statistics for dashboard
+        // ========================================
+        // STATISTICS (Dashboard)
+        // ========================================
         Route::get('/stats/overview', [FranchiseCertificateRequestController::class, 'getStats'])->name('stats');
     });
 

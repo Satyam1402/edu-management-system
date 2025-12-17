@@ -76,6 +76,17 @@ class Student extends Model
         return $this->belongsTo(Course::class);
     }
 
+     public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class, 'student_id');
+    }
+
+    // ADD THIS TOO (get active enrollment specifically)
+    public function activeEnrollment()
+    {
+        return $this->hasOne(Enrollment::class, 'student_id')->where('status', 'active')->latest();
+    }
+
     public function certificates()
     {
         return $this->hasMany(Certificate::class);

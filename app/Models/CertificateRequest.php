@@ -14,11 +14,16 @@ class CertificateRequest extends Model
         'franchise_id',
         'student_id',
         'course_id',
+        'enrollment_id',
         'amount',
         'certificate_type',
         'status',
         'notes',
         'requested_at',
+        // Payment fields
+        'payment_status',
+        'paid_at',
+        'wallet_transaction_id',
         // Admin approval fields
         'approved_by',
         'approved_at',
@@ -50,7 +55,7 @@ class CertificateRequest extends Model
 
     public function franchise()
     {
-        return $this->belongsTo(User::class, 'franchise_id');
+        return $this->belongsTo(Franchise::class, 'franchise_id');
     }
 
     public function student()
@@ -61,6 +66,11 @@ class CertificateRequest extends Model
     public function course()
     {
         return $this->belongsTo(Course::class);
+    }
+
+    public function enrollment()
+    {
+        return $this->belongsTo(Enrollment::class);
     }
 
     public function approvedBy()
@@ -121,6 +131,11 @@ class CertificateRequest extends Model
     // ========================================
     // HELPER METHODS
     // ========================================
+
+    public function canBePaid()
+    {
+        return $this->status === 'approved' && $this->payment_status === 'pending';
+    }
 
     public function canBeApproved()
     {

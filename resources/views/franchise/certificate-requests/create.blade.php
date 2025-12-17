@@ -1,340 +1,277 @@
 @extends('layouts.custom-admin')
 
-@section('page-title', 'Request Certificates')
+@section('title', 'Create Certificate Request')
+@section('page-title', 'Certificate Requests')
 
 @section('css')
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
-    .card {
-        border-radius: 15px;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-        border: none;
-        transition: all 0.3s ease;
+    .eligible-student-card {
+        border: 2px solid #28a745;
+        background: #f8fff9;
     }
-
-    .card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+    .student-info-box {
+        background: #e7f3ff;
+        border-left: 4px solid #007bff;
+        padding: 15px;
+        margin: 15px 0;
     }
-
-    .card-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 15px 15px 0 0!important;
-        padding: 1.5rem;
-    }
-
-    .wallet-card {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
-        border-radius: 12px;
-        margin-bottom: 2rem;
-    }
-
-    .wallet-balance {
+    .fee-display {
         font-size: 2rem;
-        font-weight: 700;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        font-weight: bold;
+        color: #28a745;
     }
-
-    .form-group label {
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 0.5rem;
-    }
-
-    .form-control {
-        border-radius: 8px;
-        border: 2px solid #e2e8f0;
-        transition: all 0.3s ease;
-    }
-
-    .form-control:focus {
-        border-color: #667eea;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-    }
-
-    .student-checkbox {
-        transform: scale(1.2);
-        margin-right: 0.5rem;
-    }
-
-    .student-card {
-        border: 2px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        transition: all 0.3s ease;
-        cursor: pointer;
-    }
-
-    .student-card:hover, .student-card.selected {
-        border-color: #667eea;
-        background-color: #f7faff;
-    }
-
-    .cost-calculator {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        color: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        margin: 1.5rem 0;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border: none;
-        border-radius: 8px;
-        padding: 12px 30px;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-    }
-
-    .alert {
-        border-radius: 10px;
-        border: none;
-    }
-
     .select2-container .select2-selection--single {
-        height: 45px;
-        border-radius: 8px;
-        border: 2px solid #e2e8f0;
+        height: 45px !important;
+        padding: 8px;
     }
-
-    .select2-container .select2-selection--single .select2-selection__rendered {
-        line-height: 41px;
-        padding-left: 15px;
-    }
-
-    .insufficient-balance {
-        background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
-        color: white;
-    }
-
-    .loading-spinner {
-        display: none;
-        text-align: center;
-        padding: 2rem;
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 28px !important;
     }
 </style>
 @endsection
 
 @section('content')
 <div class="container-fluid">
-    {{-- WALLET BALANCE CARD --}}
-    <div class="row">
-        <div class="col-12">
-            <div class="card wallet-card">
-                <div class="card-body text-center">
-                    <h5 class="mb-2"><i class="fas fa-wallet"></i> Current Wallet Balance</h5>
-                    <div class="wallet-balance" id="wallet-balance">₹{{ number_format($walletBalance, 2) }}</div>
-                    <small><i class="fas fa-info-circle"></i> Sufficient balance required to submit requests</small>
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Create Certificate Request</h2>
+            <p class="text-muted mb-0">Select an eligible student to request a certificate</p>
+        </div>
+        <a href="{{ route('franchise.certificate-requests.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>Back to List
+        </a>
+    </div>
+
+    <!-- Wallet Balance Card -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Your Wallet Balance
+                            </div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">
+                                ₹{{ number_format($walletBalance, 2) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-wallet fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <a href="{{ route('franchise.wallet.index') }}" class="btn btn-sm btn-success">
+                            <i class="fas fa-plus mr-1"></i>Add Funds
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Eligible Students
+                            </div>
+                            <div class="h4 mb-0 font-weight-bold text-gray-800">
+                                {{ $eligibleStudents->count() }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-graduate fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="alert alert-info mb-0 h-100 d-flex align-items-center">
+                <i class="fas fa-info-circle fa-2x mr-3"></i>
+                <div>
+                    <strong>Note:</strong> Payment will be required AFTER admin approval.
+                    No money will be deducted now.
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">
-                        <i class="fas fa-certificate"></i> Request New Certificates
-                    </h4>
-                    <small class="opacity-75">Select students and course to generate certificates</small>
+    <!-- Main Form -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-file-certificate mr-2"></i>Certificate Request Form</h5>
                 </div>
-
                 <div class="card-body">
-                    {{-- SUCCESS/ERROR MESSAGES --}}
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show">
-                            <i class="fas fa-check-circle"></i> {{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    @if($eligibleStudents->isEmpty())
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>No Eligible Students</strong>
+                            <p class="mb-0">There are no students currently eligible for certificates.
+                            Students must complete all course exams to be eligible.</p>
                         </div>
-                    @endif
+                        <a href="{{ route('franchise.students.index') }}" class="btn btn-primary">
+                            <i class="fas fa-users mr-2"></i>View All Students
+                        </a>
+                    @else
+                        <form action="{{ route('franchise.certificate-requests.store') }}" method="POST" id="certificateRequestForm">
+                            @csrf
 
-                    @if(session('error'))
-                        <div class="alert alert-danger alert-dismissible fade show">
-                            <i class="fas fa-exclamation-triangle"></i> {{ session('error') }}
-                            <button type="button" class="close" data-dismiss="alert">&times;</button>
-                        </div>
-                    @endif
-
-                    <form action="{{ route('franchise.certificate-requests.store') }}" method="POST" id="certificate-form">
-                        @csrf
-
-                        {{-- COURSE SELECTION --}}
-                        <div class="form-group">
-                            <label for="course_id">
-                                <i class="fas fa-book"></i> Select Course <span class="text-danger">*</span>
-                            </label>
-                            <select class="form-control @error('course_id') is-invalid @enderror"
-                                    name="course_id" id="course_id" required>
-                                <option value="">-- Choose a course --</option>
-                                @foreach($courses as $course)
-                                    <option value="{{ $course->id }}"
-                                            data-fee="{{ $course->certificate_fee ?? 500 }}"
-                                            {{ old('course_id') == $course->id ? 'selected' : '' }}>
-                                        {{ $course->name }} - ₹{{ number_format($course->certificate_fee ?? 500, 2) }} per certificate
-                                    </option>
-                                @endforeach
-                            </select>
-                            <small class="form-text text-muted">
-                                <i class="fas fa-info-circle"></i> Fee will be deducted from your wallet balance
-                            </small>
-                            @error('course_id')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        {{-- STUDENT SELECTION --}}
-                        <div class="form-group">
-                            <label>
-                                <i class="fas fa-users"></i> Select Students <span class="text-danger">*</span>
-                            </label>
-                            <div class="mb-3">
-                                <button type="button" class="btn btn-outline-primary btn-sm" id="select-all-students">
-                                    <i class="fas fa-check-square"></i> Select All
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary btn-sm ml-2" id="deselect-all-students">
-                                    <i class="fas fa-square"></i> Deselect All
-                                </button>
-                                <span class="ml-3 text-muted">
-                                    <i class="fas fa-user-friends"></i> <span id="selected-count">0</span> students selected
-                                </span>
-                            </div>
-
-                            @if(count($students) > 0)
-                                <div class="row" id="students-container">
-                                    @foreach($students as $student)
-                                        <div class="col-md-6 col-lg-4">
-                                            <div class="student-card" data-student-id="{{ $student->id }}">
-                                                <div class="form-check">
-                                                    <input class="form-check-input student-checkbox"
-                                                           type="checkbox"
-                                                           name="student_ids[]"
-                                                           value="{{ $student->id }}"
-                                                           id="student_{{ $student->id }}"
-                                                           {{ is_array(old('student_ids')) && in_array($student->id, old('student_ids')) ? 'checked' : '' }}>
-                                                    <label class="form-check-label w-100" for="student_{{ $student->id }}">
-                                                        <div class="font-weight-bold">{{ $student->name }}</div>
-                                                        <small class="text-muted">
-                                                            <i class="fas fa-envelope"></i> {{ $student->email }}
-                                                            @if($student->phone)
-                                                                <br><i class="fas fa-phone"></i> {{ $student->phone }}
-                                                            @endif
-                                                        </small>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
+                            <!-- Student Selection -->
+                            <div class="form-group">
+                                <label class="font-weight-bold">
+                                    Select Eligible Student <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-control select2" name="student_id" id="studentSelect" required>
+                                    <option value="">-- Choose a student --</option>
+                                    @foreach($eligibleStudents as $student)
+                                        <option value="{{ $student['id'] }}"
+                                                data-course="{{ $student['course_name'] }}"
+                                                data-fee="{{ $student['certificate_fee'] }}"
+                                                data-email="{{ $student['email'] }}">
+                                            {{ $student['name'] }} - {{ $student['course_name'] }} (₹{{ number_format($student['certificate_fee'], 2) }})
+                                        </option>
                                     @endforeach
-                                </div>
-                            @else
-                                <div class="alert alert-warning">
-                                    <i class="fas fa-user-slash"></i> No active students found for your franchise.
-                                    <a href="{{ route('franchise.students.create') }}" class="alert-link">Add students first</a>.
-                                </div>
-                            @endif
+                                </select>
+                                <small class="text-muted">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    Only students who have completed all course requirements are shown
+                                </small>
+                            </div>
 
-                            @error('student_ids')
-                                <div class="text-danger mt-2">
-                                    <small><i class="fas fa-exclamation-circle"></i> {{ $message }}</small>
-                                </div>
-                            @enderror
-                        </div>
-
-                        {{-- COST CALCULATOR --}}
-                        <div class="cost-calculator" id="cost-calculator" style="display: none;">
-                            <div class="row align-items-center">
-                                <div class="col-md-8">
-                                    <h6 class="mb-1"><i class="fas fa-calculator"></i> Cost Calculation</h6>
-                                    <div id="cost-breakdown">
-                                        <span id="selected-students-text">0 students</span> ×
-                                        <span id="fee-per-certificate">₹0</span> =
-                                        <strong id="total-cost">₹0</strong>
+                            <!-- Student Info Display (Hidden initially) -->
+                            <div id="studentInfoBox" class="student-info-box" style="display: none;">
+                                <h6 class="font-weight-bold mb-3">
+                                    <i class="fas fa-user-check text-success mr-2"></i>Selected Student Information
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-2"><strong>Student:</strong> <span id="displayName"></span></p>
+                                        <p class="mb-2"><strong>Email:</strong> <span id="displayEmail"></span></p>
+                                        <p class="mb-2"><strong>Course:</strong> <span id="displayCourse"></span></p>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <p class="mb-2"><strong>Certificate Fee:</strong></p>
+                                        <p class="fee-display mb-0">₹<span id="displayFee">0</span></p>
                                     </div>
                                 </div>
-                                <div class="col-md-4 text-right">
-                                    <div class="balance-check">
-                                        <small>Wallet Balance: <span id="current-balance">₹{{ number_format($walletBalance, 2) }}</span></small>
-                                        <div id="balance-status" class="font-weight-bold"></div>
-                                    </div>
+                                <div class="alert alert-success mt-3 mb-0">
+                                    <i class="fas fa-shield-alt mr-2"></i>
+                                    <strong>Payment Protected:</strong> Amount will be deducted only after admin approval and your confirmation.
                                 </div>
                             </div>
-                        </div>
 
-                        {{-- CERTIFICATE TYPE --}}
-                        <div class="form-group">
-                            <label for="certificate_type">
-                                <i class="fas fa-award"></i> Certificate Type
-                            </label>
-                            <select class="form-control @error('certificate_type') is-invalid @enderror"
-                                    name="certificate_type" id="certificate_type">
-                                <option value="Standard Certificate" {{ old('certificate_type') == 'Standard Certificate' ? 'selected' : '' }}>
-                                    Standard Certificate
-                                </option>
-                                <option value="Course Completion Certificate" {{ old('certificate_type') == 'Course Completion Certificate' ? 'selected' : '' }}>
-                                    Course Completion Certificate
-                                </option>
-                                <option value="Achievement Certificate" {{ old('certificate_type') == 'Achievement Certificate' ? 'selected' : '' }}>
-                                    Achievement Certificate
-                                </option>
-                                <option value="Merit Certificate" {{ old('certificate_type') == 'Merit Certificate' ? 'selected' : '' }}>
-                                    Merit Certificate
-                                </option>
-                            </select>
-                            @error('certificate_type')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <!-- Certificate Type -->
+                            <div class="form-group">
+                                <label class="font-weight-bold">Certificate Type (Optional)</label>
+                                <select class="form-control" name="certificate_type">
+                                    <option value="Course Completion Certificate">Course Completion Certificate</option>
+                                    <option value="Merit Certificate">Merit Certificate</option>
+                                    <option value="Participation Certificate">Participation Certificate</option>
+                                </select>
+                            </div>
 
-                        {{-- NOTES --}}
-                        <div class="form-group">
-                            <label for="notes">
-                                <i class="fas fa-sticky-note"></i> Additional Notes
-                            </label>
-                            <textarea class="form-control @error('notes') is-invalid @enderror"
-                                      name="notes" id="notes" rows="3"
-                                      placeholder="Any special requirements or instructions for the certificates...">{{ old('notes') }}</textarea>
-                            <small class="form-text text-muted">Optional: Add any special instructions for certificate generation</small>
-                            @error('notes')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                            <!-- Notes -->
+                            <div class="form-group">
+                                <label class="font-weight-bold">Additional Notes (Optional)</label>
+                                <textarea class="form-control" name="notes" rows="3"
+                                          placeholder="Any special instructions or notes..."></textarea>
+                            </div>
 
-                        {{-- LOADING SPINNER --}}
-                        <div class="loading-spinner" id="loading-spinner">
-                            <i class="fas fa-spinner fa-spin fa-2x"></i>
-                            <p class="mt-2">Processing your certificate requests...</p>
-                        </div>
+                            <!-- Submit Button -->
+                            <div class="form-group mb-0">
+                                <button type="submit" class="btn btn-primary btn-lg btn-block">
+                                    <i class="fas fa-paper-plane mr-2"></i>Submit Request for Approval
+                                </button>
+                                <small class="text-muted d-block mt-2 text-center">
+                                    <i class="fas fa-info-circle"></i>
+                                    Your request will be reviewed by the admin
+                                </small>
+                            </div>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        </div>
 
-                        {{-- FORM BUTTONS --}}
-                        <div class="form-group mb-0">
-                            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn" disabled>
-                                <i class="fas fa-paper-plane"></i> Submit Certificate Requests
-                            </button>
-                            <a href="{{ route('franchise.certificate-requests.index') }}" class="btn btn-secondary btn-lg ml-2">
-                                <i class="fas fa-arrow-left"></i> Back to Requests
-                            </a>
+        <!-- Information Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0"><i class="fas fa-question-circle mr-2"></i>How It Works</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">1. Select Student</h6>
+                                <p class="text-muted small mb-0">Choose an eligible student from the list</p>
+                            </div>
                         </div>
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-marker bg-warning"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">2. Submit Request</h6>
+                                <p class="text-muted small mb-0">Request sent for admin review (No payment yet)</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">3. Admin Approval</h6>
+                                <p class="text-muted small mb-0">Admin verifies and approves your request</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item mb-3">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">4. Payment</h6>
+                                <p class="text-muted small mb-0">You confirm and pay from your wallet</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="mb-1">5. Certificate Ready</h6>
+                                <p class="text-muted small mb-0">Download your certificate</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                        {{-- INFO BOX --}}
-                        <div class="alert alert-info mt-4">
-                            <h6><i class="fas fa-info-circle"></i> Important Information:</h6>
-                            <ul class="mb-0">
-                                <li><strong>Processing Time:</strong> Certificate requests are processed within 1-2 business days</li>
-                                <li><strong>Notifications:</strong> You will be notified via email when certificates are ready</li>
-                                <li><strong>Payment:</strong> Fees will be deducted from your wallet balance immediately</li>
-                                <li><strong>Bulk Requests:</strong> You can select multiple students for the same course</li>
-                            </ul>
-                        </div>
-                    </form>
+            <!-- Eligibility Criteria -->
+            <div class="card shadow">
+                <div class="card-header bg-success text-white">
+                    <h6 class="mb-0"><i class="fas fa-check-circle mr-2"></i>Eligibility Criteria</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success mr-2"></i>
+                            Student must be actively enrolled
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success mr-2"></i>
+                            All course exams must be completed
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success mr-2"></i>
+                            All exams must be passed
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success mr-2"></i>
+                            No existing certificate request
+                        </li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -346,152 +283,78 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
-    let walletBalance = {{ $walletBalance }};
-    let selectedStudents = [];
-    let currentFee = 0;
-
     // Initialize Select2
-    $('#course_id').select2({
-        placeholder: "Choose a course",
-        allowClear: true
+    $('.select2').select2({
+        placeholder: 'Search and select a student...',
+        allowClear: true,
+        width: '100%'
     });
 
-    // Auto-hide alerts
-    setTimeout(() => $('.alert-dismissible').fadeOut('slow'), 6000);
-
-    // Course selection handler
-    $('#course_id').on('change', function() {
+    // Show student info when selected
+    $('#studentSelect').on('change', function() {
         const selectedOption = $(this).find('option:selected');
-        currentFee = parseFloat(selectedOption.data('fee')) || 0;
 
-        $('#fee-per-certificate').text('₹' + currentFee.toLocaleString());
-        updateCostCalculation();
-        validateForm();
-    });
+        if (selectedOption.val()) {
+            const studentName = selectedOption.text().split(' - ')[0];
+            const courseName = selectedOption.data('course');
+            const fee = selectedOption.data('fee');
+            const email = selectedOption.data('email');
 
-    // Student selection handlers
-    $('.student-checkbox').on('change', function() {
-        const studentId = $(this).val();
-        const isChecked = $(this).is(':checked');
-        const studentCard = $(this).closest('.student-card');
+            $('#displayName').text(studentName);
+            $('#displayEmail').text(email);
+            $('#displayCourse').text(courseName);
+            $('#displayFee').text(parseFloat(fee).toFixed(2));
 
-        if (isChecked) {
-            selectedStudents.push(studentId);
-            studentCard.addClass('selected');
+            $('#studentInfoBox').slideDown();
         } else {
-            selectedStudents = selectedStudents.filter(id => id !== studentId);
-            studentCard.removeClass('selected');
-        }
-
-        updateSelectedCount();
-        updateCostCalculation();
-        validateForm();
-    });
-
-    // Student card click handler
-    $('.student-card').on('click', function(e) {
-        if (e.target.type !== 'checkbox') {
-            const checkbox = $(this).find('.student-checkbox');
-            checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+            $('#studentInfoBox').slideUp();
         }
     });
 
-    // Select/Deselect all buttons
-    $('#select-all-students').on('click', function() {
-        $('.student-checkbox').prop('checked', true).trigger('change');
-    });
+    // Form validation
+    $('#certificateRequestForm').on('submit', function(e) {
+        const studentId = $('#studentSelect').val();
 
-    $('#deselect-all-students').on('click', function() {
-        $('.student-checkbox').prop('checked', false).trigger('change');
-    });
-
-    // Form submission handler
-    $('#certificate-form').on('submit', function(e) {
-        e.preventDefault();
-
-        if (!validateForm()) {
+        if (!studentId) {
+            e.preventDefault();
+            alert('Please select a student');
             return false;
         }
 
-        // Show loading spinner
-        $('#loading-spinner').show();
-        $('#submit-btn').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
-
-        // Submit the form
-        this.submit();
-    });
-
-    function updateSelectedCount() {
-        const count = selectedStudents.length;
-        $('#selected-count').text(count);
-        $('#selected-students-text').text(count + ' student' + (count !== 1 ? 's' : ''));
-    }
-
-    function updateCostCalculation() {
-        const studentCount = selectedStudents.length;
-        const totalCost = studentCount * currentFee;
-
-        $('#total-cost').text('₹' + totalCost.toLocaleString());
-
-        if (studentCount > 0 && currentFee > 0) {
-            $('#cost-calculator').slideDown();
-
-            // Check wallet balance
-            const balanceStatus = $('#balance-status');
-            if (totalCost > walletBalance) {
-                balanceStatus.html('<i class="fas fa-exclamation-triangle"></i> Insufficient Balance')
-                           .removeClass('text-success').addClass('text-warning');
-                $('#cost-calculator').removeClass('cost-calculator').addClass('insufficient-balance');
-            } else {
-                balanceStatus.html('<i class="fas fa-check-circle"></i> Sufficient Balance')
-                           .removeClass('text-warning').addClass('text-success');
-                $('#cost-calculator').removeClass('insufficient-balance').addClass('cost-calculator');
-            }
-        } else {
-            $('#cost-calculator').slideUp();
-        }
-    }
-
-    function validateForm() {
-        const courseSelected = $('#course_id').val() !== '';
-        const studentsSelected = selectedStudents.length > 0;
-        const totalCost = selectedStudents.length * currentFee;
-        const sufficientBalance = totalCost <= walletBalance;
-
-        const isValid = courseSelected && studentsSelected && sufficientBalance;
-        $('#submit-btn').prop('disabled', !isValid);
-
-        if (!sufficientBalance && studentsSelected && courseSelected) {
-            showInsufficientBalanceError();
-        }
-
-        return isValid;
-    }
-
-    function showInsufficientBalanceError() {
-        const totalCost = selectedStudents.length * currentFee;
-        const shortfall = totalCost - walletBalance;
-
-        if ($('#balance-error').length === 0) {
-            const errorHtml = `
-                <div class="alert alert-danger" id="balance-error">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Insufficient Wallet Balance!</strong><br>
-                    Required: ₹${totalCost.toLocaleString()}, Available: ₹${walletBalance.toLocaleString()}<br>
-                    Shortfall: ₹${shortfall.toLocaleString()}<br>
-                    <a href="{{ route('franchise.wallet.create') }}" class="alert-link">
-                        <i class="fas fa-plus-circle"></i> Add funds to wallet
-                    </a>
-                </div>
-            `;
-            $('#cost-calculator').after(errorHtml);
-        }
-    }
-
-    // Remove balance error when conditions change
-    $('#course_id, .student-checkbox').on('change', function() {
-        $('#balance-error').remove();
+        // Show loading state
+        $(this).find('button[type="submit"]')
+            .prop('disabled', true)
+            .html('<i class="fas fa-spinner fa-spin mr-2"></i>Submitting Request...');
     });
 });
 </script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+.timeline:before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 5px;
+    bottom: 5px;
+    width: 2px;
+    background: #e0e0e0;
+}
+.timeline-item {
+    position: relative;
+}
+.timeline-marker {
+    position: absolute;
+    left: -26px;
+    top: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 2px #e0e0e0;
+}
+</style>
 @endsection

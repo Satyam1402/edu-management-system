@@ -7,6 +7,7 @@ use App\Models\CertificateRequest;
 use App\Models\Certificate;
 use App\Models\FranchiseWallet;
 use App\Models\WalletTransaction;
+use App\Models\Franchise;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\{DB, Log, Response};
@@ -14,15 +15,13 @@ use Illuminate\Support\Str;
 
 class CertificateRequestController extends Controller
 {
-    /**
-     * ✅ FIXED: Display certificate requests dashboard with DataTables
-     */
     public function index(Request $request)
     {
         if ($request->ajax()) {
+            // ✅ FIXED: Load full student and franchise data
             $query = CertificateRequest::with([
-                'student:id,name,email',
-                'franchise:id,name,email',
+                'student',  // Load all student fields
+                'franchise', // Load franchise relationship
                 'course:id,name,certificate_fee',
                 'approvedBy:id,name',
                 'rejectedBy:id,name'
@@ -48,12 +47,16 @@ class CertificateRequestController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('student_info', function($row) {
-                    $franchiseName = $row->franchise->name ?? 'N/A';
+                    // ✅ FIXED: Use full_name accessor and proper franchise name
+                    $studentName = $row->student ? $row->student->full_name : 'N/A';
+                    $studentEmail = $row->student ? $row->student->email : '';
+                    $franchiseName = $row->franchise ? $row->franchise->name : 'N/A';
+
                     return "
                         <div class='student-info'>
-                            <strong class='text-primary'>{$row->student->name}</strong><br>
+                            <strong class='text-primary'>{$studentName}</strong><br>
                             <small class='text-muted'>
-                                <i class='fas fa-envelope'></i> {$row->student->email}
+                                <i class='fas fa-envelope'></i> {$studentEmail}
                             </small><br>
                             <span class='badge badge-light mt-1'>
                                 <i class='fas fa-building'></i> {$franchiseName}
@@ -72,7 +75,6 @@ class CertificateRequestController extends Controller
                     }
                     return '<em class="text-muted">General Certificate</em>';
                 })
-                // ✅ FIXED: Removed 'payment_info', replaced with 'amount_info'
                 ->addColumn('amount_info', function($row) {
                     return "
                         <div class='text-center'>
@@ -100,18 +102,18 @@ class CertificateRequestController extends Controller
                     ];
                     $color = $colors[$row->status] ?? 'secondary';
                     $icon = $icons[$row->status] ?? 'question';
-                    
+
                     $badge = "<span class='badge badge-{$color} status-badge px-3 py-2'>
                                 <i class='fas fa-{$icon} mr-1'></i>" . ucfirst($row->status) . "
                              </span>";
-                    
+
                     // Add admin info
                     if ($row->status === 'approved' && $row->approvedBy) {
                         $badge .= "<br><small class='text-muted mt-1'>by {$row->approvedBy->name}</small>";
                     } elseif ($row->status === 'rejected' && $row->rejectedBy) {
                         $badge .= "<br><small class='text-danger mt-1'>by {$row->rejectedBy->name}</small>";
                     }
-                    
+
                     return $badge;
                 })
                 ->addColumn('request_date', function($row) {
@@ -155,7 +157,7 @@ class CertificateRequestController extends Controller
                                         </a>';
                             }
                         }
-                        
+
                         // History Button
                         $actions .= '<button onclick="showTimeline(' . $row->id . ')"
                                            class="btn btn-secondary" title="History" data-toggle="tooltip">
@@ -185,18 +187,14 @@ class CertificateRequestController extends Controller
                                                 ->sum('amount'),
         ];
 
-        // Franchise list for filter
-        $franchises = \App\Models\User::where('role', 'franchise')
-                                      ->select('id', 'name')
-                                      ->orderBy('name')
-                                      ->get();
+        // ✅ FIXED: Get franchises from franchises table
+        $franchises = Franchise::select('id', 'name')
+                              ->orderBy('name')
+                              ->get();
 
         return view('admin.certificate-requests.index', compact('stats', 'franchises'));
     }
 
-    /**
-     * Show detailed certificate request
-     */
     public function show(CertificateRequest $certificateRequest)
     {
         $certificateRequest->load([
@@ -216,7 +214,7 @@ class CertificateRequestController extends Controller
     }
 
     /**
-     * ✅ FIXED: Approve certificate request with wallet validation
+     * Approve certificate request
      */
     public function approve(Request $request, CertificateRequest $certificateRequest)
     {
@@ -276,7 +274,7 @@ class CertificateRequestController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             Log::error('Approval failed', [
                 'error' => $e->getMessage()
             ]);
@@ -289,7 +287,7 @@ class CertificateRequestController extends Controller
     }
 
     /**
-     * ✅ FIXED: Reject certificate request with automatic wallet refund
+     * Reject certificate request
      */
     public function reject(Request $request, CertificateRequest $certificateRequest)
     {
@@ -318,37 +316,39 @@ class CertificateRequestController extends Controller
                 'admin_notes' => $request->notes
             ]);
 
-            // ✅ REFUND TO WALLET
-            $wallet = FranchiseWallet::where('franchise_id', $certificateRequest->franchise_id)->first();
-            
-            if ($wallet) {
-                $wallet->balance += $certificateRequest->amount;
-                $wallet->save();
+            // REFUND TO WALLET (if payment was made)
+            if ($certificateRequest->payment_status === 'paid' && $certificateRequest->wallet_transaction_id) {
+                $wallet = FranchiseWallet::where('franchise_id', $certificateRequest->franchise_id)->first();
 
-                // Create refund transaction
-                WalletTransaction::create([
-                    'franchise_wallet_id' => $wallet->id,
-                    'type' => 'credit',
-                    'amount' => $certificateRequest->amount,
-                    'description' => "Refund for rejected certificate request #" . $certificateRequest->id,
-                    'status' => 'completed',
-                    'balance_after' => $wallet->balance,
-                    'reference_type' => get_class($certificateRequest),
-                    'reference_id' => $certificateRequest->id
-                ]);
+                if ($wallet) {
+                    $wallet->balance += $certificateRequest->amount;
+                    $wallet->save();
 
-                Log::info('Wallet refunded', [
-                    'request_id' => $certificateRequest->id,
-                    'amount' => $certificateRequest->amount,
-                    'new_balance' => $wallet->balance
-                ]);
+                    // Create refund transaction
+                    WalletTransaction::create([
+                        'franchise_wallet_id' => $wallet->id,
+                        'type' => 'credit',
+                        'amount' => $certificateRequest->amount,
+                        'description' => "Refund for rejected certificate request #" . $certificateRequest->id,
+                        'status' => 'completed',
+                        'balance_after' => $wallet->balance,
+                        'reference_type' => get_class($certificateRequest),
+                        'reference_id' => $certificateRequest->id
+                    ]);
+
+                    Log::info('Wallet refunded', [
+                        'request_id' => $certificateRequest->id,
+                        'amount' => $certificateRequest->amount,
+                        'new_balance' => $wallet->balance
+                    ]);
+                }
             }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Request rejected and amount refunded to wallet.'
+                'message' => 'Request rejected successfully.'
             ]);
 
         } catch (\Exception $e) {
@@ -365,9 +365,6 @@ class CertificateRequestController extends Controller
         }
     }
 
-    /**
-     * ✅ FIXED: Bulk actions
-     */
     public function bulkAction(Request $request)
     {
         $request->validate([
@@ -417,22 +414,24 @@ class CertificateRequestController extends Controller
                             'rejection_reason' => $request->reason
                         ]);
 
-                        // Refund wallet
-                        $wallet = FranchiseWallet::where('franchise_id', $certRequest->franchise_id)->first();
-                        if ($wallet) {
-                            $wallet->balance += $certRequest->amount;
-                            $wallet->save();
+                        // Refund wallet if paid
+                        if ($certRequest->payment_status === 'paid') {
+                            $wallet = FranchiseWallet::where('franchise_id', $certRequest->franchise_id)->first();
+                            if ($wallet) {
+                                $wallet->balance += $certRequest->amount;
+                                $wallet->save();
 
-                            WalletTransaction::create([
-                                'franchise_wallet_id' => $wallet->id,
-                                'type' => 'credit',
-                                'amount' => $certRequest->amount,
-                                'description' => "Bulk refund for rejected request #" . $certRequest->id,
-                                'status' => 'completed',
-                                'balance_after' => $wallet->balance,
-                                'reference_type' => get_class($certRequest),
-                                'reference_id' => $certRequest->id
-                            ]);
+                                WalletTransaction::create([
+                                    'franchise_wallet_id' => $wallet->id,
+                                    'type' => 'credit',
+                                    'amount' => $certRequest->amount,
+                                    'description' => "Bulk refund for rejected request #" . $certRequest->id,
+                                    'status' => 'completed',
+                                    'balance_after' => $wallet->balance,
+                                    'reference_type' => get_class($certRequest),
+                                    'reference_id' => $certRequest->id
+                                ]);
+                            }
                         }
 
                         $successCount++;
@@ -480,12 +479,13 @@ class CertificateRequestController extends Controller
         $csvData = "ID,Student,Franchise,Course,Amount,Status,Request Date\n";
 
         foreach ($requests as $req) {
+            // ✅ FIXED: Use full_name accessor
             $csvData .= sprintf(
                 "%d,%s,%s,%s,%.2f,%s,%s\n",
                 $req->id,
-                $req->student->name ?? 'N/A',
-                $req->franchise->name ?? 'N/A',
-                $req->course->name ?? 'N/A',
+                $req->student ? $req->student->full_name : 'N/A',
+                $req->franchise ? $req->franchise->name : 'N/A',
+                $req->course ? $req->course->name : 'N/A',
                 $req->amount,
                 ucfirst($req->status),
                 $req->created_at->format('Y-m-d H:i:s')
@@ -517,7 +517,7 @@ class CertificateRequestController extends Controller
     }
 
     /**
-     * ✅ FIXED: Generate unique certificate number
+     * Generate unique certificate number
      */
     private function generateUniqueCertificateNumber()
     {
