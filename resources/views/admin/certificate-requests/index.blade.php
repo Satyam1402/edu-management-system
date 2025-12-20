@@ -68,9 +68,10 @@
         </div>
     </div>
 
-    <!-- Stats Cards -->
+    <!-- Stats Cards - Row 1 -->
     <div class="row mb-4">
-        <div class="col-lg-3 col-md-6">
+        <!-- Total Requests -->
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card stats-card bg-primary text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -85,7 +86,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6">
+
+        <!-- Pending Approval -->
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card stats-card bg-warning text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -100,7 +103,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6">
+
+        <!-- Approved -->
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card stats-card bg-success text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -115,7 +120,9 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6">
+
+        <!-- Rejected -->
+        <div class="col-lg-3 col-md-6 mb-3">
             <div class="card stats-card bg-danger text-white">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
@@ -125,6 +132,77 @@
                         </div>
                         <div class="text-danger-50">
                             <i class="fas fa-times-circle fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ✅ NEW: Stats Cards - Row 2 (Paid & Completed) -->
+    <div class="row mb-4">
+        <!-- Paid - Processing -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">{{ $stats['paid'] ?? 0 }}</h3>
+                            <p class="mb-0">Paid - Processing</p>
+                        </div>
+                        <div class="text-info-50">
+                            <i class="fas fa-money-check-alt fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completed -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <div class="card-body text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0">{{ $stats['completed'] }}</h3>
+                            <p class="mb-0">Completed</p>
+                        </div>
+                        <div>
+                            <i class="fas fa-certificate fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Requests -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card border-left-primary">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 text-primary">{{ $stats['today_requests'] ?? 0 }}</h3>
+                            <p class="mb-0 text-muted">Today's Requests</p>
+                        </div>
+                        <div class="text-primary">
+                            <i class="fas fa-calendar-day fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card border-left-success">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h3 class="mb-0 text-success">₹{{ number_format($stats['total_revenue'] ?? 0, 2) }}</h3>
+                            <p class="mb-0 text-muted">Total Revenue</p>
+                        </div>
+                        <div class="text-success">
+                            <i class="fas fa-rupee-sign fa-2x opacity-50"></i>
                         </div>
                     </div>
                 </div>
@@ -175,6 +253,8 @@
                             <a class="dropdown-item" href="#" onclick="filterByStatus('all')">All Requests</a>
                             <a class="dropdown-item" href="#" onclick="filterByStatus('pending')">Pending Only</a>
                             <a class="dropdown-item" href="#" onclick="filterByStatus('approved')">Approved Only</a>
+                            <a class="dropdown-item" href="#" onclick="filterByStatus('paid')">Paid Only</a>
+                            <a class="dropdown-item" href="#" onclick="filterByStatus('completed')">Completed Only</a>
                             <a class="dropdown-item" href="#" onclick="filterByStatus('rejected')">Rejected Only</a>
                         </div>
                     </div>
@@ -213,7 +293,7 @@
                 <p>Are you sure you want to approve this certificate request?</p>
                 <div class="form-group">
                     <label for="approve-notes">Admin Notes (Optional)</label>
-                    <textarea class="form-control" id="approve-notes" rows="2" 
+                    <textarea class="form-control" id="approve-notes" rows="2"
                               placeholder="Add any notes..."></textarea>
                 </div>
             </div>
@@ -238,12 +318,12 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label for="rejection-reason">Rejection Reason <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="rejection-reason" rows="3" 
+                    <textarea class="form-control" id="rejection-reason" rows="3"
                               placeholder="Provide reason for rejection..." required></textarea>
                 </div>
                 <div class="form-group">
                     <label for="reject-notes">Admin Notes (Optional)</label>
-                    <textarea class="form-control" id="reject-notes" rows="2" 
+                    <textarea class="form-control" id="reject-notes" rows="2"
                               placeholder="Add any additional notes..."></textarea>
                 </div>
             </div>
@@ -284,6 +364,9 @@
 @endsection
 
 @section('js')
+<!-- ✅ SweetAlert2 for better notifications -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
@@ -309,7 +392,7 @@ $(document).ready(function() {
             },
             { data: 'student_info', name: 'student.name', orderable: false },
             { data: 'course_info', name: 'course.name', orderable: false },
-            { data: 'amount_info', name: 'amount', orderable: false }, // ✅ FIXED!
+            { data: 'amount_info', name: 'amount', orderable: false },
             { data: 'status_badge', name: 'status', orderable: false },
             { data: 'request_date', name: 'created_at' },
             { data: 'actions', name: 'actions', orderable: false, searchable: false, className: 'text-center' }
@@ -372,7 +455,7 @@ function filterByStatus(status) {
     }
 }
 
-// ✅ FIXED: Individual approve
+// Individual approve
 function showApproveModal(requestId) {
     currentRequestId = requestId;
     $('#approveModal').modal('show');
@@ -380,13 +463,14 @@ function showApproveModal(requestId) {
 
 function confirmApprove() {
     const notes = $('#approve-notes').val();
-    
+
     $.post(`/admin/certificate-requests/${currentRequestId}/approve`, {
         _token: '{{ csrf_token() }}',
         notes: notes
     }).done(function(response) {
         if (response.success) {
             $('#approveModal').modal('hide');
+            $('#approve-notes').val('');
             showToast('success', response.message);
             certificateRequestsTable.ajax.reload();
         } else {
@@ -397,7 +481,7 @@ function confirmApprove() {
     });
 }
 
-// ✅ FIXED: Individual reject
+// Individual reject
 function showRejectModal(requestId) {
     currentRequestId = requestId;
     $('#rejectModal').modal('show');
@@ -428,6 +512,144 @@ function confirmReject() {
         }
     }).fail(function(xhr) {
         showToast('error', xhr.responseJSON?.message || 'Error rejecting request');
+    });
+}
+
+// ✅ NEW: Mark certificate as completed
+function markAsCompleted(requestId) {
+    Swal.fire({
+        title: 'Mark as Completed?',
+        html: `
+            <div style="text-align: left; padding: 10px 20px;">
+                <p class="mb-2">This will:</p>
+                <ul style="margin-left: 20px;">
+                    <li>Mark the certificate as completed</li>
+                    <li>Generate a certificate number</li>
+                    <li>Allow franchise to download the certificate</li>
+                </ul>
+            </div>
+        `,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="fas fa-check"></i> Yes, Mark as Completed',
+        cancelButtonText: '<i class="fas fa-times"></i> Cancel',
+        customClass: {
+            confirmButton: 'btn btn-success',
+            cancelButton: 'btn btn-secondary'
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            // Show loading
+            Swal.fire({
+                title: 'Processing...',
+                html: 'Please wait while we process the certificate',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Send AJAX request
+            $.ajax({
+                url: `/admin/certificate-requests/${requestId}/complete`,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Completed!',
+                            html: `
+                                <p>${response.message}</p>
+                                ${response.data && response.data.certificate_number ?
+                                    `<p class="mt-2"><strong>Certificate #:</strong> ${response.data.certificate_number}</p>`
+                                    : ''}
+                            `,
+                            confirmButtonColor: '#28a745',
+                            timer: 5000
+                        }).then(() => {
+                            // Reload DataTable
+                            certificateRequestsTable.ajax.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message,
+                            confirmButtonColor: '#dc3545'
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Failed to mark as completed';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: errorMessage,
+                        confirmButtonColor: '#dc3545'
+                    });
+                }
+            });
+        }
+    });
+}
+
+// ✅ NEW: Undo completion
+function undoComplete(requestId) {
+    Swal.fire({
+        title: 'Revert to Processing?',
+        text: 'This will revert the certificate back to processing status.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#ffc107',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: '<i class="fas fa-undo"></i> Yes, Revert',
+        cancelButtonText: '<i class="fas fa-times"></i> Cancel'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: `/admin/certificate-requests/${requestId}/undo-complete`,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Reverted!',
+                            text: response.message,
+                            confirmButtonColor: '#28a745',
+                            timer: 3000
+                        }).then(() => {
+                            certificateRequestsTable.ajax.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: xhr.responseJSON?.message || 'Failed to revert'
+                    });
+                }
+            });
+        }
     });
 }
 
@@ -526,7 +748,7 @@ function showToast(type, message) {
     setTimeout(() => toast.find('.alert').alert('close'), 5000);
 }
 
-// Timeline modal (optional)
+// Timeline modal
 function showTimeline(requestId) {
     window.location.href = `/admin/certificate-requests/${requestId}`;
 }

@@ -213,61 +213,167 @@ class CertificateRequestController extends Controller
             ->with('success', "Certificate request for {$studentName} - {$courseName} has been cancelled successfully.");
     }
 
-    /**
-     * Pay for approved certificate request
-     */
+
+    // public function pay(CertificateRequest $certificateRequest)
+    // {
+    //     $franchiseId = Auth::user()->franchise_id;
+
+    //     // Verify ownership
+    //     if ($certificateRequest->franchise_id !== $franchiseId) {
+    //         return redirect()->back()->with('error', 'Unauthorized access.');
+    //     }
+
+    //     // Check if can be paid
+    //     if (!$certificateRequest->canBePaid()) {
+    //         return redirect()->back()->with('error', 'This request cannot be paid at this time.');
+    //     }
+
+    //     DB::beginTransaction();
+
+    //     try {
+    //         // Get wallet
+    //         $wallet = FranchiseWallet::where('franchise_id', $franchiseId)->firstOrFail();
+
+    //         // Check balance
+    //         if (!$wallet->hasSufficientBalance($certificateRequest->amount)) {
+    //             return redirect()->route('franchise.wallet.index')
+    //                 ->with('error', 'Insufficient wallet balance. Please add funds first. Required: ₹' . number_format($certificateRequest->amount, 2));
+    //         }
+
+    //         // Deduct from wallet
+    //         $transaction = $wallet->debit(
+    //             $certificateRequest->amount,
+    //             "Payment for certificate - {$certificateRequest->student->full_name} - {$certificateRequest->course->name}"
+    //         );
+
+    //         // Update certificate request
+    //         $certificateRequest->update([
+    //             'payment_status' => 'paid',
+    //             'paid_at' => now(),
+    //             'wallet_transaction_id' => $transaction->id,
+    //             'status' => 'paid' // Move to processing
+    //         ]);
+
+    //         DB::commit();
+
+    //         return redirect()->route('franchise.certificate-requests.show', $certificateRequest)
+    //             ->with('success', 'Payment successful! Your certificate is now being processed.');
+
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Certificate Payment Error: ' . $e->getMessage());
+
+    //         return redirect()->back()->with('error', 'Payment failed: ' . $e->getMessage());
+    //     }
+    // }
+
     public function pay(CertificateRequest $certificateRequest)
     {
         $franchiseId = Auth::user()->franchise_id;
 
         // Verify ownership
         if ($certificateRequest->franchise_id !== $franchiseId) {
-            return redirect()->back()->with('error', 'Unauthorized access.');
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized access.'
+            ], 403);
         }
 
         // Check if can be paid
         if (!$certificateRequest->canBePaid()) {
-            return redirect()->back()->with('error', 'This request cannot be paid at this time.');
+            return response()->json([
+                'success' => false,
+                'message' => 'This certificate cannot be paid. Current status: ' . $certificateRequest->status
+            ]);
         }
 
         DB::beginTransaction();
 
         try {
             // Get wallet
-            $wallet = FranchiseWallet::where('franchise_id', $franchiseId)->firstOrFail();
+            $wallet = FranchiseWallet::where('franchise_id', $franchiseId)->first();
+
+            if (!$wallet) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Wallet not found. Please contact admin.'
+                ]);
+            }
 
             // Check balance
-            if (!$wallet->hasSufficientBalance($certificateRequest->amount)) {
-                return redirect()->route('franchise.wallet.index')
-                    ->with('error', 'Insufficient wallet balance. Please add funds first. Required: ₹' . number_format($certificateRequest->amount, 2));
+            if ($wallet->balance < $certificateRequest->amount) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient wallet balance. Please recharge your wallet.',
+                    'data' => [
+                        'required' => number_format($certificateRequest->amount, 2),
+                        'available' => number_format($wallet->balance, 2),
+                        'shortage' => number_format($certificateRequest->amount - $wallet->balance, 2)
+                    ]
+                ]);
             }
 
             // Deduct from wallet
-            $transaction = $wallet->debit(
-                $certificateRequest->amount,
-                "Payment for certificate - {$certificateRequest->student->full_name} - {$certificateRequest->course->name}"
-            );
+            $wallet->balance -= $certificateRequest->amount;
+            $wallet->save();
 
-            // Update certificate request
+            // Create transaction
+            $transaction = WalletTransaction::create([
+                'franchise_wallet_id' => $wallet->id,
+                'type' => 'debit',
+                'amount' => $certificateRequest->amount,
+                'description' => "Payment for certificate - {$certificateRequest->student->full_name} - {$certificateRequest->course->name}",
+                'status' => 'completed',
+                'balance_after' => $wallet->balance,
+                'reference_type' => get_class($certificateRequest),
+                'reference_id' => $certificateRequest->id
+            ]);
+
+            // ✅ CRITICAL: Update certificate request to PAID status
             $certificateRequest->update([
                 'payment_status' => 'paid',
                 'paid_at' => now(),
                 'wallet_transaction_id' => $transaction->id,
-                'status' => 'paid' // Move to processing
+                'status' => 'paid' // ← THIS MOVES IT TO "PROCESSING"
             ]);
 
             DB::commit();
 
-            return redirect()->route('franchise.certificate-requests.show', $certificateRequest)
-                ->with('success', 'Payment successful! Your certificate is now being processed.');
+            Log::info('Certificate payment successful', [
+                'request_id' => $certificateRequest->id,
+                'amount' => $certificateRequest->amount,
+                'franchise_id' => $franchiseId,
+                'new_balance' => $wallet->balance
+            ]);
+
+            // ✅ RETURN JSON (not redirect!)
+            return response()->json([
+                'success' => true,
+                'message' => 'Payment successful! Your certificate is now being processed.',
+                'data' => [
+                    'transaction_id' => $transaction->id,
+                    'new_balance' => number_format($wallet->balance, 2),
+                    'amount_paid' => number_format($certificateRequest->amount, 2),
+                    'status' => 'paid'
+                ]
+            ]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Certificate Payment Error: ' . $e->getMessage());
 
-            return redirect()->back()->with('error', 'Payment failed: ' . $e->getMessage());
+            Log::error('Certificate Payment Error', [
+                'error' => $e->getMessage(),
+                'request_id' => $certificateRequest->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment failed: ' . $e->getMessage()
+            ], 500);
         }
     }
+
 
     // ========================================
     // HELPER METHODS
@@ -332,24 +438,72 @@ class CertificateRequestController extends Controller
         return '<span class="badge badge-secondary">N/A</span>';
     }
 
-    /**
-     * Get action buttons HTML
-     */
+
+    // private function getActionButtons($request)
+    // {
+    //     $buttons = '<div class="btn-group" role="group">';
+
+    //     // View button (always available)
+    //     $buttons .= '<a href="' . route('franchise.certificate-requests.show', $request->id) . '"
+    //                     class="btn btn-sm btn-info"
+    //                     data-toggle="tooltip"
+    //                     title="View Details">
+    //                     <i class="fas fa-eye"></i>
+    //                 </a>';
+
+    //     // Cancel button (only for pending)
+    //     if ($request->status === 'pending') {
+    //         $buttons .= '<button class="btn btn-sm btn-danger"
+    //                             onclick="cancelRequest(' . $request->id . ')"
+    //                             data-toggle="tooltip"
+    //                             title="Cancel Request">
+    //                             <i class="fas fa-times"></i>
+    //                     </button>';
+    //     }
+
+    //     // Pay button (if approved and not paid)
+    //     if ($request->canBePaid()) {
+    //         $buttons .= '<button class="btn btn-sm btn-success pay-now-btn"
+    //                             data-id="' . $request->id . '"
+    //                             data-student="' . htmlspecialchars($request->student->full_name ?? '') . '"
+    //                             data-course="' . htmlspecialchars($request->course->name ?? '') . '"
+    //                             data-amount="' . $request->amount . '"
+    //                             data-toggle="tooltip"
+    //                             title="Pay Now">
+    //                             <i class="fas fa-money-bill-wave"></i>
+    //                     </button>';
+    //     }
+
+    //     // Download button (if completed)
+    //     if ($request->status === 'completed' && $request->certificate_number) {
+    //         $buttons .= '<a href="' . route('franchise.certificates.download', $request->id) . '"
+    //                         class="btn btn-sm btn-primary"
+    //                         data-toggle="tooltip"
+    //                         title="Download Certificate">
+    //                         <i class="fas fa-download"></i>
+    //                     </a>';
+    //     }
+
+    //     $buttons .= '</div>';
+
+    //     return $buttons;
+    // }
+
     private function getActionButtons($request)
     {
-        $buttons = '<div class="btn-group" role="group">';
+        $buttons = '<div class="btn-group btn-group-sm" role="group">';
 
-        // View button (always available)
+        // View Details Button (Always available)
         $buttons .= '<a href="' . route('franchise.certificate-requests.show', $request->id) . '"
-                        class="btn btn-sm btn-info"
+                        class="btn btn-info"
                         data-toggle="tooltip"
                         title="View Details">
                         <i class="fas fa-eye"></i>
                     </a>';
 
-        // Cancel button (only for pending)
+        // Cancel Button (Only for pending requests)
         if ($request->status === 'pending') {
-            $buttons .= '<button class="btn btn-sm btn-danger"
+            $buttons .= '<button class="btn btn-danger"
                                 onclick="cancelRequest(' . $request->id . ')"
                                 data-toggle="tooltip"
                                 title="Cancel Request">
@@ -357,26 +511,27 @@ class CertificateRequestController extends Controller
                         </button>';
         }
 
-        // Pay button (if approved and not paid)
+        // Pay Button (If approved and not paid)
         if ($request->canBePaid()) {
-            $buttons .= '<button class="btn btn-sm btn-success pay-now-btn"
+            $buttons .= '<button class="btn btn-success pay-now-btn"
                                 data-id="' . $request->id . '"
                                 data-student="' . htmlspecialchars($request->student->full_name ?? '') . '"
                                 data-course="' . htmlspecialchars($request->course->name ?? '') . '"
                                 data-amount="' . $request->amount . '"
                                 data-toggle="tooltip"
                                 title="Pay Now">
-                                <i class="fas fa-money-bill-wave"></i>
+                                <i class="fas fa-money-bill-wave"></i> Pay
                         </button>';
         }
 
-        // Download button (if completed)
+        // ✅ NEW: Download Button (If completed)
         if ($request->status === 'completed' && $request->certificate_number) {
-            $buttons .= '<a href="' . route('franchise.certificates.download', $request->id) . '"
-                            class="btn btn-sm btn-primary"
+            $buttons .= '<a href="' . route('franchise.certificate-requests.download', $request->id) . '"
+                            class="btn btn-primary"
                             data-toggle="tooltip"
-                            title="Download Certificate">
-                            <i class="fas fa-download"></i>
+                            title="Download Certificate"
+                            target="_blank">
+                            <i class="fas fa-download"></i> Download
                         </a>';
         }
 
@@ -384,6 +539,7 @@ class CertificateRequestController extends Controller
 
         return $buttons;
     }
+
 
     // ========================================
     // OPTIONAL AJAX METHODS (If routes exist)
@@ -455,11 +611,16 @@ class CertificateRequestController extends Controller
 
         // Check if certificate is completed
         if ($certificateRequest->status !== 'completed') {
-            return redirect()->back()->with('error', 'Certificate is not yet ready for download.');
+            return redirect()
+                ->route('franchise.certificate-requests.index')
+                ->with('error', 'Certificate is not yet ready for download.');
         }
 
-        // TODO: Implement PDF generation
-        // For now, redirect with message
-        return redirect()->back()->with('info', 'Certificate download will be available soon. Certificate Number: ' . $certificateRequest->certificate_number);
+        // Load relationships
+        $certificateRequest->load(['student', 'course', 'franchise']);
+
+        // Show a certificate page (HTML); user can print or save as PDF
+        return view('franchise.certificate-requests.download', compact('certificateRequest'));
     }
+
 }

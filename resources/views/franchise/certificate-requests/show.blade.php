@@ -100,11 +100,11 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
                             <h6 class="text-muted mb-2">Current Status</h6>
-                            {!! $certificateRequest->getStatusBadgeAttribute() !!}
+                            {!! $certificateRequest->status_badge !!}
                         </div>
                         <div class="text-right">
                             <h6 class="text-muted mb-2">Payment Status</h6>
-                            {!! $certificateRequest->getPaymentStatusBadgeAttribute() !!}
+                            {!! $certificateRequest->payment_status_badge !!}
                         </div>
                     </div>
 
@@ -113,10 +113,15 @@
                             <h6 class="alert-heading">
                                 <i class="fas fa-times-circle mr-2"></i>Request Rejected
                             </h6>
-                            <p class="mb-0"><strong>Reason:</strong> {{ $certificateRequest->rejection_reason ?? 'Not specified' }}</p>
+                            <p class="mb-0">
+                                <strong>Reason:</strong>
+                                {{ $certificateRequest->rejection_reason ?? 'Not specified' }}
+                            </p>
                             @if($certificateRequest->admin_notes)
                                 <hr>
-                                <p class="mb-0"><strong>Admin Notes:</strong> {{ $certificateRequest->admin_notes }}</p>
+                                <p class="mb-0">
+                                    <strong>Admin Notes:</strong> {{ $certificateRequest->admin_notes }}
+                                </p>
                             @endif
                         </div>
                     @endif
@@ -127,10 +132,12 @@
                                 <i class="fas fa-check-circle mr-2"></i>Certificate Issued
                             </h6>
                             <p class="mb-2">
-                                <strong>Certificate Number:</strong> {{ $certificateRequest->certificate_number }}
+                                <strong>Certificate Number:</strong>
+                                {{ $certificateRequest->certificate_number }}
                             </p>
                             <p class="mb-0">
-                                <strong>Issued Date:</strong> {{ $certificateRequest->issued_date ? $certificateRequest->issued_date->format('d M Y') : 'N/A' }}
+                                <strong>Issued Date:</strong>
+                                {{ $certificateRequest->issued_date ? $certificateRequest->issued_date->format('d M Y') : 'N/A' }}
                             </p>
                         </div>
                     @endif
@@ -185,10 +192,10 @@
                         <span>{{ $certificateRequest->certificate_type }}</span>
                     </div>
                     @if($certificateRequest->notes)
-                    <div class="info-row">
-                        <strong class="d-block mb-2">Additional Notes:</strong>
-                        <p class="text-muted mb-0">{{ $certificateRequest->notes }}</p>
-                    </div>
+                        <div class="info-row">
+                            <strong class="d-block mb-2">Additional Notes:</strong>
+                            <p class="text-muted mb-0">{{ $certificateRequest->notes }}</p>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -210,86 +217,92 @@
                             <div class="timeline-content">
                                 <h6 class="mb-1">Request Submitted</h6>
                                 <p class="text-muted small mb-0">
-                                    {{ $certificateRequest->requested_at ? $certificateRequest->requested_at->format('d M Y, h:i A') : $certificateRequest->created_at->format('d M Y, h:i A') }}
+                                    {{ $certificateRequest->requested_at
+                                        ? $certificateRequest->requested_at->format('d M Y, h:i A')
+                                        : $certificateRequest->created_at->format('d M Y, h:i A') }}
                                 </p>
                             </div>
                         </div>
 
                         <!-- Admin Review -->
                         @if($certificateRequest->status !== 'pending')
-                        <div class="timeline-item">
-                            <div class="timeline-marker {{ $certificateRequest->status === 'rejected' ? 'bg-danger' : 'completed' }}">
-                                <i class="fas {{ $certificateRequest->status === 'rejected' ? 'fa-times' : 'fa-check' }}"></i>
-                            </div>
-                            <div class="timeline-content">
-                                <h6 class="mb-1">
-                                    {{ $certificateRequest->status === 'rejected' ? 'Request Rejected' : 'Request Approved' }}
-                                </h6>
-                                <p class="text-muted small mb-1">
-                                    @if($certificateRequest->approved_at)
-                                        {{ $certificateRequest->approved_at->format('d M Y, h:i A') }}
-                                    @elseif($certificateRequest->rejected_at)
-                                        {{ $certificateRequest->rejected_at->format('d M Y, h:i A') }}
+                            <div class="timeline-item">
+                                <div class="timeline-marker {{ $certificateRequest->status === 'rejected' ? 'bg-danger' : 'completed' }}">
+                                    <i class="fas {{ $certificateRequest->status === 'rejected' ? 'fa-times' : 'fa-check' }}"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">
+                                        {{ $certificateRequest->status === 'rejected' ? 'Request Rejected' : 'Request Approved' }}
+                                    </h6>
+                                    <p class="text-muted small mb-1">
+                                        @if($certificateRequest->approved_at)
+                                            {{ $certificateRequest->approved_at->format('d M Y, h:i A') }}
+                                        @elseif($certificateRequest->rejected_at)
+                                            {{ $certificateRequest->rejected_at->format('d M Y, h:i A') }}
+                                        @endif
+                                    </p>
+                                    @if($certificateRequest->approvedBy)
+                                        <p class="text-muted small mb-0">
+                                            By: {{ $certificateRequest->approvedBy->name }}
+                                        </p>
                                     @endif
-                                </p>
-                                @if($certificateRequest->approvedBy)
-                                    <p class="text-muted small mb-0">By: {{ $certificateRequest->approvedBy->name }}</p>
-                                @endif
-                                @if($certificateRequest->rejectedBy)
-                                    <p class="text-muted small mb-0">By: {{ $certificateRequest->rejectedBy->name }}</p>
-                                @endif
+                                    @if($certificateRequest->rejectedBy)
+                                        <p class="text-muted small mb-0">
+                                            By: {{ $certificateRequest->rejectedBy->name }}
+                                        </p>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
                         @else
-                        <div class="timeline-item">
-                            <div class="timeline-marker current active">
-                                <i class="fas fa-clock"></i>
+                            <div class="timeline-item">
+                                <div class="timeline-marker current active">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Pending Admin Review</h6>
+                                    <p class="text-muted small mb-0">Waiting for admin approval</p>
+                                </div>
                             </div>
-                            <div class="timeline-content">
-                                <h6 class="mb-1">Pending Admin Review</h6>
-                                <p class="text-muted small mb-0">Waiting for admin approval</p>
-                            </div>
-                        </div>
                         @endif
 
                         <!-- Payment -->
                         @if($certificateRequest->payment_status === 'paid')
-                        <div class="timeline-item">
-                            <div class="timeline-marker completed">
-                                <i class="fas fa-check"></i>
+                            <div class="timeline-item">
+                                <div class="timeline-marker completed">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Payment Completed</h6>
+                                    <p class="text-muted small mb-0">
+                                        {{ $certificateRequest->paid_at ? $certificateRequest->paid_at->format('d M Y, h:i A') : 'N/A' }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="timeline-content">
-                                <h6 class="mb-1">Payment Completed</h6>
-                                <p class="text-muted small mb-0">
-                                    {{ $certificateRequest->paid_at ? $certificateRequest->paid_at->format('d M Y, h:i A') : 'N/A' }}
-                                </p>
-                            </div>
-                        </div>
                         @elseif($certificateRequest->status === 'approved')
-                        <div class="timeline-item">
-                            <div class="timeline-marker current active">
-                                <i class="fas fa-money-bill-wave"></i>
+                            <div class="timeline-item">
+                                <div class="timeline-marker current active">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Awaiting Payment</h6>
+                                    <p class="text-muted small mb-0">Payment confirmation required</p>
+                                </div>
                             </div>
-                            <div class="timeline-content">
-                                <h6 class="mb-1">Awaiting Payment</h6>
-                                <p class="text-muted small mb-0">Payment confirmation required</p>
-                            </div>
-                        </div>
                         @endif
 
                         <!-- Certificate Generation -->
                         @if($certificateRequest->status === 'completed')
-                        <div class="timeline-item">
-                            <div class="timeline-marker completed">
-                                <i class="fas fa-certificate"></i>
+                            <div class="timeline-item">
+                                <div class="timeline-marker completed">
+                                    <i class="fas fa-certificate"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-1">Certificate Generated</h6>
+                                    <p class="text-muted small mb-0">
+                                        {{ $certificateRequest->processed_at ? $certificateRequest->processed_at->format('d M Y, h:i A') : 'N/A' }}
+                                    </p>
+                                </div>
                             </div>
-                            <div class="timeline-content">
-                                <h6 class="mb-1">Certificate Generated</h6>
-                                <p class="text-muted small mb-0">
-                                    {{ $certificateRequest->processed_at ? $certificateRequest->processed_at->format('d M Y, h:i A') : 'N/A' }}
-                                </p>
-                            </div>
-                        </div>
                         @endif
                     </div>
                 </div>
@@ -300,47 +313,56 @@
         <div class="col-lg-4">
             <!-- Payment Action Card (if approved and not paid) -->
             @if($certificateRequest->canBePaid())
-            <div class="payment-action-card shadow-lg mb-4">
-                <i class="fas fa-money-bill-wave fa-4x mb-3" style="opacity: 0.8;"></i>
-                <h4 class="mb-3">Payment Required</h4>
-                <p class="mb-4">Your request has been approved! Complete the payment to proceed.</p>
+                <div class="payment-action-card shadow-lg mb-4">
+                    <i class="fas fa-money-bill-wave fa-4x mb-3" style="opacity: 0.8;"></i>
+                    <h4 class="mb-3">Payment Required</h4>
+                    <p class="mb-4">Your request has been approved! Complete the payment to proceed.</p>
 
-                <div class="bg-white text-dark rounded p-3 mb-4">
-                    <h2 class="mb-0 text-success">₹{{ number_format($certificateRequest->amount, 2) }}</h2>
-                    <small class="text-muted">Certificate Fee</small>
+                    <div class="bg-white text-dark rounded p-3 mb-4">
+                        <h2 class="mb-0 text-success">
+                            ₹{{ number_format($certificateRequest->amount, 2) }}
+                        </h2>
+                        <small class="text-muted">Certificate Fee</small>
+                    </div>
+
+                    <form action="{{ route('franchise.certificate-requests.pay', $certificateRequest) }}"
+                          method="POST"
+                          id="paymentForm">
+                        @csrf
+                        <button type="button"
+                                class="btn btn-light btn-lg btn-block"
+                                onclick="confirmPayment()">
+                            <i class="fas fa-check-circle mr-2"></i>Pay Now
+                        </button>
+                    </form>
+
+                    <small class="d-block mt-3" style="opacity: 0.8;">
+                        <i class="fas fa-shield-alt mr-1"></i>Secure payment via wallet
+                    </small>
                 </div>
-
-                <form action="{{ route('franchise.certificate-requests.pay', $certificateRequest) }}" method="POST" id="paymentForm">
-                    @csrf
-                    <button type="button" class="btn btn-light btn-lg btn-block" onclick="confirmPayment()">
-                        <i class="fas fa-check-circle mr-2"></i>Pay Now
-                    </button>
-                </form>
-
-                <small class="d-block mt-3" style="opacity: 0.8;">
-                    <i class="fas fa-shield-alt mr-1"></i>Secure payment via wallet
-                </small>
-            </div>
             @endif
 
             <!-- Download Certificate (if completed) -->
             @if($certificateRequest->status === 'completed')
-            <div class="card shadow mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
-                <div class="card-body text-center p-4">
-                    <i class="fas fa-certificate fa-4x mb-3" style="opacity: 0.8;"></i>
-                    <h4 class="mb-3">Certificate Ready!</h4>
-                    <p class="mb-4">Your certificate has been generated and is ready to download.</p>
+                <div class="card shadow mb-4"
+                     style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <div class="card-body text-center p-4">
+                        <i class="fas fa-certificate fa-4x mb-3" style="opacity: 0.8;"></i>
+                        <h4 class="mb-3">Certificate Ready!</h4>
+                        <p class="mb-4">Your certificate has been generated and is ready to download.</p>
 
-                    <a href="{{ route('franchise.certificates.download', $certificateRequest->id) }}"
-                       class="btn btn-light btn-lg btn-block">
-                        <i class="fas fa-download mr-2"></i>Download Certificate
-                    </a>
+                        <a href="{{ route('franchise.certificate-requests.download', $certificateRequest->id) }}"
+                           class="btn btn-light btn-lg btn-block">
+                            <i class="fas fa-download mr-2"></i>Download Certificate
+                        </a>
 
-                    <div class="bg-white text-dark rounded p-2 mt-3">
-                        <small class="mb-0"><strong>Certificate #:</strong> {{ $certificateRequest->certificate_number }}</small>
+                        <div class="bg-white text-dark rounded p-2 mt-3">
+                            <small class="mb-0">
+                                <strong>Certificate #:</strong> {{ $certificateRequest->certificate_number }}
+                            </small>
+                        </div>
                     </div>
                 </div>
-            </div>
             @endif
 
             <!-- Financial Details -->
@@ -353,7 +375,9 @@
                 <div class="card-body">
                     <div class="info-row d-flex justify-content-between">
                         <strong>Certificate Fee:</strong>
-                        <span class="text-success font-weight-bold">₹{{ number_format($certificateRequest->amount, 2) }}</span>
+                        <span class="text-success font-weight-bold">
+                            ₹{{ number_format($certificateRequest->amount, 2) }}
+                        </span>
                     </div>
                     <div class="info-row d-flex justify-content-between">
                         <strong>Payment Status:</strong>
@@ -366,16 +390,16 @@
                         </span>
                     </div>
                     @if($certificateRequest->paid_at)
-                    <div class="info-row d-flex justify-content-between">
-                        <strong>Paid On:</strong>
-                        <span>{{ $certificateRequest->paid_at->format('d M Y') }}</span>
-                    </div>
+                        <div class="info-row d-flex justify-content-between">
+                            <strong>Paid On:</strong>
+                            <span>{{ $certificateRequest->paid_at->format('d M Y') }}</span>
+                        </div>
                     @endif
                     @if($certificateRequest->walletTransaction)
-                    <div class="info-row d-flex justify-content-between">
-                        <strong>Transaction ID:</strong>
-                        <span class="small">{{ $certificateRequest->walletTransaction->id }}</span>
-                    </div>
+                        <div class="info-row d-flex justify-content-between">
+                            <strong>Transaction ID:</strong>
+                            <span class="small">{{ $certificateRequest->walletTransaction->id }}</span>
+                        </div>
                     @endif
                 </div>
             </div>
@@ -459,7 +483,6 @@ function confirmPayment() {
         cancelButtonText: 'Cancel'
     }).then((result) => {
         if (result.isConfirmed) {
-            // Show loading
             Swal.fire({
                 title: 'Processing Payment...',
                 html: 'Please wait while we process your payment.',
@@ -469,7 +492,6 @@ function confirmPayment() {
                 }
             });
 
-            // Submit form
             document.getElementById('paymentForm').submit();
         }
     });

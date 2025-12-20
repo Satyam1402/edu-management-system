@@ -124,6 +124,10 @@ Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')
         Route::post('/{certificateRequest}/reject', [CertificateRequestController::class, 'reject'])->name('reject');
         Route::post('/{certificateRequest}/process', [CertificateRequestController::class, 'process'])->name('process');
 
+        // Certificate completion actions
+        Route::post('/{certificateRequest}/complete', [CertificateRequestController::class, 'complete'])->name('complete');
+        Route::post('/{certificateRequest}/undo-complete', [CertificateRequestController::class, 'undoComplete'])->name('undo-complete');
+
         // Bulk operations
         Route::post('/bulk-action', [CertificateRequestController::class, 'bulkAction'])->name('bulk-action');
         Route::post('/bulk-approve', [CertificateRequestController::class, 'bulkApprove'])->name('bulk-approve');
@@ -299,11 +303,11 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
         Route::get('/create', [FranchiseCertificateRequestController::class, 'create'])->name('create');
         Route::post('/', [FranchiseCertificateRequestController::class, 'store'])->name('store');
         Route::get('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'show'])->name('show');
-        
+
         // ❌ REMOVED: Edit & Update routes (no longer needed)
         // Route::get('/{certificateRequest}/edit', [FranchiseCertificateRequestController::class, 'edit'])->name('edit');
         // Route::put('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'update'])->name('update');
-        
+
         // ✅ NEW: Delete route (cancel pending requests)
         Route::delete('/{certificateRequest}', [FranchiseCertificateRequestController::class, 'destroy'])->name('destroy');
 
@@ -312,10 +316,10 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
         // ========================================
         // Pay for approved certificate request
         Route::post('/{certificateRequest}/pay', [FranchiseCertificateRequestController::class, 'pay'])->name('pay');
-        
+
         // Download completed certificate
         Route::get('/{certificateRequest}/download', [FranchiseCertificateRequestController::class, 'download'])->name('download');
-        
+
         // ❌ REMOVED: Duplicate cancel route (already handled by destroy)
         // Route::post('/{certificateRequest}/cancel', [FranchiseCertificateRequestController::class, 'cancel'])->name('cancel');
 
@@ -338,6 +342,9 @@ Route::middleware(['auth', 'role:franchise'])->prefix('franchise')->name('franch
         Route::get('/export', [FranchiseCertificateRequestController::class, 'export'])->name('export');
         Route::get('/export/excel', [FranchiseCertificateRequestController::class, 'exportExcel'])->name('export.excel');
         Route::get('/export/pdf', [FranchiseCertificateRequestController::class, 'exportPdf'])->name('export.pdf');
+
+        Route::get('/{certificateRequest}/download', [FranchiseCertificateRequestController::class, 'download'])->name('download');
+        Route::post('/{certificateRequest}/cancel', [FranchiseCertificateRequestController::class, 'cancel'])->name('cancel');
 
         // ========================================
         // STATISTICS (Dashboard)

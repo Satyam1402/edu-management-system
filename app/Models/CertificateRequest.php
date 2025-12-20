@@ -222,4 +222,34 @@ class CertificateRequest extends Model
             ->get()
             ->keyBy('status');
     }
+
+        // ========================================
+    // ACCESSORS (for badges)
+    // ========================================
+
+    public function getStatusBadgeAttribute()
+    {
+        $map = [
+            'pending'   => '<span class="badge badge-warning"><i class="fas fa-clock mr-1"></i> Pending Review</span>',
+            'approved'  => '<span class="badge badge-info"><i class="fas fa-check-circle mr-1"></i> Approved</span>',
+            'paid'      => '<span class="badge badge-success"><i class="fas fa-money-bill mr-1"></i> Processing</span>',
+            'completed' => '<span class="badge badge-primary"><i class="fas fa-certificate mr-1"></i> Completed</span>',
+            'rejected'  => '<span class="badge badge-danger"><i class="fas fa-times-circle mr-1"></i> Rejected</span>',
+        ];
+
+        return $map[$this->status] ?? '<span class="badge badge-secondary">Unknown</span>';
+    }
+
+    public function getPaymentStatusBadgeAttribute()
+    {
+        if ($this->payment_status === 'paid') {
+            return '<span class="badge badge-success"><i class="fas fa-check mr-1"></i> Paid</span>';
+        }
+
+        if ($this->status === 'approved' && $this->payment_status === 'pending') {
+            return '<span class="badge badge-warning"><i class="fas fa-clock mr-1"></i> Pending</span>';
+        }
+
+        return '<span class="badge badge-secondary">N/A</span>';
+    }
 }

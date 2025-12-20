@@ -12,16 +12,16 @@ use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Support\Facades\{DB, Log, Response};
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 class CertificateRequestController extends Controller
 {
     public function index(Request $request)
     {
         if ($request->ajax()) {
-            // ✅ FIXED: Load full student and franchise data
             $query = CertificateRequest::with([
-                'student',  // Load all student fields
-                'franchise', // Load franchise relationship
+                'student',
+                'franchise',
                 'course:id,name,certificate_fee',
                 'approvedBy:id,name',
                 'rejectedBy:id,name'
@@ -47,7 +47,6 @@ class CertificateRequestController extends Controller
             return DataTables::of($query)
                 ->addIndexColumn()
                 ->addColumn('student_info', function($row) {
-                    // ✅ FIXED: Use full_name accessor and proper franchise name
                     $studentName = $row->student ? $row->student->full_name : 'N/A';
                     $studentEmail = $row->student ? $row->student->email : '';
                     $franchiseName = $row->franchise ? $row->franchise->name : 'N/A';
@@ -76,12 +75,21 @@ class CertificateRequestController extends Controller
                     return '<em class="text-muted">General Certificate</em>';
                 })
                 ->addColumn('amount_info', function($row) {
+                    $paymentBadge = '';
+                    if ($row->payment_status === 'paid') {
+                        $paymentBadge = "<small class='badge badge-success mt-1'>
+                            <i class='fas fa-check'></i> Paid
+                        </small>";
+                    } else {
+                        $paymentBadge = "<small class='badge badge-warning mt-1'>
+                            <i class='fas fa-clock'></i> Unpaid
+                        </small>";
+                    }
+
                     return "
                         <div class='text-center'>
                             <strong class='text-success' style='font-size: 1.1rem;'>₹" . number_format($row->amount, 2) . "</strong><br>
-                            <small class='badge badge-info mt-1'>
-                                <i class='fas fa-wallet'></i> Wallet Deducted
-                            </small>
+                            {$paymentBadge}
                         </div>
                     ";
                 })
@@ -90,6 +98,7 @@ class CertificateRequestController extends Controller
                         'pending' => 'warning',
                         'processing' => 'info',
                         'approved' => 'success',
+                        'paid' => 'info',
                         'rejected' => 'danger',
                         'completed' => 'primary'
                     ];
@@ -97,14 +106,20 @@ class CertificateRequestController extends Controller
                         'pending' => 'clock',
                         'processing' => 'spinner fa-spin',
                         'approved' => 'check-circle',
+                        'paid' => 'money-check-alt',
                         'rejected' => 'times-circle',
                         'completed' => 'certificate'
                     ];
                     $color = $colors[$row->status] ?? 'secondary';
                     $icon = $icons[$row->status] ?? 'question';
 
+                    $statusText = ucfirst($row->status);
+                    if ($row->status === 'paid') {
+                        $statusText = 'Processing';
+                    }
+
                     $badge = "<span class='badge badge-{$color} status-badge px-3 py-2'>
-                                <i class='fas fa-{$icon} mr-1'></i>" . ucfirst($row->status) . "
+                                <i class='fas fa-{$icon} mr-1'></i>{$statusText}
                              </span>";
 
                     // Add admin info
@@ -146,19 +161,27 @@ class CertificateRequestController extends Controller
                                            class="btn btn-danger" title="Reject" data-toggle="tooltip">
                                            <i class="fas fa-times"></i>
                                     </button>';
-                    } else {
-                        // View Certificate
-                        if (in_array($row->status, ['approved', 'completed'])) {
-                            $certificate = Certificate::where('certificate_request_id', $row->id)->first();
-                            if ($certificate) {
-                                $actions .= '<a href="' . route('admin.certificates.show', $certificate->id) . '"
-                                               class="btn btn-primary" title="View Certificate" data-toggle="tooltip">
-                                               <i class="fas fa-certificate"></i>
-                                        </a>';
-                            }
+                    }
+                    // ✅ NEW: Mark as Completed button for paid requests
+                    elseif ($row->status === 'paid' && $row->payment_status === 'paid') {
+                        $actions .= '<button onclick="markAsCompleted(' . $row->id . ')"
+                                           class="btn btn-primary" title="Mark as Completed" data-toggle="tooltip">
+                                           <i class="fas fa-certificate"></i> Complete
+                                    </button>';
+                    }
+                    // View Certificate (if completed)
+                    elseif ($row->status === 'completed') {
+                        $certificate = Certificate::where('certificate_request_id', $row->id)->first();
+                        if ($certificate) {
+                            $actions .= '<a href="' . route('admin.certificates.show', $certificate->id) . '"
+                                           class="btn btn-primary" title="View Certificate" data-toggle="tooltip">
+                                           <i class="fas fa-certificate"></i>
+                                    </a>';
                         }
+                    }
 
-                        // History Button
+                    // History Button (for non-pending requests)
+                    if (!in_array($row->status, ['pending'])) {
                         $actions .= '<button onclick="showTimeline(' . $row->id . ')"
                                            class="btn btn-secondary" title="History" data-toggle="tooltip">
                                            <i class="fas fa-history"></i>
@@ -177,17 +200,18 @@ class CertificateRequestController extends Controller
             'total' => CertificateRequest::count(),
             'pending' => CertificateRequest::where('status', 'pending')->count(),
             'approved' => CertificateRequest::where('status', 'approved')->count(),
+            'paid' => CertificateRequest::where('status', 'paid')->count(), // ✅ NEW
             'rejected' => CertificateRequest::where('status', 'rejected')->count(),
             'completed' => CertificateRequest::where('status', 'completed')->count(),
             'today_requests' => CertificateRequest::whereDate('created_at', today())->count(),
             'today_approved' => CertificateRequest::where('status', 'approved')
                                                   ->whereDate('approved_at', today())
                                                   ->count(),
-            'total_revenue' => CertificateRequest::whereIn('status', ['approved', 'completed'])
+            'total_revenue' => CertificateRequest::whereIn('status', ['approved', 'paid', 'completed'])
+                                                ->where('payment_status', 'paid')
                                                 ->sum('amount'),
         ];
 
-        // ✅ FIXED: Get franchises from franchises table
         $franchises = Franchise::select('id', 'name')
                               ->orderBy('name')
                               ->get();
@@ -365,6 +389,77 @@ class CertificateRequestController extends Controller
         }
     }
 
+    /**
+     * ✅ NEW: Mark certificate request as completed
+     */
+    public function markAsCompleted(Request $request, CertificateRequest $certificateRequest)
+    {
+        // Validate status
+        if ($certificateRequest->status !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only paid requests can be marked as completed.'
+            ]);
+        }
+
+        if ($certificateRequest->payment_status !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Payment must be completed before marking as completed.'
+            ]);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Update certificate request status
+            $certificateRequest->update([
+                'status' => 'completed',
+                'processed_by' => auth()->id(),
+                'processed_at' => now()
+            ]);
+
+            // Update certificate status
+            $certificate = Certificate::where('certificate_request_id', $certificateRequest->id)->first();
+
+            if ($certificate) {
+                $certificate->update([
+                    'status' => 'completed',
+                    'completed_at' => now()
+                ]);
+            }
+
+            DB::commit();
+
+            Log::info('Certificate marked as completed', [
+                'request_id' => $certificateRequest->id,
+                'certificate_number' => $certificate->number ?? 'N/A',
+                'processed_by' => auth()->id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Certificate marked as completed! Franchise can now download it.',
+                'data' => [
+                    'certificate_number' => $certificate->number ?? null
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Mark as completed failed', [
+                'request_id' => $certificateRequest->id,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to mark as completed: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function bulkAction(Request $request)
     {
         $request->validate([
@@ -476,18 +571,18 @@ class CertificateRequestController extends Controller
 
         $requests = $query->orderBy('created_at', 'desc')->get();
 
-        $csvData = "ID,Student,Franchise,Course,Amount,Status,Request Date\n";
+        $csvData = "ID,Student,Franchise,Course,Amount,Status,Payment Status,Request Date\n";
 
         foreach ($requests as $req) {
-            // ✅ FIXED: Use full_name accessor
             $csvData .= sprintf(
-                "%d,%s,%s,%s,%.2f,%s,%s\n",
+                "%d,%s,%s,%s,%.2f,%s,%s,%s\n",
                 $req->id,
                 $req->student ? $req->student->full_name : 'N/A',
                 $req->franchise ? $req->franchise->name : 'N/A',
                 $req->course ? $req->course->name : 'N/A',
                 $req->amount,
                 ucfirst($req->status),
+                ucfirst($req->payment_status),
                 $req->created_at->format('Y-m-d H:i:s')
             );
         }
@@ -507,8 +602,12 @@ class CertificateRequestController extends Controller
             'total_requests' => CertificateRequest::count(),
             'pending' => CertificateRequest::where('status', 'pending')->count(),
             'approved' => CertificateRequest::where('status', 'approved')->count(),
+            'paid' => CertificateRequest::where('status', 'paid')->count(),
             'rejected' => CertificateRequest::where('status', 'rejected')->count(),
-            'total_revenue' => CertificateRequest::whereIn('status', ['approved', 'completed'])->sum('amount'),
+            'completed' => CertificateRequest::where('status', 'completed')->count(),
+            'total_revenue' => CertificateRequest::whereIn('status', ['approved', 'paid', 'completed'])
+                                                ->where('payment_status', 'paid')
+                                                ->sum('amount'),
             'recent_requests' => CertificateRequest::with(['student', 'course', 'franchise'])
                                                   ->orderBy('created_at', 'desc')
                                                   ->take(5)
@@ -527,4 +626,188 @@ class CertificateRequestController extends Controller
 
         return $number;
     }
+
+    /**
+     * Mark certificate as completed
+     */
+    public function complete(CertificateRequest $certificateRequest)
+    {
+        // Validate status - can only complete if paid
+        if ($certificateRequest->status !== 'paid') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only paid requests can be marked as completed. Current status: ' . $certificateRequest->status
+            ]);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // Generate certificate number if not exists
+            if (!$certificateRequest->certificate_number) {
+                $certificateNumber = $this->generateUniqueCertificateNumber();
+            } else {
+                $certificateNumber = $certificateRequest->certificate_number;
+            }
+
+            // Update certificate request to completed
+            $certificateRequest->update([
+                'status' => 'completed',
+                'certificate_number' => $certificateNumber,
+                'completed_at' => now(),
+                'completed_by' => Auth::id()
+            ]);
+
+            // Create or update certificate record (if you have a separate certificates table)
+            $certificate = Certificate::updateOrCreate(
+                ['certificate_request_id' => $certificateRequest->id],
+                [
+                    'student_id' => $certificateRequest->student_id,
+                    'course_id' => $certificateRequest->course_id,
+                    'franchise_id' => $certificateRequest->franchise_id,
+                    'number' => $certificateNumber,
+                    'status' => 'issued',
+                    'issued_at' => now(),
+                    'issued_by' => Auth::id()
+                ]
+            );
+
+            DB::commit();
+
+            Log::info('Certificate marked as completed', [
+                'request_id' => $certificateRequest->id,
+                'certificate_number' => $certificateNumber,
+                'completed_by' => Auth::id()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Certificate marked as completed! Certificate Number: ' . $certificateNumber,
+                'data' => [
+                    'certificate_number' => $certificateNumber,
+                    'certificate_id' => $certificate->id ?? null,
+                    'status' => 'completed'
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Certificate completion failed', [
+                'error' => $e->getMessage(),
+                'request_id' => $certificateRequest->id,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to complete certificate: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Undo completion (revert to paid status)
+     */
+    public function undoComplete(CertificateRequest $certificateRequest)
+    {
+        if ($certificateRequest->status !== 'completed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Only completed requests can be reverted.'
+            ]);
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $certificateRequest->update([
+                'status' => 'paid',
+                'completed_at' => null,
+                'completed_by' => null
+            ]);
+
+            // Optionally delete the certificate record if it shouldn't exist for non-completed requests
+            // Certificate::where('certificate_request_id', $certificateRequest->id)->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Certificate completion has been reverted to processing status.'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to revert: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function getActionButtons($request)
+    {
+        $buttons = '<div class="btn-group btn-group-sm" role="group">';
+
+        // View Details Button
+        $buttons .= '<a href="' . route('admin.certificate-requests.show', $request->id) . '"
+                        class="btn btn-info"
+                        data-toggle="tooltip"
+                        title="View Details">
+                        <i class="fas fa-eye"></i>
+                    </a>';
+
+        // Approve/Reject Buttons (if pending)
+        if ($request->status === 'pending') {
+            $buttons .= '<button onclick="showApproveModal(' . $request->id . ')"
+                                class="btn btn-success"
+                                title="Approve"
+                                data-toggle="tooltip">
+                                <i class="fas fa-check"></i>
+                        </button>';
+
+            $buttons .= '<button onclick="showRejectModal(' . $request->id . ')"
+                                class="btn btn-danger"
+                                title="Reject"
+                                data-toggle="tooltip">
+                                <i class="fas fa-times"></i>
+                        </button>';
+        }
+
+        // ✅ NEW: Complete Button (if paid)
+        if ($request->status === 'paid') {
+            $buttons .= '<button onclick="markAsCompleted(' . $request->id . ')"
+                                class="btn btn-primary"
+                                title="Mark as Completed"
+                                data-toggle="tooltip">
+                                <i class="fas fa-certificate"></i> Complete
+                        </button>';
+        }
+
+        // ✅ NEW: Undo Button (if completed)
+        if ($request->status === 'completed') {
+            $buttons .= '<button onclick="undoComplete(' . $request->id . ')"
+                                class="btn btn-warning"
+                                title="Undo Completion"
+                                data-toggle="tooltip">
+                                <i class="fas fa-undo"></i>
+                        </button>';
+        }
+
+        // History Button
+        $buttons .= '<button onclick="showTimeline(' . $request->id . ')"
+                            class="btn btn-secondary"
+                            title="History"
+                            data-toggle="tooltip">
+                            <i class="fas fa-history"></i>
+                    </button>';
+
+        $buttons .= '</div>';
+
+        return $buttons;
+    }
+
+
 }
